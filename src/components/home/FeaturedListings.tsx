@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { fetchFeaturedHomestays } from "@/app/services/homestayService";
+import { fetchFeaturedHomestays } from "../../interfaces/homestay";
 import { Card, Rate, Skeleton, Button } from "antd";
 import { HeartOutlined, RightOutlined } from "@ant-design/icons";
 import Image from "next/image";

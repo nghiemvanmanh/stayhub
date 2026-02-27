@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { fetchTestimonials } from "@/app/services/homestayService";
+import { fetchTestimonials } from "../../interfaces/homestay";
 import { Rate, Avatar, Skeleton } from "antd";
 
 export default function Testimonials() {

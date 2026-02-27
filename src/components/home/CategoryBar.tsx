@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { fetchCategories } from "@/app/services/homestayService";
+import { fetchCategories } from "../../interfaces/homestay";
 import { Skeleton } from "antd";
 import { Flame, Waves, House, TreePine, Tent, Camera } from "lucide-react";
 import { JSX, useState } from "react";
