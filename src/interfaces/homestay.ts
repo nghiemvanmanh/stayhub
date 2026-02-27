@@ -24,6 +24,55 @@ export interface Testimonial {
   comment: string;
 }
 
+export interface RoomType {
+  id: string;
+  name: string;
+  area: number;
+  bedType: string;
+  description: string;
+  price: string;
+  pricePerNight: number;
+  maxGuests: number;
+  originalPrice?: string;
+  discount?: number;
+  amenities: string[];
+  image: string;
+}
+
+export interface HomestayDetail {
+  id: string;
+  title: string;
+  subtitle: string;
+  address: string;
+  city: string;
+  country: string;
+  rating: number;
+  reviewCount: number;
+  badge: string;
+  hostName: string;
+  hostAvatar: string;
+  maxGuests: number;
+  bedrooms: number;
+  beds: number;
+  bathrooms: number;
+  pricePerNight: number;
+  cleaningFee: number;
+  serviceFee: number;
+  images: string[];
+  description: string;
+  highlights: { icon: string; title: string; description: string }[];
+  tabs: string[];
+  roomTypes: RoomType[];
+  reviews: {
+    id: string;
+    name: string;
+    avatar: string;
+    date: string;
+    comment: string;
+  }[];
+  isFavorite: boolean;
+}
+
 const mockHomestays: Homestay[] = [
   {
     id: "1",
@@ -154,6 +203,121 @@ const mockTestimonials: Testimonial[] = [
   },
 ];
 
+const mockHomestayDetails: HomestayDetail[] = [
+  {
+    id: "1",
+    title: "Horizon Villa - View Biển Tuyệt Đỉnh & Hồ Bơi Vô Cực",
+    subtitle: "Toàn bộ biệt thự. Chủ nhà Minh Anh",
+    address: "Phường Hàm Tiến, Phan Thiết, Việt Nam",
+    city: "Phan Thiết",
+    country: "Việt Nam",
+    rating: 4.92,
+    reviewCount: 128,
+    badge: "Chỗ ở siêu đẹp",
+    hostName: "Minh Anh",
+    hostAvatar: "https://randomuser.me/api/portraits/women/68.jpg",
+    maxGuests: 12,
+    bedrooms: 5,
+    beds: 6,
+    bathrooms: 5,
+    pricePerNight: 10000000,
+    cleaningFee: 200000,
+    serviceFee: 450000,
+    images: [
+      "https://images.unsplash.com/photo-1582268611958-ebfd161ef9cf?w=1200&h=800&fit=crop",
+      "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=600&fit=crop",
+    ],
+    description:
+      "Chào mừng bạn đến với Horizon Villa, nơi biển xanh và bầu trời gặp nhau. Căn biệt thự tọa lạc tại vị trí đắc địa nhất Mũi Né, mang đến cho bạn không gian yên bình tuyệt đối với tầm nhìn 180 độ ra đại dương.\n\nNội thất được thiết kế theo phong cách tối giản Nhật Bản kết hợp với sự phóng khoáng của vùng nhiệt đới. Phòng khách rộng lớn với trần cao và kính cường lực mang toàn bộ cảnh sắc thiên nhiên vào trong nhà.",
+    highlights: [
+      {
+        icon: "wifi",
+        title: "Wifi tốc độ cao miễn phí",
+        description: "Phù hợp cho cả nghỉ dưỡng và làm việc từ xa.",
+      },
+      {
+        icon: "car",
+        title: "Chỗ đậu xe miễn phí",
+        description: "Không gian rộng rãi cho tới 2 xe tô gia đình.",
+      },
+      {
+        icon: "calendar",
+        title: "Hủy miễn phí trước 48 giờ",
+        description: "Nhận toàn bộ tiền hoàn nếu bạn thay đổi kế hoạch sớm.",
+      },
+    ],
+    tabs: ["Mô tả", "Tiện nghi", "Vị trí", "Chính sách"],
+    roomTypes: [
+      {
+        id: "r1",
+        name: "Phòng Master View Biển",
+        area: 45,
+        bedType: "1 giường King",
+        maxGuests: 2,
+        description:
+          "Phòng ngủ rộng nhất biệt thự với bồn tắm nằm nhìn thẳng ra Biển Nhĩ.",
+        price: "3,200,000đ",
+        pricePerNight: 3200000,
+        originalPrice: "4,500,000đ",
+        discount: 30,
+        amenities: ["Bữa sáng miễn phí", "Hủy phòng linh hoạt", "Cọc trước 30%"],
+        image:
+          "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop",
+      },
+      {
+        id: "r2",
+        name: "Phòng Double Ban Công",
+        area: 32,
+        bedType: "1 giường Queen",
+        maxGuests: 2,
+        description:
+          "Phòng ấm cúng với ban công rộng lãng tục và bàn trà thư giãn.",
+        price: "2,500,000đ",
+        pricePerNight: 2500000,
+        amenities: ["Bữa sáng miễn phí", "Hủy phòng linh hoạt", "Thanh toán khi nhận phòng"],
+        image:
+          "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=600&h=400&fit=crop",
+      },
+      {
+        id: "r3",
+        name: "Phòng Twin Gia Đình",
+        area: 38,
+        bedType: "2 giường đơn",
+        maxGuests: 4,
+        description:
+          "Lựa chọn lý tưởng cho trẻ em hoặc nhóm bạn với không gian sinh hoạt chung.",
+        price: "2,800,000đ",
+        pricePerNight: 2800000,
+        amenities: ["Bữa sáng miễn phí", "Hủy phòng linh hoạt", "Thanh toán trước"],
+        image:
+          "https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=600&h=400&fit=crop",
+      },
+    ],
+    reviews: [
+      {
+        id: "rv1",
+        name: "Hương Giang",
+        avatar: "https://randomuser.me/api/portraits/women/12.jpg",
+        date: "Tháng 9 năm 2024",
+        comment:
+          "Trải nghiệm tuyệt vời! Villa sạch sẽ, view đẹp hơn cả trong ảnh. Chủ nhà Minh Anh rất nhiệt tình hỗ trợ đoàn mình suốt chuyến đi. Chắc chắn sẽ quay lại!",
+      },
+      {
+        id: "rv2",
+        name: "Hương Giang",
+        avatar: "https://randomuser.me/api/portraits/women/22.jpg",
+        date: "Tháng 8 năm 2024",
+        comment:
+          "Trải nghiệm tuyệt vời! Villa sạch sẽ, view đẹp hơn cả trong ảnh. Chủ nhà Minh Anh rất nhiệt tình hỗ trợ đoàn mình suốt chuyến đi. Chắc chắn sẽ quay lại!",
+      },
+    ],
+    isFavorite: false,
+  },
+];
+
 // ============================================================
 // API FUNCTIONS - Replace these with actual fetch calls later
 // ============================================================
@@ -177,4 +341,23 @@ export async function fetchTestimonials(): Promise<Testimonial[]> {
   // TODO: Replace with actual API call
   await delay(400);
   return mockTestimonials;
+}
+
+export async function fetchHomestayDetail(id: string): Promise<HomestayDetail | null> {
+  // TODO: Replace with actual API call
+  await delay(400);
+  return mockHomestayDetails.find((h) => h.id === id) ?? mockHomestayDetails[0];
+}
+
+export async function fetchSimilarHomestays(city: string): Promise<Homestay[]> {
+  await delay(300);
+  return mockHomestays.slice(0, 4).map((h) => ({
+    ...h,
+    title: "Sunrise Beach House",
+    location: `Cách biển 200m`,
+    distance: `Cách biển 200m`,
+    price: "1,800,000đ",
+    rating: 4.8,
+    image: "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&h=600&fit=crop",
+  }));
 }

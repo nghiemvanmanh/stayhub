@@ -45,46 +45,51 @@ export default function FeaturedListings() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {homestays?.map((stay) => (
-              <Card
+              <Link
                 key={stay.id}
-                hoverable
-                className="!rounded-2xl overflow-hidden !border-0 !shadow-none group"
-                styles={{ body: { padding: "12px 0 0 0" } }}
-                cover={
-                  <div className="relative w-full h-[220px] overflow-hidden rounded-2xl">
-                    <Image
-                      src={stay.image}
-                      alt={stay.title}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-300"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-                    />
-                    <button className="absolute top-3 right-3 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-colors cursor-pointer border-none">
-                      <HeartOutlined className="text-gray-600 text-sm" />
-                    </button>
-                    <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-full px-2 py-0.5 flex items-center gap-1">
-                      <span className="text-yellow-500 text-xs">★</span>
-                      <span className="text-xs font-semibold text-gray-800">
-                        {stay.rating}
-                      </span>
-                    </div>
-                  </div>
-                }
+                href={`/homestay/${stay.id}`}
+                className="no-underline block"
               >
-                <div className="flex flex-col gap-0.5">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-gray-900 truncate">
-                      {stay.title}
-                    </h3>
+                <Card
+                  hoverable
+                  className="!rounded-2xl overflow-hidden !border-0 !shadow-none group"
+                  styles={{ body: { padding: "12px 0 0 0" } }}
+                  cover={
+                    <div className="relative w-full h-[220px] overflow-hidden rounded-2xl">
+                      <Image
+                        src={stay.image}
+                        alt={stay.title}
+                        fill
+                        className="object-cover group-hover:scale-105 transition-transform duration-300"
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                      />
+                      <button className="absolute top-3 right-3 w-8 h-8 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white transition-colors cursor-pointer border-none">
+                        <HeartOutlined className="text-gray-600 text-sm" />
+                      </button>
+                      <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-full px-2 py-0.5 flex items-center gap-1">
+                        <span className="text-yellow-500 text-xs">★</span>
+                        <span className="text-xs font-semibold text-gray-800">
+                          {stay.rating}
+                        </span>
+                      </div>
+                    </div>
+                  }
+                >
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-gray-900 truncate">
+                        {stay.title}
+                      </h3>
+                    </div>
+                    <p className="text-xs text-gray-400">{stay.distance}</p>
+                    <p className="text-xs text-gray-400">{stay.dates}</p>
+                    <p className="text-sm mt-1">
+                      <span className="font-bold text-gray-900">{stay.price}</span>
+                      <span className="text-gray-400 font-normal"> / đêm</span>
+                    </p>
                   </div>
-                  <p className="text-xs text-gray-400">{stay.distance}</p>
-                  <p className="text-xs text-gray-400">{stay.dates}</p>
-                  <p className="text-sm mt-1">
-                    <span className="font-bold text-gray-900">{stay.price}</span>
-                    <span className="text-gray-400 font-normal"> / đêm</span>
-                  </p>
-                </div>
-              </Card>
+                </Card>
+              </Link>
             ))}
           </div>
         )}
