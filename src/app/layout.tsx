@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ReactQueryProvider from "@/contexts/ReactQueryProvider";
 import AntdProvider from "@/contexts/AntdProvider";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,7 +32,9 @@ export default function RootLayout({
       >
         <ReactQueryProvider>
           <AntdProvider>
-            {children}
+            <AuthProvider>
+              {children}
+            </AuthProvider>
           </AntdProvider>
         </ReactQueryProvider>
       </body>
