@@ -10,6 +10,7 @@ import {
 } from "@ant-design/icons";
 import { useState } from "react";
 import { fetcher } from "../../../utils/fetcher";
+import { PASSWORD_RULES } from "@/constants/validation";
 
 interface RegisterModalProps {
     open: boolean;
@@ -114,10 +115,7 @@ export default function RegisterModal({
                     <Form.Item
                         name="password"
                         label={<span className="font-medium text-gray-700">Mật khẩu</span>}
-                        rules={[
-                            { required: true, message: "Vui lòng nhập mật khẩu" },
-                            { min: 6, message: "Mật khẩu ít nhất 6 ký tự" },
-                        ]}
+                        rules={PASSWORD_RULES}
                     >
                         <Input.Password
                             prefix={<LockOutlined className="text-gray-400" />}
