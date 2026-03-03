@@ -9,8 +9,7 @@ import {
     EyeTwoTone,
 } from "@ant-design/icons";
 import { useState } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { registerApi } from "@/app/services/authService";
+import { fetcher } from "../../../utils/fetcher";
 
 interface RegisterModalProps {
     open: boolean;
@@ -25,20 +24,18 @@ export default function RegisterModal({
 }: RegisterModalProps) {
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
-    const { login } = useAuth();
     const [messageApi, contextHolder] = message.useMessage();
 
     const handleRegister = async (values: {
-        name: string;
+        fullName: string;
         email: string;
         password: string;
         confirmPassword: string;
     }) => {
         setLoading(true);
         try {
-            const res = await registerApi(values);
-            login(res.user, res.tokens);
-            messageApi.success(`Đăng ký thành công! Chào mừng ${res.user.name} 🎉`);
+            await fetcher.post('/auth/register-guest', values);
+            messageApi.success(`Đăng ký thành công🎉. Vui lòng kiểm tra email để xác thực tài khoản.`);
             form.resetFields();
             onClose();
         } catch (err: unknown) {
@@ -81,7 +78,7 @@ export default function RegisterModal({
                     requiredMark={false}
                 >
                     <Form.Item
-                        name="name"
+                        name="fullName"
                         label={
                             <span className="font-medium text-gray-700">Họ và tên</span>
                         }

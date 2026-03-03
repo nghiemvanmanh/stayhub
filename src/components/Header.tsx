@@ -15,19 +15,18 @@ import {
 import { useState } from "react";
 import type { MenuProps } from "antd";
 import { useAuth } from "@/contexts/AuthContext";
-import { logoutApi } from "@/app/services/authService";
 import LoginModal from "@/components/auth/LoginModal";
 import RegisterModal from "@/components/auth/RegisterModal";
+import { fetcher } from "../../utils/fetcher";
 
 export default function Header() {
   const { user, isLoggedIn, logout } = useAuth();
   const [loginOpen, setLoginOpen] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
-
   const handleLogout = async () => {
     try {
-      await logoutApi();
+      await fetcher.post("/auth/logout");
     } finally {
       logout();
       messageApi.success("Đã đăng xuất thành công!");
@@ -39,7 +38,7 @@ export default function Header() {
       key: "user-info",
       label: (
         <div className="py-1">
-          <p className="font-semibold text-gray-900 m-0">{user?.name}</p>
+          <p className="font-semibold text-gray-900 m-0">{user?.fullName}</p>
           <p className="text-xs text-gray-500 m-0">{user?.email}</p>
         </div>
       ),
@@ -149,12 +148,12 @@ export default function Header() {
                   <MenuOutlined className="text-gray-600 text-xs" />
                   <Avatar
                     size={30}
-                    icon={!user?.avatar ? <UserOutlined /> : undefined}
-                    src={user?.avatar}
+                    icon={!user?.avatarUrl ? <UserOutlined /> : undefined}
+                    src={user?.avatarUrl}
                     className={isLoggedIn ? "bg-[#2DD4A8]" : "bg-gray-500"}
                   >
-                    {isLoggedIn && !user?.avatar
-                      ? user?.name?.charAt(0).toUpperCase()
+                    {isLoggedIn && !user?.avatarUrl
+                      ? user?.fullName?.charAt(0).toUpperCase()
                       : undefined}
                   </Avatar>
                 </div>

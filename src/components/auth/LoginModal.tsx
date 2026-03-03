@@ -9,7 +9,7 @@ import {
 } from "@ant-design/icons";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { loginApi } from "@/app/services/authService";
+import { fetcher } from "../../../utils/fetcher";
 
 interface LoginModalProps {
     open: boolean;
@@ -30,9 +30,10 @@ export default function LoginModal({
     const handleLogin = async (values: { email: string; password: string }) => {
         setLoading(true);
         try {
-            const res = await loginApi(values);
-            login(res.user, res.tokens);
-            messageApi.success(`Chào mừng trở lại, ${res.user.name}! 👋`);
+            const res = await fetcher.post('/auth/login', values);
+            const data = res.data.data;
+            login(data.userInfResponse, { accessToken: data.accessToken, refreshToken: data.refreshToken });
+            messageApi.success(`Chào mừng trở lại, ${data?.userInfResponse?.fullName}! 👋`);
             form.resetFields();
             onClose();
         } catch (err: unknown) {
@@ -134,15 +135,6 @@ export default function LoginModal({
                 <Divider className="my-5">
                     <span className="text-gray-400 text-sm">hoặc</span>
                 </Divider>
-
-                {/* Hint tài khoản demo */}
-                <div className="bg-gray-50 rounded-xl p-3 mb-4 text-center">
-                    <p className="text-xs text-gray-500 m-0">
-                        🧪 Tài khoản demo:{" "}
-                        <span className="font-medium text-gray-700">test@stayhub.vn</span>{" "}
-                        / <span className="font-medium text-gray-700">123456</span>
-                    </p>
-                </div>
 
                 <p className="text-center text-sm text-gray-500 mb-0">
                     Chưa có tài khoản?{" "}
