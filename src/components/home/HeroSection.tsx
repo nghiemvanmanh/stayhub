@@ -4,6 +4,8 @@ import { Button, DatePicker, Input, Select } from "antd";
 import { SearchOutlined, EnvironmentOutlined } from "@ant-design/icons";
 import Image from "next/image";
 
+const { RangePicker } = DatePicker;
+
 export default function HeroSection() {
   return (
     <section className="relative bg-gradient-to-br from-gray-50 to-white overflow-hidden flex items-center py-20">
@@ -25,55 +27,57 @@ export default function HeroSection() {
             </p>
 
             {/* Search Bar */}
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-              <div className="flex-1 min-w-0">
-                <div className="text-[11px] font-semibold text-gray-800 px-3 pt-2 uppercase tracking-wide">
-                  Địa điểm
-                </div>
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 flex flex-col gap-1">
+              {/* Địa điểm - hàng trên */}
+              <div className="w-full border-b border-gray-200 pb-3">
                 <Input
                   prefix={<EnvironmentOutlined className="text-gray-400" />}
-                  placeholder="Bạn muốn"
+                  placeholder="Bạn muốn đi đâu?"
                   variant="borderless"
-                  className="text-sm"
+                  className="text-base"
+                  size="large"
                 />
               </div>
-              <div className="hidden sm:block w-px h-10 bg-gray-200 self-center" />
-              <div className="flex-1 min-w-0">
-                <div className="text-[11px] font-semibold text-gray-800 px-3 pt-2 uppercase tracking-wide">
-                  Thời gian
+              
+              {/* Ngày đến, Ngày đi, Khách - hàng dưới */}
+              <div className="flex flex-col sm:flex-row items-stretch gap-2 pt-2">
+                <div className="flex-[2] min-w-0 border-r border-gray-200 pr-3">
+                  <RangePicker
+                    placeholder={["Ngày đến", "Ngày đi"]}
+                    variant="borderless"
+                    className="w-full"
+                    suffixIcon={null}
+                  />
                 </div>
-                <DatePicker
-                  placeholder="Thêm ngày"
-                  variant="borderless"
-                  className="w-full text-sm"
-                  suffixIcon={null}
-                />
-              </div>
-              <div className="hidden sm:block w-px h-10 bg-gray-200 self-center" />
-              <div className="flex-1 min-w-0">
-                <div className="text-[11px] font-semibold text-gray-800 px-3 pt-2 uppercase tracking-wide">
-                  Khách
-                </div>
-                <Select
-                  placeholder="Thêm khách"
-                  variant="borderless"
-                  className="w-full text-sm"
-                  options={[
+                
+                <div className="flex-1 min-w-0">
+                  <Select
+                    placeholder="Thêm khách"
+                    variant="borderless"
+                    className="w-full"
+                    suffixIcon={<span className="text-gray-400">▼</span>}
+                    options={[
                     { value: "1", label: "1 khách" },
                     { value: "2", label: "2 khách" },
                     { value: "3", label: "3 khách" },
                     { value: "4", label: "4+ khách" },
-                  ]}
-                />
+                    ]}
+                  />
+                </div>
               </div>
-              <Button
-                type="primary"
-                icon={<SearchOutlined />}
-                className="!bg-[#2DD4A8] hover:!bg-[#22b892] !border-none !rounded-xl !h-12 !px-6 !font-semibold"
-                size="large"
-              >
-                Tìm kiếm
-              </Button>
+
+              {/* Nút tìm kiếm */}
+              <div className="pt-3">
+                <Button
+                  type="primary"
+                  icon={<SearchOutlined />}
+                  className="!bg-[#2DD4A8] hover:!bg-[#22b892] !border-none !rounded-xl !h-12 w-full !font-semibold text-base"
+                  size="large"
+                  block
+                >
+                  Tìm kiếm
+                </Button>
+              </div>
             </div>
           </div>
 

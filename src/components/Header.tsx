@@ -124,7 +124,7 @@ export default function Header() {
                 type="text"
                 className="hidden md:inline-flex text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-full"
               >
-                Trở thành chủ nhà
+                Trở thành đối tác homestay
               </Button>
               <Button
                 type="text"

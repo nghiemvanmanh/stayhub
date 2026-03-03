@@ -1,16 +1,20 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { fetchFeaturedHomestays } from "../../interfaces/homestay";
+import { fetchHomestaysByCategory } from "../../interfaces/homestay";
 import { Card, Rate, Skeleton, Button } from "antd";
 import { HeartOutlined, RightOutlined } from "@ant-design/icons";
 import Image from "next/image";
 import Link from "next/link";
 
-export default function FeaturedListings() {
+interface FeaturedListingsProps {
+  categoryId: string;
+}
+
+export default function FeaturedListings({ categoryId }: FeaturedListingsProps) {
   const { data: homestays, isLoading } = useQuery({
-    queryKey: ["featuredHomestays"],
-    queryFn: fetchFeaturedHomestays,
+    queryKey: ["homestaysByCategory", categoryId],
+    queryFn: () => fetchHomestaysByCategory(categoryId),
   });
 
   return (

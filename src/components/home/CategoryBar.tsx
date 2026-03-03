@@ -2,23 +2,25 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { fetchCategories } from "../../interfaces/homestay";
-import { Skeleton } from "antd";
+import { Skeleton, Tabs } from "antd";
 import { Flame, Waves, House, TreePine, Tent, Camera } from "lucide-react";
-import { JSX, useState } from "react";
+import { JSX } from "react";
 
+interface CategoryBarProps {
+  onCategoryChange: (categoryId: string) => void;
+  activeCategory: string;
+}
 
 const categoryIcons: Record<string, JSX.Element> = {
-  "1": <Flame />,
-  "2": <Waves />,
-  "3": <House />,
-  "4": <TreePine />,
-  "5": <Tent />,
-  "6": <Camera />,
+  "1": <Flame className="w-6 h-6" />,
+  "2": <Waves className="w-6 h-6" />,
+  "3": <House className="w-6 h-6" />,
+  "4": <TreePine className="w-6 h-6" />,
+  "5": <Tent className="w-6 h-6" />,
+  "6": <Camera className="w-6 h-6" />,
 };
 
-export default function CategoryBar() {
-  const [activeId, setActiveId] = useState<string | null>("1");
-
+export default function CategoryBar({ onCategoryChange, activeCategory }: CategoryBarProps) {
   const { data: categories, isLoading } = useQuery({
     queryKey: ["categories"],
     queryFn: fetchCategories,
@@ -36,45 +38,26 @@ export default function CategoryBar() {
     );
   }
 
+  const items = categories?.map((cat) => ({
+    key: cat.id,
+    label: (
+      <div className="flex flex-col items-center gap-2 px-4 py-2">
+        <span className="text-gray-700">{categoryIcons[cat.id]}</span>
+        <span className="text-xs font-medium whitespace-nowrap">{cat.name}</span>
+      </div>
+    ),
+  }));
+
   return (
     <div className="border-b border-gray-100 bg-white">
-      <div className="max-w-[1440px] mx-auto px-6 lg:px-10 py-4">
-        <div className="flex items-center gap-8 justify-center overflow-x-auto">
-          {categories?.map((cat) => {
-            const isActive = activeId === cat.id;
-            return (
-              <button
-                key={cat.id}
-                onClick={() => setActiveId(cat.id)}
-                className="relative flex flex-col items-center gap-1.5 min-w-[70px] group cursor-pointer bg-transparent outline-none pb-3 border-none"
-              >
-                <span
-                  className={`text-2xl transition-all duration-200 ${isActive ? "opacity-100 scale-110" : "opacity-60 group-hover:opacity-90 group-hover:scale-105"
-                    }`}
-                >
-                  {categoryIcons[cat.id]}
-                </span>
-                <span
-                  className={`text-xs font-medium whitespace-nowrap transition-colors duration-200 ${isActive
-                    ? "text-gray-900"
-                    : "text-gray-500 group-hover:text-gray-700"
-                    }`}
-                >
-                  {cat.name}
-                </span>
-                {/* Active indicator bar */}
-                <span
-                  className="absolute bottom-0 left-0 w-full h-0.5 bg-gray-900 rounded-full transition-all duration-300"
-                  style={{
-                    opacity: isActive ? 1 : 0,
-                    transform: isActive ? "scaleX(1)" : "scaleX(0)",
-                    transformOrigin: "center",
-                  }}
-                />
-              </button>
-            );
-          })}
-        </div>
+      <div className="max-w-[1440px] mx-auto px-6 lg:px-10">
+        <Tabs
+          activeKey={activeCategory}
+          onChange={onCategoryChange}
+          items={items}
+          centered
+          className="category-tabs"
+        />
       </div>
     </div>
   );
