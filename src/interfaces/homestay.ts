@@ -83,7 +83,8 @@ const mockHomestays: Homestay[] = [
     dates: "Ngày 13 - 17 thg 5",
     price: "1,200,000đ",
     rating: 4.9,
-    image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop",
     isFavorite: false,
     categoryId: "1",
   },
@@ -95,7 +96,8 @@ const mockHomestays: Homestay[] = [
     dates: "Ngày 20 - 25 thg 6",
     price: "2,500,000đ",
     rating: 4.86,
-    image: "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&h=600&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=800&h=600&fit=crop",
     isFavorite: false,
     categoryId: "2",
   },
@@ -107,7 +109,8 @@ const mockHomestays: Homestay[] = [
     dates: "Ngày 05 - 10 thg 5",
     price: "1,850,000đ",
     rating: 4.92,
-    image: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&h=600&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=800&h=600&fit=crop",
     isFavorite: false,
     categoryId: "4",
   },
@@ -119,7 +122,8 @@ const mockHomestays: Homestay[] = [
     dates: "Ngày 15 - 18 thg 5",
     price: "3,500,000đ",
     rating: 4.75,
-    image: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&h=600&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=800&h=600&fit=crop",
     isFavorite: false,
     categoryId: "2",
   },
@@ -130,8 +134,9 @@ const mockHomestays: Homestay[] = [
     distance: "Cách 60km",
     dates: "Ngày 10 - 12 thg 5",
     price: "950,000đ",
-    rating: 4.80,
-    image: "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&h=600&fit=crop",
+    rating: 4.8,
+    image:
+      "https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=800&h=600&fit=crop",
     isFavorite: false,
     categoryId: "4",
   },
@@ -143,7 +148,8 @@ const mockHomestays: Homestay[] = [
     dates: "Ngày 22 - 25 thg 5",
     price: "1,400,000đ",
     rating: 4.78,
-    image: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&h=600&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=800&h=600&fit=crop",
     isFavorite: false,
     categoryId: "6",
   },
@@ -155,7 +161,8 @@ const mockHomestays: Homestay[] = [
     dates: "Ngày 14 - 19 thg 7",
     price: "4,500,000đ",
     rating: 4.91,
-    image: "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800&h=600&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?w=800&h=600&fit=crop",
     isFavorite: false,
     categoryId: "2",
   },
@@ -167,7 +174,8 @@ const mockHomestays: Homestay[] = [
     dates: "Ngày 01 - 05 thg 6",
     price: "2,350,000đ",
     rating: 4.85,
-    image: "https://images.unsplash.com/photo-1445019980597-93fa8acb246c?w=800&h=600&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1445019980597-93fa8acb246c?w=800&h=600&fit=crop",
     isFavorite: false,
     categoryId: "6",
   },
@@ -179,7 +187,8 @@ const mockHomestays: Homestay[] = [
     dates: "Ngày 08 - 12 thg 5",
     price: "1,100,000đ",
     rating: 4.88,
-    image: "https://images.unsplash.com/photo-1523217582562-09d0def993a6?w=800&h=600&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1523217582562-09d0def993a6?w=800&h=600&fit=crop",
     isFavorite: false,
     categoryId: "3",
   },
@@ -191,7 +200,8 @@ const mockHomestays: Homestay[] = [
     dates: "Ngày 25 - 30 thg 6",
     price: "2,800,000đ",
     rating: 4.82,
-    image: "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800&h=600&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800&h=600&fit=crop",
     isFavorite: false,
     categoryId: "2",
   },
@@ -203,7 +213,8 @@ const mockHomestays: Homestay[] = [
     dates: "Ngày 03 - 05 thg 5",
     price: "850,000đ",
     rating: 4.76,
-    image: "https://images.unsplash.com/photo-1520608421741-68228b76b6df?w=800&h=600&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1520608421741-68228b76b6df?w=800&h=600&fit=crop",
     isFavorite: false,
     categoryId: "4",
   },
@@ -215,7 +226,8 @@ const mockHomestays: Homestay[] = [
     dates: "Ngày 18 - 21 thg 5",
     price: "1,050,000đ",
     rating: 4.89,
-    image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=600&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=600&fit=crop",
     isFavorite: false,
     categoryId: "3",
   },
@@ -227,7 +239,8 @@ const mockHomestays: Homestay[] = [
     dates: "Ngày 12 - 16 thg 6",
     price: "3,200,000đ",
     rating: 4.84,
-    image: "https://images.unsplash.com/photo-1540541338287-41700207dee6?w=800&h=600&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1540541338287-41700207dee6?w=800&h=600&fit=crop",
     isFavorite: false,
     categoryId: "2",
   },
@@ -239,7 +252,8 @@ const mockHomestays: Homestay[] = [
     dates: "Ngày 06 - 08 thg 5",
     price: "750,000đ",
     rating: 4.71,
-    image: "https://images.unsplash.com/photo-1602343168117-bb8ffe3e2e9f?w=800&h=600&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1602343168117-bb8ffe3e2e9f?w=800&h=600&fit=crop",
     isFavorite: false,
     categoryId: "5",
   },
@@ -251,7 +265,8 @@ const mockHomestays: Homestay[] = [
     dates: "Ngày 28 thg 5 - 02 thg 6",
     price: "2,100,000đ",
     rating: 4.87,
-    image: "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=800&h=600&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=800&h=600&fit=crop",
     isFavorite: false,
     categoryId: "6",
   },
@@ -263,7 +278,8 @@ const mockHomestays: Homestay[] = [
     dates: "Ngày 10 - 15 thg 7",
     price: "1,350,000đ",
     rating: 4.93,
-    image: "https://images.unsplash.com/photo-1496417263034-38ec4f0b665a?w=800&h=600&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1496417263034-38ec4f0b665a?w=800&h=600&fit=crop",
     isFavorite: false,
     categoryId: "4",
   },
@@ -275,7 +291,8 @@ const mockHomestays: Homestay[] = [
     dates: "Ngày 02 - 06 thg 6",
     price: "1,650,000đ",
     rating: 4.79,
-    image: "https://images.unsplash.com/photo-1505692952047-1a78307f1b58?w=800&h=600&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1505692952047-1a78307f1b58?w=800&h=600&fit=crop",
     isFavorite: false,
     categoryId: "3",
   },
@@ -287,7 +304,8 @@ const mockHomestays: Homestay[] = [
     dates: "Ngày 20 - 24 thg 6",
     price: "2,450,000đ",
     rating: 4.81,
-    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop",
     isFavorite: false,
     categoryId: "2",
   },
@@ -298,8 +316,9 @@ const mockHomestays: Homestay[] = [
     distance: "Cách 180km",
     dates: "Ngày 16 - 19 thg 5",
     price: "1,250,000đ",
-    rating: 4.90,
-    image: "https://images.unsplash.com/photo-1523482580672-f109ba8cb9be?w=800&h=600&fit=crop",
+    rating: 4.9,
+    image:
+      "https://images.unsplash.com/photo-1523482580672-f109ba8cb9be?w=800&h=600&fit=crop",
     isFavorite: false,
     categoryId: "3",
   },
@@ -311,7 +330,8 @@ const mockHomestays: Homestay[] = [
     dates: "Ngày 09 - 11 thg 5",
     price: "980,000đ",
     rating: 4.74,
-    image: "https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&h=600&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1551632811-561732d1e306?w=800&h=600&fit=crop",
     isFavorite: false,
     categoryId: "5",
   },
@@ -323,7 +343,8 @@ const mockHomestays: Homestay[] = [
     dates: "Ngày 05 - 10 thg 7",
     price: "5,200,000đ",
     rating: 4.95,
-    image: "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=600&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=800&h=600&fit=crop",
     isFavorite: false,
     categoryId: "6",
   },
@@ -335,7 +356,8 @@ const mockHomestays: Homestay[] = [
     dates: "Ngày 24 - 27 thg 5",
     price: "1,150,000đ",
     rating: 4.83,
-    image: "https://images.unsplash.com/photo-1470770903676-69b98201ea1c?w=800&h=600&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1470770903676-69b98201ea1c?w=800&h=600&fit=crop",
     isFavorite: false,
     categoryId: "4",
   },
@@ -347,7 +369,8 @@ const mockHomestays: Homestay[] = [
     dates: "Ngày 11 - 14 thg 6",
     price: "1,320,000đ",
     rating: 4.86,
-    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800&h=600&fit=crop",
     isFavorite: false,
     categoryId: "6",
   },
@@ -359,7 +382,8 @@ const mockHomestays: Homestay[] = [
     dates: "Ngày 30 thg 4 - 02 thg 5",
     price: "680,000đ",
     rating: 4.68,
-    image: "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&h=600&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&h=600&fit=crop",
     isFavorite: false,
     categoryId: "1",
   },
@@ -379,28 +403,73 @@ const mockTestimonials: Testimonial[] = [
     id: "1",
     name: "Nguyễn Văn An",
     avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-    location: "Traveler từ Đà Lạt",
+    location: "Traveler từ Hà Nội",
     rating: 5,
     comment:
-      "Tôi đã có trải nghiệm tuyệt vời ở homestay tuyệt vời ở Đà Pa không gian yên bình, Chủ nhà rất thân thiện và nhiệt tình. Đẹp biết bao ở Mọi Pao.",
+      "Trải nghiệm tuyệt vời tại homestay ở Đà Lạt! Không gian yên bình, view đồi thông đẹp mê ly. Chủ nhà rất thân thiện và nhiệt tình hỗ trợ mọi thứ. Chắc chắn sẽ quay lại!",
   },
   {
     id: "2",
-    name: "Trần Thị Nha",
+    name: "Trần Thị Mai",
     avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-    location: "Thiên cổ phí phường",
+    location: "Traveler từ TP. Hồ Chí Minh",
     rating: 5,
     comment:
-      "Homestay thực sự tốt, căn hòm thủ ấy đã bê một tô bún bò cập thêo và cao với loại bún lứa và danh giản đơn nhưng đậm đà đặc vặt",
+      "Homestay sạch sẽ, tiện nghi đầy đủ. Bữa sáng do chủ nhà tự nấu rất ngon và đậm đà hương vị Việt. Vị trí thuận tiện, gần các điểm tham quan nổi tiếng.",
   },
   {
     id: "3",
     name: "Lê Minh Đức",
     avatar: "https://randomuser.me/api/portraits/men/67.jpg",
-    location: "Thiên cổn gia",
+    location: "Traveler từ Đà Nẵng",
     rating: 5,
     comment:
-      "Đây là nơi hoàn hảo để trải tay với chứng bưa, Tôi và gia đinh đã nghỉ dưỡng hè, đã có trải nghiệm 5/5 hoàn thiện tới nay, tuyệt vờ ĐT phải.",
+      "Nơi hoàn hảo cho kỳ nghỉ gia đình! Tôi và gia đình đã có kỳ nghỉ hè tuyệt vời. Phòng rộng rãi, thoáng mát, hồ bơi sạch đẹp. Đánh giá 5/5!",
+  },
+  {
+    id: "4",
+    name: "Phạm Thùy Linh",
+    avatar: "https://randomuser.me/api/portraits/women/65.jpg",
+    location: "Traveler từ Hải Phòng",
+    rating: 4,
+    comment:
+      "Homestay có kiến trúc rất đẹp, mang đậm phong cách truyền thống. Khu vườn xanh mát, không khí trong lành. Rất phù hợp để nghỉ dưỡng cuối tuần xa thành phố ồn ào.",
+  },
+  {
+    id: "5",
+    name: "Hoàng Tuấn Kiệt",
+    avatar: "https://randomuser.me/api/portraits/men/45.jpg",
+    location: "Traveler từ Cần Thơ",
+    rating: 5,
+    comment:
+      "Lần đầu sử dụng StayHub để đặt phòng và thực sự ấn tượng! Quy trình đặt phòng nhanh chóng, giá cả hợp lý. Homestay đúng như mô tả, thậm chí còn đẹp hơn trong ảnh.",
+  },
+  {
+    id: "6",
+    name: "Ngô Thanh Hương",
+    avatar: "https://randomuser.me/api/portraits/women/33.jpg",
+    location: "Traveler từ Nha Trang",
+    rating: 5,
+    comment:
+      "View biển tuyệt đẹp từ ban công phòng ngủ. Thức dậy mỗi sáng với tiếng sóng biển và ánh bình minh. Dịch vụ chăm sóc khách hàng chu đáo, tận tình.",
+  },
+  {
+    id: "7",
+    name: "Vũ Đình Nam",
+    avatar: "https://randomuser.me/api/portraits/men/52.jpg",
+    location: "Traveler từ Huế",
+    rating: 4,
+    comment:
+      "Không gian homestay rất chill, phù hợp cho các bạn trẻ thích chụp ảnh. Có nhiều góc sống ảo cực đẹp. Chủ nhà còn hướng dẫn các địa điểm ăn uống ngon rẻ xung quanh.",
+  },
+  {
+    id: "8",
+    name: "Đặng Minh Châu",
+    avatar: "https://randomuser.me/api/portraits/women/28.jpg",
+    location: "Traveler từ Quy Nhơn",
+    rating: 5,
+    comment:
+      "Đặt phòng qua StayHub rất tiện lợi và nhanh chóng. Homestay tại Sa Pa quá đẹp, nằm giữa ruộng bậc thang. Sáng ra ngắm mây trôi trên đỉnh núi, cảm giác thật bình yên.",
   },
 ];
 
@@ -464,7 +533,11 @@ const mockHomestayDetails: HomestayDetail[] = [
         pricePerNight: 3200000,
         originalPrice: "4,500,000đ",
         discount: 30,
-        amenities: ["Bữa sáng miễn phí", "Hủy phòng linh hoạt", "Cọc trước 30%"],
+        amenities: [
+          "Bữa sáng miễn phí",
+          "Hủy phòng linh hoạt",
+          "Cọc trước 30%",
+        ],
         image:
           "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=600&h=400&fit=crop",
       },
@@ -478,7 +551,11 @@ const mockHomestayDetails: HomestayDetail[] = [
           "Phòng ấm cúng với ban công rộng lãng tục và bàn trà thư giãn.",
         price: "2,500,000đ",
         pricePerNight: 2500000,
-        amenities: ["Bữa sáng miễn phí", "Hủy phòng linh hoạt", "Thanh toán khi nhận phòng"],
+        amenities: [
+          "Bữa sáng miễn phí",
+          "Hủy phòng linh hoạt",
+          "Thanh toán khi nhận phòng",
+        ],
         image:
           "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=600&h=400&fit=crop",
       },
@@ -492,7 +569,11 @@ const mockHomestayDetails: HomestayDetail[] = [
           "Lựa chọn lý tưởng cho trẻ em hoặc nhóm bạn với không gian sinh hoạt chung.",
         price: "2,800,000đ",
         pricePerNight: 2800000,
-        amenities: ["Bữa sáng miễn phí", "Hủy phòng linh hoạt", "Thanh toán trước"],
+        amenities: [
+          "Bữa sáng miễn phí",
+          "Hủy phòng linh hoạt",
+          "Thanh toán trước",
+        ],
         image:
           "https://images.unsplash.com/photo-1552321554-5fefe8c9ef14?w=600&h=400&fit=crop",
       },
@@ -544,7 +625,9 @@ export async function fetchTestimonials(): Promise<Testimonial[]> {
   return mockTestimonials;
 }
 
-export async function fetchHomestayDetail(id: string): Promise<HomestayDetail | null> {
+export async function fetchHomestayDetail(
+  id: string,
+): Promise<HomestayDetail | null> {
   // TODO: Replace with actual API call
   await delay(400);
   return mockHomestayDetails.find((h) => h.id === id) ?? mockHomestayDetails[0];
@@ -559,11 +642,14 @@ export async function fetchSimilarHomestays(city: string): Promise<Homestay[]> {
     distance: `Cách biển 200m`,
     price: "1,800,000đ",
     rating: 4.8,
-    image: "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&h=600&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&h=600&fit=crop",
   }));
 }
 
-export async function fetchHomestaysByCategory(categoryId: string): Promise<Homestay[]> {
+export async function fetchHomestaysByCategory(
+  categoryId: string,
+): Promise<Homestay[]> {
   await delay(300);
   return mockHomestays.filter((h) => h.categoryId === categoryId);
 }

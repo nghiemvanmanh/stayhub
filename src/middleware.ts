@@ -1,4 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  ACCESS_TOKEN_KEY,
+  REFRESH_TOKEN_KEY,
+  USER_INFO,
+} from "@/constants/cookie";
 
 // Các route cần đăng nhập mới vào được
 const PROTECTED_ROUTES = ["/profile", "/bookings", "/host"];
@@ -10,8 +15,8 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Đọc accessToken từ cookie (server-side)
-  const accessToken = request.cookies.get("stayhub_access_token")?.value;
-  const refreshToken = request.cookies.get("stayhub_refresh_token")?.value;
+  const accessToken = request.cookies.get(ACCESS_TOKEN_KEY)?.value;
+  const refreshToken = request.cookies.get(REFRESH_TOKEN_KEY)?.value;
 
   const isLoggedIn = !!accessToken;
 
@@ -35,7 +40,9 @@ export function middleware(request: NextRequest) {
     if (!refreshToken) {
       // Không có refresh token → clear cookie và redirect
       const response = NextResponse.redirect(new URL("/", request.url));
-      response.cookies.delete("stayhub_access_token");
+      response.cookies.delete(ACCESS_TOKEN_KEY);
+      response.cookies.delete(REFRESH_TOKEN_KEY);
+      response.cookies.delete(USER_INFO);
       return response;
     }
   }
