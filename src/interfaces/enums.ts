@@ -1,0 +1,135 @@
+export enum UserStatus {
+  UNVERIFIED = "UNVERIFIED",
+  ACTIVE = "ACTIVE",
+  BANNED = "BANNED",
+  LOCKED = "LOCKED",
+}
+
+export enum Gender {
+  MALE = "MALE",
+  FEMALE = "FEMALE",
+  OTHER = "OTHER",
+}
+
+export enum VerificationType {
+  REGISTER = "REGISTER",
+  FORGOT_PASSWORD = "FORGOT_PASSWORD",
+  UPGRADE_HOST = "UPGRADE_HOST",
+}
+
+export enum SocialProvider {
+  GOOGLE = "GOOGLE",
+  FACEBOOK = "FACEBOOK",
+}
+
+export enum SubscriptionTier {
+  FREE = "FREE",
+  PREMIUM = "PREMIUM",
+  BUSINESS = "BUSINESS",
+}
+
+export enum HostOnboardingStatus {
+  DRAFT = "DRAFT",
+  PENDING_REVIEW = "PENDING_REVIEW",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+  REQUEST_CHANGES = "REQUEST_CHANGES",
+}
+
+export enum PropertyStatus {
+  DRAFT = "DRAFT",
+  PENDING_REVIEW = "PENDING_REVIEW",
+  PUBLISHED = "PUBLISHED",
+  HIDDEN = "HIDDEN",
+  BANNED = "BANNED",
+}
+
+export enum RentalType {
+  ENTIRE_PLACE = "ENTIRE_PLACE",
+  PRIVATE_ROOM = "PRIVATE_ROOM",
+  SHARED_ROOM = "SHARED_ROOM",
+}
+
+export enum CancellationPolicy {
+  FLEXIBLE = "FLEXIBLE",
+  MODERATE = "MODERATE",
+  STRICT = "STRICT",
+}
+
+export enum BookingStatus {
+  PENDING = "PENDING",
+  AWAITING_PAYMENT = "AWAITING_PAYMENT",
+  PARTIALLY_PAID = "PARTIALLY_PAID",
+  CONFIRMED = "CONFIRMED",
+  CHECKED_IN = "CHECKED_IN",
+  CHECKED_OUT = "CHECKED_OUT",
+  DISPUTED = "DISPUTED",
+  COMPLETED = "COMPLETED",
+  CANCELLED = "CANCELLED",
+  REJECTED = "REJECTED",
+  EXPIRED = "EXPIRED",
+}
+
+export enum PaymentMethod {
+  VNPAY = "VNPAY",
+  MOMO = "MOMO",
+  PAYPAL = "PAYPAL",
+  STRIPE = "STRIPE",
+  CASH = "CASH",
+}
+
+export enum PaymentStatus {
+  PENDING = "PENDING",
+  SUCCESS = "SUCCESS",
+  FAILED = "FAILED",
+  REFUNDED = "REFUNDED",
+}
+
+export enum PaymentPurpose {
+  DEPOSIT = "DEPOSIT",
+  REMAINING_BALANCE = "REMAINING_BALANCE",
+  FULL_PAYMENT = "FULL_PAYMENT",
+}
+
+export enum BookingPaymentOption {
+  PAY_IN_FULL = "PAY_IN_FULL",
+  PAY_AT_CHECKIN = "PAY_AT_CHECKIN",
+}
+
+export enum WalletStatus {
+  ACTIVE = "ACTIVE",
+  LOCKED = "LOCKED",
+  FROZEN = "FROZEN",
+  DEBT_OVERDUE = "DEBT_OVERDUE",
+}
+
+export enum TransactionType {
+  BOOKING_PAYMENT = "BOOKING_PAYMENT",
+  BOOKING_INCOME = "BOOKING_INCOME",
+  BOOKING_REFUND = "BOOKING_REFUND",
+  WITHDRAWAL = "WITHDRAWAL",
+  SYSTEM_FEE = "SYSTEM_FEE",
+  DEBT_PAYMENT = "DEBT_PAYMENT",
+}
+
+export enum TransactionStatus {
+  PENDING = "PENDING",
+  SUCCESS = "SUCCESS",
+  FAILED = "FAILED",
+  CANCELLED = "CANCELLED",
+}
+
+export enum PayoutStatus {
+  REQUESTED = "REQUESTED",
+  PROCESSING = "PROCESSING",
+  COMPLETED = "COMPLETED",
+  REJECTED = "REJECTED",
+}
+
+export enum DisputeStatus {
+  OPEN = "OPEN",
+  UNDER_REVIEW = "UNDER_REVIEW",
+  RESOLVED_REFUND_GUEST = "RESOLVED_REFUND_GUEST",
+  RESOLVED_PAY_HOST = "RESOLVED_PAY_HOST",
+  REJECTED = "REJECTED",
+}

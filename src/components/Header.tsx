@@ -100,7 +100,7 @@ export default function Header() {
             <nav className="hidden md:flex items-center gap-8">
               <Link
                 href="/"
-                className="text-sm font-semibold text-gray-900 no-underline hover:text-[#2DD4A8] transition-colors"
+                className="text-sm font-medium text-gray-500 no-underline hover:text-[#2DD4A8] transition-colors"
               >
                 Khám phá
               </Link>

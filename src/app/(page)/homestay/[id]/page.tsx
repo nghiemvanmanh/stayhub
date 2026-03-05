@@ -42,10 +42,79 @@ import locale from "antd/locale/vi_VN";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import {
-    fetchHomestayDetail,
-    fetchSimilarHomestays,
-    type RoomType,
-} from "@/interfaces/homestay";
+    mockProperties,
+    mockPropertyImages,
+    mockProfiles,
+    mockReviews,
+    mockAmenities,
+    mockPropertyAmenities
+} from "@/data";
+
+// We'll map the mock property to a detail object similar to what the UI expects
+const getHomestayDetail = async (id: string) => {
+    await new Promise(res => setTimeout(res, 500));
+    const property = mockProperties.find(p => String(p.id) === id);
+    if (!property) return null;
+
+    const images = mockPropertyImages.filter(img => img.propertyId === property.id).sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+    const hostProfile = mockProfiles.find(p => p.userId === property.hostId);
+    
+    const propertyAmenitiesIds = mockPropertyAmenities.filter(pa => pa.propertyId === property.id).map(pa => pa.amenityId);
+    const amenities = mockAmenities.filter(a => propertyAmenitiesIds.includes(a.id)).map(a => a.name) || ["Đang cập nhật"];
+
+    const reviews = mockReviews.filter(r => r.propertyId === property.id).map(r => ({
+        id: String(r.id),
+        name: mockProfiles.find(p => p.userId === r.userId)?.fullName || 'Guest',
+        avatar: mockProfiles.find(p => p.userId === r.userId)?.avatarUrl || 'https://i.pravatar.cc/150',
+        date: r.createdAt ? dayjs(r.createdAt).format('DD/MM/YYYY') : '',
+        comment: r.comment || '',
+    }));
+
+    return {
+        id: String(property.id),
+        title: property.name,
+        subtitle: `Toàn bộ ${property.rentalType === 'ENTIRE_PLACE' ? 'biệt thự/nhà' : 'phòng'} cho thuê bởi ${hostProfile?.fullName || 'Host'}`,
+        rating: property.ratingAvg?.toFixed(1) || '5.0',
+        reviewCount: property.reviewCount || 0,
+        badge: "Chủ nhà siêu cấp",
+        address: `${property.ward}, ${property.district}, ${property.province}`,
+        city: property.province,
+        images: images.length > 0 ? images.map(i => i.url) : ["https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=800&q=80", "https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=800&q=80", "https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=800&q=80", "https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=800&q=80", "https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=800&q=80"],
+        hostName: hostProfile?.fullName || 'Host',
+        hostAvatar: hostProfile?.avatarUrl || "https://i.pravatar.cc/150",
+        maxGuests: property.maxGuests,
+        bedrooms: property.numBedrooms || 1,
+        beds: property.numBeds || 1,
+        bathrooms: property.numBathrooms || 1,
+        description: property.description || "",
+        pricePerNight: property.pricePerNight,
+        cleaningFee: property.cleaningFee || 0,
+        serviceFee: property.pricePerNight * 0.1, // mock 10%
+        highlights: [
+            { icon: "wifi", title: "Wi-fi nhanh", description: "Băng thông 100Mbps đáp ứng làm việc từ xa." },
+            { icon: "calendar", title: "Hủy miễn phí", description: "Hủy miễn phí trước 24H so với giờ nhận phòng." }
+        ],
+        latitude: property.latitude,
+        longitude: property.longitude,
+        amenities,
+        tabs: ["Về không gian này", "Vị trí", "Tiện nghi", "Quy định chung"],
+        reviews
+    };
+};
+
+const getSimilarHomestays = async (province: string, currentId: string) => {
+    await new Promise(res => setTimeout(res, 500));
+    return mockProperties.filter(p => p.province === province && String(p.id) !== currentId).map(p => {
+        const thumb = mockPropertyImages.find(img => img.propertyId === p.id && img.isThumbnail)?.url || "https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=800&q=80";
+        return {
+            id: String(p.id),
+            title: p.name,
+            image: thumb,
+            distance: `${p.district}`,
+            price: `${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: p.currency || 'VND' }).format(p.pricePerNight)}`
+        };
+    });
+};
 
 dayjs.locale("vi");
 
@@ -64,57 +133,35 @@ export default function HomestayDetailPage() {
     const [isFavorite, setIsFavorite] = useState(false);
     const [showAllPhotos, setShowAllPhotos] = useState(false);
     const [guests, setGuests] = useState(2);
-    const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
-    const [bookWholeVilla, setBookWholeVilla] = useState(false);
+    const [bookWholeVilla, setBookWholeVilla] = useState(true); // Default to true since we book the whole property
     const [dates, setDates] = useState<[Dayjs, Dayjs] | null>(null);
 
     const { data: detail, isLoading: loadingDetail } = useQuery({
         queryKey: ["homestay-detail", id],
-        queryFn: () => fetchHomestayDetail(id),
+        queryFn: () => getHomestayDetail(id),
     });
 
     const { data: similar, isLoading: loadingSimilar } = useQuery({
-        queryKey: ["similar-homestays", detail?.city],
-        queryFn: () => fetchSimilarHomestays(detail?.city ?? ""),
+        queryKey: ["similar-homestays", detail?.city, id],
+        queryFn: () => getSimilarHomestays(detail?.city ?? "", id),
         enabled: !!detail?.city,
     });
 
-    const selectedRoom = detail?.roomTypes.find((r) => r.id === selectedRoomId) ?? null;
     const nights = dates ? dates[1].diff(dates[0], "day") : 0;
 
-    // Max guests depends on what's selected
-    const maxGuestsLimit = bookWholeVilla
-        ? (detail?.maxGuests ?? 1)
-        : selectedRoom
-            ? selectedRoom.maxGuests
-            : (detail?.maxGuests ?? 1);
+    const maxGuestsLimit = detail?.maxGuests ?? 1;
 
-    // Nothing selected → no price shown, button disabled
-    const hasSelection = bookWholeVilla || !!selectedRoomId;
-    const pricePerNight = bookWholeVilla
-        ? (detail?.pricePerNight ?? 0)
-        : selectedRoom
-            ? selectedRoom.pricePerNight
-            : 0;
+    const hasSelection = bookWholeVilla;
+    const pricePerNight = detail?.pricePerNight ?? 0;
     const subtotal = pricePerNight * nights;
     const cleaningFee = detail?.cleaningFee ?? 0;
     const serviceFee = detail?.serviceFee ?? 0;
     const total = subtotal + cleaningFee + serviceFee;
     const canBook = hasSelection && nights > 0;
 
-    const handleToggleRoom = (room: RoomType) => {
-        setBookWholeVilla(false);
-        setSelectedRoomId((prev) => {
-            const next = prev === room.id ? null : room.id;
-            if (next) setGuests((g) => Math.min(g, room.maxGuests));
-            return next;
-        });
-    };
-
+    // Remove room toggle handlers since we only book entire property
     const handleToggleWholeVilla = () => {
-        setSelectedRoomId(null);
         setBookWholeVilla((prev) => !prev);
-        // no need to clamp: whole villa has the highest limit
     };
 
     const disabledDate = (current: Dayjs) =>
@@ -213,7 +260,7 @@ export default function HomestayDetailPage() {
                             className="absolute bottom-4 right-4 bg-white border border-gray-300 rounded-xl px-4 py-2 text-sm font-semibold flex items-center gap-2 hover:bg-gray-50 shadow-sm"
                         >
                             <ExpandAltOutlined />
-                            Xem tất cả ảnh
+                            Xem tất cả ({detail.images.length}) ảnh
                         </button>
                     </div>
 
@@ -277,36 +324,88 @@ export default function HomestayDetailPage() {
                             <Tabs
                                 defaultActiveKey="0"
                                 className="mb-6"
-                                items={detail.tabs.map((tab, i) => ({
-                                    key: String(i),
-                                    label: tab,
-                                    children:
-                                        i === 0 ? (
-                                            <div className="text-gray-600 text-sm leading-relaxed">
-                                                {detail.description.split("\n\n").map((para, pi) => (
-                                                    <p key={pi} className="mb-3">
-                                                        {para}
+                                items={detail.tabs.map((tab, i) => {
+                                    if (tab === "Về không gian này") {
+                                        return {
+                                            key: String(i),
+                                            label: tab,
+                                            children: (
+                                                <div className="text-gray-600 text-sm leading-relaxed">
+                                                    {detail.description.split("\n\n").map((para, pi) => (
+                                                        <p key={pi} className="mb-3">
+                                                            {para}
+                                                        </p>
+                                                    ))}
+                                                    <button className="flex items-center gap-1 font-semibold text-gray-900 text-sm mt-2 hover:underline">
+                                                        Hiển thị thêm <ChevronRight size={16} />
+                                                    </button>
+                                                </div>
+                                            )
+                                        };
+                                    }
+                                    if (tab === "Vị trí") {
+                                        return {
+                                            key: String(i),
+                                            label: tab,
+                                            children: (
+                                                <div className="py-2">
+                                                    <p className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                                                        <EnvironmentOutlined className="text-[#2DD4A8] text-lg" />
+                                                        {detail.address}
                                                     </p>
-                                                ))}
-                                                <button className="flex items-center gap-1 font-semibold text-gray-900 text-sm mt-2 hover:underline">
-                                                    Hiển thị thêm <ChevronRight size={16} />
-                                                </button>
-                                            </div>
-                                        ) : (
+                                                    <div className="w-full h-[400px] rounded-xl overflow-hidden border border-gray-200 shadow-sm relative z-0">
+                                                        <iframe
+                                                            title={`Bản đồ của ${detail.title}`}
+                                                            width="100%"
+                                                            height="100%"
+                                                            style={{ border: 0 }}
+                                                            loading="lazy"
+                                                            allowFullScreen
+                                                            referrerPolicy="no-referrer-when-downgrade"
+                                                            src={`https://maps.google.com/maps?q=${detail.latitude},${detail.longitude}&hl=vi&z=15&output=embed`}
+                                                        ></iframe>
+                                                    </div>
+                                                </div>
+                                            )
+                                        };
+                                    }
+                                    if (tab === "Tiện nghi") {
+                                        return {
+                                            key: String(i),
+                                            label: tab,
+                                            children: (
+                                                <div className="py-2">
+                                                    <h3 className="text-lg font-bold text-gray-900 mb-4">Tiện nghi có sẵn</h3>
+                                                    <div className="grid grid-cols-2 lg:grid-cols-3 gap-y-4 gap-x-6">
+                                                        {detail.amenities.map((item, idx) => (
+                                                            <div key={idx} className="flex items-center gap-2 text-gray-700">
+                                                                <CheckCircleFilled className="text-[#2DD4A8] text-sm" />
+                                                                <span className="text-sm font-medium">{item}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )
+                                        };
+                                    }
+                                    return {
+                                        key: String(i),
+                                        label: tab,
+                                        children: (
                                             <div className="text-gray-500 text-sm py-4">
                                                 Nội dung đang được cập nhật...
                                             </div>
-                                        ),
-                                }))}
+                                        )
+                                    };
+                                })}
                             />
 
-                            {/* Room Types */}
+                            {/* Room Types has been removed since we only book entire properties based on schema */}
                             <div className="mb-8">
                                 <h3 className="text-xl font-bold text-gray-900 mb-4">
-                                    Chọn loại phòng phù hợp
+                                    Tùy chọn đặt phòng
                                 </h3>
                                 <div className="space-y-4">
-
                                     {/* ── Whole villa card ─────────────────── */}
                                     <div
                                         onClick={handleToggleWholeVilla}
@@ -318,7 +417,7 @@ export default function HomestayDetailPage() {
                                         <div className="w-32 h-24 flex-shrink-0 rounded-xl overflow-hidden">
                                             <img
                                                 src={detail.images[0]}
-                                                alt="Toàn bộ biệt thự"
+                                                alt="Toàn bộ nhà/phòng"
                                                 className="w-full h-full object-cover"
                                             />
                                         </div>
@@ -326,7 +425,7 @@ export default function HomestayDetailPage() {
                                             <div className="flex items-start justify-between gap-2">
                                                 <div>
                                                     <h4 className="font-semibold text-gray-900 text-base mb-1">
-                                                        Toàn bộ biệt thự
+                                                        Toàn bộ nhà/biệt thự
                                                     </h4>
                                                     <div className="flex items-center gap-3 text-gray-500 text-xs mb-1.5 flex-wrap">
                                                         <span className="flex items-center gap-1">
@@ -345,10 +444,10 @@ export default function HomestayDetailPage() {
                                                         </span>
                                                     </div>
                                                     <p className="text-gray-500 text-xs line-clamp-2 mb-2">
-                                                        Thuê toàn bộ không gian biệt thự, phù hợp cho nhóm đông hoặc gia đình lớn.
+                                                        Thuê toàn bộ không gian, riêng tư tuyệt đối.
                                                     </p>
                                                     <div className="flex flex-wrap gap-1.5">
-                                                        {["Bữa sáng miễn phí", "Hồ bơi riêng", "Hủy linh hoạt"].map((a) => (
+                                                        {["Không gian riêng", "Tiện nghi đầy đủ", "Hủy linh hoạt"].map((a) => (
                                                             <span key={a} className="text-[10px] bg-gray-100 text-gray-600 rounded-full px-2 py-0.5">
                                                                 {a}
                                                             </span>
@@ -369,94 +468,6 @@ export default function HomestayDetailPage() {
                                             </div>
                                         </div>
                                     </div>
-
-                                    {/* ── Individual room cards ─────────────── */}
-                                    {detail.roomTypes.map((room) => {
-                                        const isSelected = selectedRoomId === room.id;
-                                        return (
-                                            <div
-                                                key={room.id}
-                                                onClick={() => handleToggleRoom(room)}
-                                                className={`flex gap-4 p-4 border-2 rounded-2xl transition-all cursor-pointer ${isSelected
-                                                    ? "border-[#2DD4A8] shadow-md bg-[#F0FDFB]"
-                                                    : "border-gray-200 hover:border-[#2DD4A8] hover:shadow-md"
-                                                    }`}
-                                            >
-                                                {/* Room image */}
-                                                <div className="w-32 h-24 flex-shrink-0 rounded-xl overflow-hidden">
-                                                    <img
-                                                        src={room.image}
-                                                        alt={room.name}
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                </div>
-                                                {/* Room info */}
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="flex items-start justify-between gap-2">
-                                                        <div>
-                                                            <h4 className="font-semibold text-gray-900 text-base mb-1">
-                                                                {room.name}
-                                                            </h4>
-                                                            <div className="flex items-center gap-3 text-gray-500 text-xs mb-1.5">
-                                                                <span className="flex items-center gap-1">
-                                                                    <SquareM size={12} />
-                                                                    {room.area}m²
-                                                                </span>
-                                                                <span>·</span>
-                                                                <span className="flex items-center gap-1">
-                                                                    <BedDouble size={12} />
-                                                                    {room.bedType}
-                                                                </span>
-                                                                <span>·</span>
-                                                                <span className="flex items-center gap-1">
-                                                                    <Users size={12} />
-                                                                    Tối đa {room.maxGuests} khách
-                                                                </span>
-                                                            </div>
-                                                            <p className="text-gray-500 text-xs line-clamp-2 mb-2">
-                                                                {room.description}
-                                                            </p>
-                                                            <div className="flex flex-wrap gap-1.5">
-                                                                {room.amenities.map((a) => (
-                                                                    <span
-                                                                        key={a}
-                                                                        className="text-[10px] bg-gray-100 text-gray-600 rounded-full px-2 py-0.5"
-                                                                    >
-                                                                        {a}
-                                                                    </span>
-                                                                ))}
-                                                            </div>
-                                                        </div>
-                                                        {/* Price */}
-                                                        <div className="text-right flex-shrink-0">
-                                                            <div className="text-[#2DD4A8] font-bold text-base">
-                                                                {room.price}
-                                                            </div>
-                                                            {room.originalPrice && (
-                                                                <div className="text-xs text-gray-400 line-through">
-                                                                    {room.originalPrice}
-                                                                </div>
-                                                            )}
-                                                            {room.discount && (
-                                                                <Tag color="red" className="text-xs mt-0.5">
-                                                                    -{room.discount}%
-                                                                </Tag>
-                                                            )}
-                                                            <div className="text-[10px] text-gray-400">
-                                                                /đêm
-                                                            </div>
-                                                            {isSelected && (
-                                                                <div className="mt-1.5 flex items-center justify-end gap-1 text-[#2DD4A8] text-xs font-semibold">
-                                                                    <CheckCircleFilled />
-                                                                    Đang chọn
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
                                 </div>
                             </div>
 
@@ -568,31 +579,13 @@ export default function HomestayDetailPage() {
                                 {bookWholeVilla ? (
                                     <div className="mb-3 flex items-center justify-between bg-[#E6FAF5] border border-[#2DD4A8] rounded-xl px-3 py-2">
                                         <span className="text-xs text-[#2DD4A8] font-semibold flex items-center gap-1">
-                                            <CheckCircleFilled /> Toàn bộ biệt thự
+                                            <CheckCircleFilled /> {detail.subtitle.split(' ')[0] === 'Toàn' ? 'Toàn bộ không gian' : 'Đã chọn'}
                                         </span>
-                                        <button
-                                            onClick={() => setBookWholeVilla(false)}
-                                            className="text-gray-400 hover:text-gray-600 text-xs leading-none"
-                                        >
-                                            ✕
-                                        </button>
-                                    </div>
-                                ) : selectedRoom ? (
-                                    <div className="mb-3 flex items-center justify-between bg-[#E6FAF5] border border-[#2DD4A8] rounded-xl px-3 py-2">
-                                        <span className="text-xs text-[#2DD4A8] font-semibold flex items-center gap-1">
-                                            <CheckCircleFilled /> {selectedRoom.name}
-                                        </span>
-                                        <button
-                                            onClick={() => setSelectedRoomId(null)}
-                                            className="text-gray-400 hover:text-gray-600 text-xs leading-none"
-                                        >
-                                            ✕
-                                        </button>
                                     </div>
                                 ) : (
                                     <div className="mb-3 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-xl">
                                         <p className="text-xs text-amber-600 m-0">
-                                            👆 Chọn loại phòng hoặc toàn bộ biệt thự bên trái để tiếp tục
+                                            👆 Vui lòng chọn xác nhận đặt toàn bộ {detail.subtitle.includes('biệt thự') ? 'biệt thự' : 'phòng'} bên trái
                                         </p>
                                     </div>
                                 )}

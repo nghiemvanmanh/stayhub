@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { fetchHomestaysByCategory } from "../../interfaces/homestay";
+import { mockProperties, mockPropertyImages } from "../../data/property";
 import { Card, Rate, Skeleton, Button } from "antd";
 import { HeartOutlined, RightOutlined } from "@ant-design/icons";
 import Image from "next/image";
@@ -10,6 +10,11 @@ import Link from "next/link";
 interface FeaturedListingsProps {
   categoryId: string;
 }
+
+const fetchHomestaysByCategory = async (categoryId: string) => {
+  await new Promise(resolve => setTimeout(resolve, 800));
+  return mockProperties.filter(p => String(p.categoryId) === categoryId);
+};
 
 export default function FeaturedListings({ categoryId }: FeaturedListingsProps) {
   const { data: homestays, isLoading } = useQuery({
@@ -48,7 +53,11 @@ export default function FeaturedListings({ categoryId }: FeaturedListingsProps) 
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {homestays?.map((stay) => (
+            {homestays?.map((stay) => {
+              const thumbnail = mockPropertyImages.find(img => img.propertyId === stay.id && img.isThumbnail) || mockPropertyImages.find(img => img.propertyId === stay.id);
+              const imageUrl = thumbnail?.url || "https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=800&q=80";
+              
+              return (
               <Link
                 key={stay.id}
                 href={`/homestay/${stay.id}`}
@@ -61,8 +70,8 @@ export default function FeaturedListings({ categoryId }: FeaturedListingsProps) 
                   cover={
                     <div className="relative w-full h-[220px] overflow-hidden rounded-2xl">
                       <Image
-                        src={stay.image}
-                        alt={stay.title}
+                        src={imageUrl}
+                        alt={stay.name}
                         fill
                         className="object-cover group-hover:scale-105 transition-transform duration-300"
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
@@ -73,7 +82,7 @@ export default function FeaturedListings({ categoryId }: FeaturedListingsProps) 
                       <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm rounded-full px-2 py-0.5 flex items-center gap-1">
                         <span className="text-yellow-500 text-xs">★</span>
                         <span className="text-xs font-semibold text-gray-800">
-                          {stay.rating}
+                          {stay.ratingAvg?.toFixed(1) || "5.0"}
                         </span>
                       </div>
                     </div>
@@ -82,19 +91,19 @@ export default function FeaturedListings({ categoryId }: FeaturedListingsProps) 
                   <div className="flex flex-col gap-0.5">
                     <div className="flex items-center justify-between">
                       <h3 className="text-sm font-semibold text-gray-900 truncate">
-                        {stay.title}
+                        {stay.name}
                       </h3>
                     </div>
-                    <p className="text-xs text-gray-400">{stay.distance}</p>
-                    <p className="text-xs text-gray-400">{stay.dates}</p>
+                    <p className="text-xs text-gray-400 truncate">{stay.addressDetail}, {stay.ward}, {stay.district}</p>
+                    <p className="text-xs text-gray-400">Tối đa {stay.maxGuests} khách · {stay.numBedrooms} phòng ngủ</p>
                     <p className="text-sm mt-1">
-                      <span className="font-bold text-gray-900">{stay.price}</span>
+                      <span className="font-bold text-gray-900">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: stay.currency || 'VND' }).format(stay.pricePerNight)}</span>
                       <span className="text-gray-400 font-normal"> / đêm</span>
                     </p>
                   </div>
                 </Card>
               </Link>
-            ))}
+            )})}
           </div>
         )}
       </div>

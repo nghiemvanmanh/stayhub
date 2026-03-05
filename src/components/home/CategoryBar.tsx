@@ -1,9 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { fetchCategories } from "../../interfaces/homestay";
+import { mockCategories } from "../../data/property";
 import { Skeleton, Tabs } from "antd";
-import { Flame, Waves, House, TreePine, Tent, Camera } from "lucide-react";
+import { Building, House, TreePine, Tent, Palmtree } from "lucide-react";
 import { JSX } from "react";
 
 interface CategoryBarProps {
@@ -12,18 +12,20 @@ interface CategoryBarProps {
 }
 
 const categoryIcons: Record<string, JSX.Element> = {
-  "1": <Flame className="w-6 h-6" />,
-  "2": <Waves className="w-6 h-6" />,
+  "1": <House className="w-6 h-6" />,
+  "2": <Building className="w-6 h-6" />,
   "3": <House className="w-6 h-6" />,
   "4": <TreePine className="w-6 h-6" />,
   "5": <Tent className="w-6 h-6" />,
-  "6": <Camera className="w-6 h-6" />,
 };
 
 export default function CategoryBar({ onCategoryChange, activeCategory }: CategoryBarProps) {
   const { data: categories, isLoading } = useQuery({
     queryKey: ["categories"],
-    queryFn: fetchCategories,
+    queryFn: async () => {
+      await new Promise(resolve => setTimeout(resolve, 800));
+      return mockCategories;
+    },
   });
 
   if (isLoading) {
@@ -39,17 +41,17 @@ export default function CategoryBar({ onCategoryChange, activeCategory }: Catego
   }
 
   const items = categories?.map((cat) => ({
-    key: cat.id,
+    key: String(cat.id),
     label: (
       <div className="flex flex-col items-center gap-2 px-4 py-2">
-        <span className="text-gray-700">{categoryIcons[cat.id]}</span>
+        <span className="text-gray-700">{categoryIcons[String(cat.id)]}</span>
         <span className="text-xs font-medium whitespace-nowrap">{cat.name}</span>
       </div>
     ),
   }));
 
   return (
-    <div className="border-b border-gray-100 bg-white">
+    <div className="border-gray-100 bg-white">
       <div className="max-w-[1440px] mx-auto px-6 lg:px-10">
         <Tabs
           activeKey={activeCategory}

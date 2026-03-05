@@ -1,9 +1,28 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { fetchTestimonials } from "../../interfaces/homestay";
+import { mockReviews, mockProfiles } from "../../data";
 import { Rate, Avatar, Skeleton } from "antd";
 import Marquee from "react-fast-marquee";
+
+const fetchTestimonials = async () => {
+  await new Promise(resolve => setTimeout(resolve, 500));
+  // Get latest 6 reviews with high rating
+  return mockReviews
+    .filter(r => r.rating >= 4)
+    .slice(0, 6)
+    .map((r, index) => {
+      const profile = mockProfiles.find(p => p.userId === r.userId);
+      return {
+        id: r.id,
+        rating: r.rating,
+        comment: r.comment,
+        name: profile?.fullName || "Khách Hàng",
+        avatar: profile?.avatarUrl || `https://i.pravatar.cc/150?u=${r.userId}`,
+        location: profile?.fullName ? "Từ StayHub" : "Khách du lịch",
+      };
+    });
+};
 
 export default function Testimonials() {
   const { data: testimonials, isLoading } = useQuery({

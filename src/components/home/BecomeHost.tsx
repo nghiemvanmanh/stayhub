@@ -82,7 +82,7 @@ export default function BecomeHost() {
             {/* Right Image */}
             <div className="relative min-h-[400px] hidden lg:block">
               <Image
-                src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&h=600&fit=crop"
+                src="https://vending-cdn.kootoro.com/torov-cms/upload/image/1680147316418-th%E1%BB%8B%20tr%C6%B0%E1%BB%9Dng%20homestay.jpg"
                 alt="Become a host"
                 fill
                 className="object-cover"
