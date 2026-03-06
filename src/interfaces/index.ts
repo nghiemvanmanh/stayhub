@@ -10,3 +10,5 @@ export * from "./wallet";
 export * from "./dispute";
 export * from "./review";
 export * from "./analytics";
+export * from "./room";
+export * from "./reserve";

@@ -4,6 +4,8 @@ import {
   PropertyStatus,
   RentalType,
 } from "./enums";
+import { Room } from "./room";
+import { Reserve } from "./reserve";
 
 export interface Category {
   id: string | number;
@@ -54,6 +56,8 @@ export interface Property {
   status: PropertyStatus;
   ratingAvg?: number;
   reviewCount?: number;
+  rooms?: Room[]; // Array of Room
+  reserves?: Reserve[]; // Array of Reserve
   createdAt?: Date | string;
   updatedAt?: Date | string;
 }

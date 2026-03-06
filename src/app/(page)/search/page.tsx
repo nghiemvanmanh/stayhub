@@ -17,6 +17,40 @@ import {
   mockProperties,
   mockPropertyAmenities,
 } from "@/data/property";
+import { mockRooms, mockReserves } from "@/data";
+import { BookingStatus } from "@/interfaces/enums";
+
+// Blocking statuses for availability check
+const BLOCKING_STATUSES: BookingStatus[] = [
+  BookingStatus.CONFIRMED,
+  BookingStatus.CHECKED_IN,
+  BookingStatus.PENDING,
+  BookingStatus.AWAITING_PAYMENT,
+  BookingStatus.PARTIALLY_PAID,
+];
+
+function getAvailableRoomCount(
+  propertyId: string | number,
+  checkIn: Dayjs,
+  checkOut: Dayjs
+): number {
+  const rooms = mockRooms.filter((r) => r.propertyId === propertyId && r.isActive);
+  return rooms.filter((room) => {
+    const hasConflict = mockReserves.some((res) => {
+      if (res.roomId !== room.id) return false;
+      if (!BLOCKING_STATUSES.includes(res.status)) return false;
+      const rStart = dayjs(res.startDate);
+      const rEnd = dayjs(res.endDate);
+      return !(
+        checkOut.isSame(rStart, "day") ||
+        checkOut.isBefore(rStart, "day") ||
+        checkIn.isSame(rEnd, "day") ||
+        checkIn.isAfter(rEnd, "day")
+      );
+    });
+    return !hasConflict;
+  }).length;
+}
 
 const ITEMS_PER_PAGE = 6;
 
@@ -130,8 +164,22 @@ function SearchPageContent() {
     if (urlGuests) {
       const guestCount = parseInt(urlGuests);
       if (!isNaN(guestCount)) {
-        results = results.filter((p) => p.maxGuests >= guestCount);
+        // Check total maxGuests across all rooms for the property
+        results = results.filter((p) => {
+          const propertyRooms = mockRooms.filter((r) => r.propertyId === p.id && r.isActive);
+          const totalRoomGuests = propertyRooms.reduce((s, r) => s + r.maxGuests, 0);
+          return (totalRoomGuests > 0 ? totalRoomGuests : p.maxGuests) >= guestCount;
+        });
       }
+    }
+
+    // ── Date-based availability filter ──
+    // Only show properties that have at least 1 available room for the selected dates
+    if (dates) {
+      results = results.filter((p) => {
+        const availCount = getAvailableRoomCount(p.id, dates[0], dates[1]);
+        return availCount > 0;
+      });
     }
 
     // Sort
@@ -145,7 +193,7 @@ function SearchPageContent() {
     // "recommended" = default order
 
     return results;
-  }, [location, activeCategory, priceRange, rentalType, selectedAmenities, sortBy, urlGuests]);
+  }, [location, activeCategory, priceRange, rentalType, selectedAmenities, sortBy, urlGuests, dates]);
 
   // Pagination
   const totalResults = filteredProperties.length;
@@ -314,15 +362,51 @@ function SearchPageContent() {
               </div>
             </div>
 
+            {/* Prompt to select dates */}
+            {!dates && (
+              <div className="mb-6 px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl flex items-start sm:items-center gap-3">
+                <div className="text-blue-500 text-lg mt-0.5 sm:mt-0">💡</div>
+                <div className="flex-1">
+                  <p className="text-sm text-blue-800 font-medium m-0">
+                    Bạn chưa chọn ngày nhận/trả phòng
+                  </p>
+                  <p className="text-xs text-blue-600 m-0 mt-0.5">
+                    Vui lòng chọn ngày để xem chính xác các homestay còn phòng trống.
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    const el = document.querySelector(".ant-picker");
+                    if (el instanceof HTMLElement) el.click();
+                  }}
+                  className="hidden sm:block whitespace-nowrap px-3 py-1.5 bg-white border border-blue-200 text-blue-600 rounded-lg text-xs font-semibold hover:bg-blue-50 transition-colors"
+                >
+                  Chọn ngày ngay
+                </button>
+              </div>
+            )}
+
             {/* Results list */}
             {paginatedResults.length > 0 ? (
               <div>
-                {paginatedResults.map((property) => (
-                  <SearchResultCard
-                    key={String(property.id)}
-                    property={property}
-                  />
-                ))}
+                {paginatedResults.map((property) => {
+                  const availableRoomCount = dates
+                    ? getAvailableRoomCount(property.id, dates[0], dates[1])
+                    : undefined;
+                  const totalRoomCount = mockRooms.filter(
+                    (r) => r.propertyId === property.id && r.isActive
+                  ).length;
+                  return (
+                    <SearchResultCard
+                      key={String(property.id)}
+                      property={property}
+                      checkIn={dates ? dates[0].format("YYYY-MM-DD") : undefined}
+                      checkOut={dates ? dates[1].format("YYYY-MM-DD") : undefined}
+                      availableRoomCount={availableRoomCount}
+                      totalRoomCount={totalRoomCount}
+                    />
+                  );
+                })}
               </div>
             ) : (
               <div className="py-16 sm:py-20 text-center">

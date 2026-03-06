@@ -895,7 +895,7 @@ export const mockPropertyImages: PropertyImage[] = (() => {
   let idCounter = 1;
   // Generate 5 images for each properties (20 * 5 = 100 images)
   for (let propId = 1; propId <= 20; propId++) {
-    for (let i = 1; i <= 5; i++) {
+    for (let i = 1; i <= 20; i++) {
       images.push({
         id: idCounter++,
         propertyId: propId,
