@@ -650,20 +650,33 @@ export default function HomestayDetailPage() {
                                 </div>
 
                                 {/* CTA */}
-                                <Button
-                                    type="primary"
-                                    block
-                                    size="large"
-                                    disabled={!canBook}
-                                    className="!rounded-xl !h-12 !text-base !font-semibold mb-3
-                                    enabled:!bg-[#2DD4A8] enabled:!border-[#2DD4A8] enabled:hover:!bg-[#25bc95]"
-                                >
-                                    {!hasSelection
-                                        ? "Chọn phòng để đặt"
-                                        : !dates
-                                            ? "Chọn ngày để đặt"
-                                            : "Đặt ngay"}
-                                </Button>
+                                {canBook && dates ? (
+                                    <Link
+                                        href={`/payment/${id}?checkin=${dates[0].format("YYYY-MM-DD")}&checkout=${dates[1].format("YYYY-MM-DD")}&guests=${guests}`}
+                                    >
+                                        <Button
+                                            type="primary"
+                                            block
+                                            size="large"
+                                            className="!rounded-xl !h-12 !text-base !font-semibold mb-3
+                                            !bg-[#2DD4A8] !border-[#2DD4A8] hover:!bg-[#25bc95]"
+                                        >
+                                            Đặt ngay
+                                        </Button>
+                                    </Link>
+                                ) : (
+                                    <Button
+                                        type="primary"
+                                        block
+                                        size="large"
+                                        disabled
+                                        className="!rounded-xl !h-12 !text-base !font-semibold mb-3"
+                                    >
+                                        {!hasSelection
+                                            ? "Chọn phòng để đặt"
+                                            : "Chọn ngày để đặt"}
+                                    </Button>
+                                )}
                                 {canBook && (
                                     <p className="text-center text-xs text-gray-400 mb-4">
                                         Bạn vẫn chưa bị tính tiền

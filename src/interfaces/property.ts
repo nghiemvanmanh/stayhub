@@ -1,4 +1,9 @@
-import { CancellationPolicy, PropertyStatus, RentalType } from "./enums";
+import {
+  CancellationPolicy,
+  PropertyPaymentType,
+  PropertyStatus,
+  RentalType,
+} from "./enums";
 
 export interface Category {
   id: string | number;
@@ -40,6 +45,8 @@ export interface Property {
   checkinAfter?: string;
   checkoutBefore?: string;
   cancellationPolicy: CancellationPolicy;
+  allowedPaymentTypes: PropertyPaymentType[];
+  depositPercent?: number;
   isInstantBook?: boolean;
   isSmokingAllowed?: boolean;
   isPetsAllowed?: boolean;

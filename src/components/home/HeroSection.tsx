@@ -3,10 +3,29 @@
 import { Button, DatePicker, Input, Select } from "antd";
 import { SearchOutlined, EnvironmentOutlined } from "@ant-design/icons";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import dayjs, { Dayjs } from "dayjs";
 
 const { RangePicker } = DatePicker;
 
 export default function HeroSection() {
+  const router = useRouter();
+  const [location, setLocation] = useState("");
+  const [dates, setDates] = useState<[Dayjs, Dayjs] | null>(null);
+  const [guests, setGuests] = useState<string | undefined>(undefined);
+
+  const handleSearch = () => {
+    const params = new URLSearchParams();
+    if (location.trim()) params.set("location", location.trim());
+    if (dates) {
+      params.set("checkIn", dates[0].format("YYYY-MM-DD"));
+      params.set("checkOut", dates[1].format("YYYY-MM-DD"));
+    }
+    if (guests) params.set("guests", guests);
+    router.push(`/search?${params.toString()}`);
+  };
+
   return (
     <section className="relative bg-gradient-to-br from-gray-50 to-white overflow-hidden flex items-center py-20">
       <div className="max-w-[1440px] mx-auto px-6 lg:px-32 w-full h-[700px] flex items-center">
@@ -36,6 +55,9 @@ export default function HeroSection() {
                   variant="borderless"
                   className="text-base"
                   size="large"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  onPressEnter={handleSearch}
                 />
               </div>
               
@@ -47,6 +69,14 @@ export default function HeroSection() {
                     variant="borderless"
                     className="w-full"
                     suffixIcon={null}
+                    value={dates}
+                    onChange={(vals) => {
+                      if (vals?.[0] && vals?.[1]) {
+                        setDates([vals[0], vals[1]]);
+                      } else {
+                        setDates(null);
+                      }
+                    }}
                   />
                 </div>
                 
@@ -56,6 +86,8 @@ export default function HeroSection() {
                     variant="borderless"
                     className="w-full"
                     suffixIcon={<span className="text-gray-400">▼</span>}
+                    value={guests}
+                    onChange={(val) => setGuests(val)}
                     options={[
                     { value: "1", label: "1 khách" },
                     { value: "2", label: "2 khách" },
@@ -74,6 +106,7 @@ export default function HeroSection() {
                   className="!bg-[#2DD4A8] hover:!bg-[#22b892] !border-none !rounded-xl !h-12 w-full !font-semibold text-base"
                   size="large"
                   block
+                  onClick={handleSearch}
                 >
                   Tìm kiếm
                 </Button>

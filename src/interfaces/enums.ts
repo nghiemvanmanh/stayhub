@@ -133,3 +133,9 @@ export enum DisputeStatus {
   RESOLVED_PAY_HOST = "RESOLVED_PAY_HOST",
   REJECTED = "REJECTED",
 }
+
+export enum PropertyPaymentType {
+  ONLINE_FULL = "ONLINE_FULL",
+  ONLINE_DEPOSIT = "ONLINE_DEPOSIT",
+  PAY_AT_CHECKIN = "PAY_AT_CHECKIN",
+}
