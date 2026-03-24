@@ -18,12 +18,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import LoginModal from "@/components/auth/LoginModal";
 import RegisterModal from "@/components/auth/RegisterModal";
 import { fetcher } from "../../utils/fetcher";
+import { useRouter } from "next/navigation";
 
 export default function Header() {
   const { user, isLoggedIn, logout } = useAuth();
   const [loginOpen, setLoginOpen] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
+  const router = useRouter();
   const handleLogout = async () => {
     try {
       await fetcher.post("/auth/logout");
@@ -123,6 +125,7 @@ export default function Header() {
               <Button
                 type="text"
                 className="hidden md:inline-flex text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-full"
+                onClick={() => router.push("/become-partner/registration")}
               >
                 Trở thành đối tác homestay
               </Button>
