@@ -1,22 +1,21 @@
 "use client";
 
 import { useMemo } from "react";
-import { Button, Checkbox, Upload } from "antd";
+import { Input, Upload, Checkbox } from "antd";
 import type { UploadFile } from "antd";
 import {
   CameraOutlined,
   IdcardOutlined,
-  UserSwitchOutlined,
   QuestionCircleOutlined,
   LockOutlined,
   DeleteOutlined,
+  FileProtectOutlined,
 } from "@ant-design/icons";
 import type { VerificationData } from "./registrationData";
 
 interface VerificationStepProps {
   data: VerificationData;
   onChange: (data: Partial<VerificationData>) => void;
-  accountType: "personal" | "business";
 }
 
 function ImagePreview({
@@ -45,10 +44,9 @@ function ImagePreview({
 export default function VerificationStep({
   data,
   onChange,
-  accountType,
 }: VerificationStepProps) {
   const handleFileChange = (
-    key: "frontCCCD" | "backCCCD" | "selfie",
+    key: "frontCCCD" | "backCCCD" | "businessLicense",
     info: { fileList: UploadFile[] }
   ) => {
     if (info.fileList.length > 0) {
@@ -64,28 +62,11 @@ export default function VerificationStep({
       {/* Left Column */}
       <div className="flex flex-col gap-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Xác minh danh tính</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Xác minh danh tính & Giấy phép</h1>
           <p className="text-sm text-gray-500 leading-relaxed">
-            Để đảm bảo an toàn cho cộng đồng HomestayBooking, chúng tôi cần xác
-            nhận danh tính của bạn. Thông tin này được bảo mật và chỉ dùng cho
-            mục đích xác thực.
+            Để đảm bảo an toàn cho cộng đồng, chúng tôi cần xác nhận danh tính
+            và giấy phép kinh doanh của bạn. Thông tin này được bảo mật tuyệt đối.
           </p>
-        </div>
-
-        {/* Account type notice */}
-        <div className="bg-white border border-gray-200 rounded-xl px-5 py-4 flex items-center justify-between gap-4 flex-wrap">
-          <div className="flex items-center gap-3">
-            <UserSwitchOutlined className="text-xl text-[#1890ff]" />
-            <div>
-              <span className="text-[13px] text-gray-500 mr-1">Bạn đang đăng ký với tư cách:</span>
-              <span className="text-[13px] font-semibold text-gray-900">
-                Tài khoản {accountType === "personal" ? "Cá nhân" : "Doanh nghiệp"}
-              </span>
-            </div>
-          </div>
-          <Button className="text-[13px] font-medium !rounded-lg">
-            Đổi sang {accountType === "personal" ? "Doanh nghiệp" : "Cá nhân"}
-          </Button>
         </div>
 
         {/* CCCD Section */}
@@ -108,7 +89,7 @@ export default function VerificationStep({
                 accept="image/*,.pdf"
                 beforeUpload={() => false}
                 onChange={(info) => handleFileChange("frontCCCD", info)}
-                className="upload-dragger-custom"
+                className="!rounded-xl !border-2 !border-dashed !border-gray-300 !bg-gray-50 !min-h-[180px] hover:!border-[#1890ff] hover:!bg-blue-50"
               >
                 <div className="flex flex-col items-center text-center gap-1">
                   <div className="text-4xl text-gray-300 mb-2"><IdcardOutlined /></div>
@@ -130,7 +111,7 @@ export default function VerificationStep({
                 accept="image/*,.pdf"
                 beforeUpload={() => false}
                 onChange={(info) => handleFileChange("backCCCD", info)}
-                className="upload-dragger-custom"
+                className="!rounded-xl !border-2 !border-dashed !border-gray-300 !bg-gray-50 !min-h-[180px] hover:!border-[#1890ff] hover:!bg-blue-50"
               >
                 <div className="flex flex-col items-center text-center gap-1">
                   <div className="text-4xl text-gray-300 mb-2"><CameraOutlined /></div>
@@ -145,32 +126,50 @@ export default function VerificationStep({
           </div>
         </div>
 
-        {/* Selfie Section */}
+        {/* Business License Section */}
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <UserSwitchOutlined className="text-lg text-[#1890ff]" />
-              <h3 className="text-base font-semibold text-gray-900 m-0">Ảnh Selfie xác thực</h3>
+              <FileProtectOutlined className="text-lg text-[#1890ff]" />
+              <h3 className="text-base font-semibold text-gray-900 m-0">Giấy phép kinh doanh</h3>
             </div>
             <span className="text-xs font-medium text-[#1890ff]">Bắt buộc</span>
           </div>
+          <p className="text-xs text-gray-500 m-0 -mt-2 leading-relaxed">
+            Theo quy định pháp luật, kinh doanh lưu trú cần có giấy phép kinh doanh (Hộ kinh doanh / Doanh nghiệp).
+          </p>
 
-          {data.selfie ? (
-            <ImagePreview file={data.selfie} onRemove={() => onChange({ selfie: null })} label="Ảnh selfie" />
+          {/* Business License Number */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[13px] font-medium text-gray-700">
+              Số giấy phép kinh doanh <span className="text-red-500">*</span>
+            </label>
+            <Input
+              size="large"
+              placeholder="Nhập số giấy phép kinh doanh"
+              prefix={<FileProtectOutlined className="text-gray-300" />}
+              value={data.businessLicenseNumber}
+              onChange={(e) => onChange({ businessLicenseNumber: e.target.value })}
+            />
+          </div>
+
+          {/* Business License Upload */}
+          {data.businessLicense ? (
+            <ImagePreview file={data.businessLicense} onRemove={() => onChange({ businessLicense: null })} label="Giấy phép kinh doanh" />
           ) : (
             <Upload.Dragger
               showUploadList={false}
               maxCount={1}
-              accept="image/*"
+              accept="image/*,.pdf"
               beforeUpload={() => false}
-              onChange={(info) => handleFileChange("selfie", info)}
-              className="upload-dragger-custom"
+              onChange={(info) => handleFileChange("businessLicense", info)}
+              className="!rounded-xl !border-2 !border-dashed !border-gray-300 !bg-gray-50 !min-h-[180px] hover:!border-[#1890ff] hover:!bg-blue-50"
             >
               <div className="flex flex-col items-center text-center gap-1">
-                <div className="text-[40px] text-gray-300 mb-2"><UserSwitchOutlined /></div>
-                <p className="text-sm font-semibold text-gray-700 m-0">Ảnh chân dung kèm CCCD</p>
-                <p className="text-xs text-gray-400 m-0 leading-relaxed max-w-[200px]">
-                  Chụp khuôn mặt bạn đang cầm mặt trước CCCD.
+                <div className="text-[40px] text-gray-300 mb-2"><FileProtectOutlined /></div>
+                <p className="text-sm font-semibold text-gray-700 m-0">Ảnh giấy phép kinh doanh</p>
+                <p className="text-xs text-gray-400 m-0 leading-relaxed max-w-[240px]">
+                  Ảnh chụp hoặc scan rõ ràng giấy phép kinh doanh lưu trú (PDF, JPG, PNG)
                 </p>
                 <p className="text-[13px] text-[#1890ff] font-medium mt-1 m-0">Nhấp để tải lên</p>
               </div>
@@ -206,8 +205,8 @@ export default function VerificationStep({
               'Định dạng cho phép: JPG, PNG, PDF.',
               'Dung lượng tối đa: 10MB cho mỗi tệp.',
               'Đảm bảo 4 góc của giấy tờ nằm trong khung hình.',
-              'Ảnh Selfie cần rõ mặt, không đeo kính râm hoặc đội mũ che khuất.',
               'Giấy tờ phải còn hạn sử dụng ít nhất 3 tháng.',
+              'Giấy phép kinh doanh phải rõ số đăng ký và tên chủ sở hữu.',
             ].map((tip, i) => (
               <li key={i} className="text-[13px] text-gray-600 leading-relaxed py-1 pl-4 relative before:content-['•'] before:absolute before:left-0 before:text-[#1890ff] before:font-bold">
                 {tip}

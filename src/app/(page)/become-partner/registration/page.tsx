@@ -5,7 +5,6 @@ import { Steps, Button, message } from "antd";
 import {
   SolutionOutlined,
   SafetyCertificateOutlined,
-  BankOutlined,
   CheckCircleOutlined,
   ArrowLeftOutlined,
 } from "@ant-design/icons";
@@ -14,50 +13,75 @@ import {
   type RegistrationFormData,
   type PersonalInfoData,
   type VerificationData,
-  type BankData,
+  type PresignedUrlRequest,
+  type PresignedUrlResponse,
 } from "@/components/become-partner/registration/registrationData";
 import VerificationStep from "@/components/become-partner/registration/VerificationStep";
 import PersonalInfoStep from "@/components/become-partner/registration/PersonalInfoStep";
-import BankInfoStep from "@/components/become-partner/registration/BankInfoStep";
 import ReviewStep from "@/components/become-partner/registration/ReviewStep";
 import SuccessStep from "@/components/become-partner/registration/SuccessStep";
+import { fetcher } from "../../../../../utils/fetcher";
 
 const stepItems = [
   { title: "Cá nhân", icon: <SolutionOutlined /> },
   { title: "Xác minh", icon: <SafetyCertificateOutlined /> },
-  { title: "Ngân hàng", icon: <BankOutlined /> },
   { title: "Xem lại", icon: <CheckCircleOutlined /> },
 ];
 
 // Validation helpers
 function isStep0Valid(data: PersonalInfoData): boolean {
   return !!(
-    data.fullName.trim() &&
-    data.phone.trim() &&
-    data.province &&
-    data.district &&
-    data.addressDetail.trim()
+    data.supportEmail.trim() &&
+    data.businessPhone.trim() &&
+    data.identityCardNumber.trim()
   );
 }
 
 function isStep1Valid(data: VerificationData): boolean {
-  return !!(data.frontCCCD && data.backCCCD && data.selfie && data.agreed);
+  return !!(
+    data.frontCCCD &&
+    data.backCCCD &&
+    data.businessLicenseNumber.trim() &&
+    data.businessLicense &&
+    data.agreed
+  );
 }
 
-function isStep2Valid(data: BankData): boolean {
-  return !!(
-    data.accountHolder.trim() &&
-    data.bankCode &&
-    data.accountNumber.trim() &&
-    data.accountNumberConfirm.trim() &&
-    data.accountNumber === data.accountNumberConfirm
-  );
+// Helper: get file extension and content type
+function getFileInfo(file: File): PresignedUrlRequest {
+  const name = file.name;
+  const ext = name.substring(name.lastIndexOf(".")).toLowerCase();
+  return { extension: ext, contentType: file.type || "application/octet-stream" };
+}
+
+// Helper: upload a single file via presigned URL
+async function uploadFileToS3(file: File): Promise<string> {
+  const fileInfo = getFileInfo(file);
+
+  // 1. Get presigned URL
+  const { data } = await fetcher.post<PresignedUrlResponse>("/files/presigned-url", {
+    files: [fileInfo],
+  });
+
+  // Response is array when sending files array
+  const presigned = Array.isArray(data) ? data[0] : data;
+  console.log(presigned.data)
+  // 2. PUT file to S3 via presigned URL (raw axios, no auth header)
+  await fetch(presigned.data.presignedUrl, {
+    method: "PUT",
+    body: file,
+    headers: { "Content-Type": file.type },
+  });
+
+  // 3. Return public URL
+  return presigned.data.publicUrl;
 }
 
 export default function PartnerRegistrationPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<RegistrationFormData>(initialFormData);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
   const [highestStep, setHighestStep] = useState(0);
 
@@ -81,16 +105,6 @@ export default function PartnerRegistrationPage() {
     []
   );
 
-  const updateBank = useCallback(
-    (data: Partial<BankData>) => {
-      setFormData((prev) => ({
-        ...prev,
-        bank: { ...prev.bank, ...data },
-      }));
-    },
-    []
-  );
-
   const canProceed = useMemo(() => {
     switch (currentStep) {
       case 0:
@@ -98,8 +112,6 @@ export default function PartnerRegistrationPage() {
       case 1:
         return isStep1Valid(formData.verification);
       case 2:
-        return isStep2Valid(formData.bank);
-      case 3:
         return true;
       default:
         return false;
@@ -131,50 +143,47 @@ export default function PartnerRegistrationPage() {
   };
 
   const handleSubmit = async () => {
-    const apiBody = {
-      personal: {
-        fullName: formData.personal.fullName,
-        phone: formData.personal.phone,
-        accountType: formData.personal.accountType,
-        province: formData.personal.province,
-        district: formData.personal.district,
-        addressDetail: formData.personal.addressDetail,
-      },
-      verification: {
-        frontCCCD: formData.verification.frontCCCD?.name || null,
-        backCCCD: formData.verification.backCCCD?.name || null,
-        selfie: formData.verification.selfie?.name || null,
-        agreed: formData.verification.agreed,
-      },
-      bank: {
-        accountHolder: formData.bank.accountHolder,
-        bankCode: formData.bank.bankCode,
-        accountNumber: formData.bank.accountNumber,
-        branch: formData.bank.branch,
-        currency: formData.bank.currency,
-        swift: formData.bank.swift,
-        iban: formData.bank.iban,
-      },
-    };
+    if (submitting) return;
+    setSubmitting(true);
 
-    console.log("=== PARTNER REGISTRATION API BODY ===");
-    console.log(JSON.stringify(apiBody, null, 2));
+    try {
+      const { personal, verification } = formData;
 
-    // TODO: Replace with actual API call
-    // const formPayload = new FormData();
-    // formPayload.append("data", JSON.stringify(apiBody));
-    // if (formData.verification.frontCCCD)
-    //   formPayload.append("frontCCCD", formData.verification.frontCCCD);
-    // if (formData.verification.backCCCD)
-    //   formPayload.append("backCCCD", formData.verification.backCCCD);
-    // if (formData.verification.selfie)
-    //   formPayload.append("selfie", formData.verification.selfie);
-    // if (formData.bank.proofFile)
-    //   formPayload.append("bankProof", formData.bank.proofFile);
-    // const res = await fetcher.post("/partner/register", formPayload);
+      // Step 1: Upload 3 files in parallel via presigned URLs
+      const [identityCardFrontUrl, identityCardBackUrl, businessLicenseUrl] =
+        await Promise.all([
+          uploadFileToS3(verification.frontCCCD!),
+          uploadFileToS3(verification.backCCCD!),
+          uploadFileToS3(verification.businessLicense!),
+        ]);
+       console.log({identityCardFrontUrl, identityCardBackUrl, businessLicenseUrl})
+      // Step 2: Submit registration
+      const apiBody = {
+        businessPhone: personal.businessPhone,
+        supportEmail: personal.supportEmail,
+        identityCardNumber: personal.identityCardNumber,
+        identityCardFrontUrl,
+        identityCardBackUrl,
+        businessLicenseNumber: verification.businessLicenseNumber,
+        businessLicenseUrl,
+      };
 
-    messageApi.success("Đăng ký thành công!");
-    setSubmitted(true);
+      console.log("=== PARTNER REGISTRATION API BODY ===");
+      console.log(JSON.stringify(apiBody, null, 2));
+
+      await fetcher.post("/auth/host-applications", apiBody);
+
+      messageApi.success("Đăng ký thành công!");
+      setSubmitted(true);
+    } catch (error: unknown) {
+      console.error("Registration failed:", error);
+      const err = error as { response?: { data?: { message?: string } } };
+      messageApi.error(
+        err?.response?.data?.message || "Đăng ký thất bại. Vui lòng thử lại."
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const goToStep = (step: number) => {
@@ -206,17 +215,15 @@ export default function PartnerRegistrationPage() {
           <VerificationStep
             data={formData.verification}
             onChange={updateVerification}
-            accountType={formData.personal.accountType}
           />
         );
       case 2:
-        return <BankInfoStep data={formData.bank} onChange={updateBank} />;
-      case 3:
         return (
           <ReviewStep
             formData={formData}
             onSubmit={handleSubmit}
             onGoToStep={goToStep}
+            submitting={submitting}
           />
         );
       default:
@@ -227,11 +234,9 @@ export default function PartnerRegistrationPage() {
   const getButtonText = () => {
     switch (currentStep) {
       case 1:
-        return "Tiếp tục";
-      case 2:
         return "Kiểm tra & Hoàn tất";
-      case 3:
-        return "Gửi hồ sơ để duyệt";
+      case 2:
+        return ;
       default:
         return "Tiếp theo";
     }
@@ -249,10 +254,9 @@ export default function PartnerRegistrationPage() {
               items={stepItems.map((item, index) => ({
                 ...item,
                 className:
-                  index <= highestStep ? "clickable-step" : "disabled-step",
+                  index <= highestStep ? "cursor-pointer" : "cursor-not-allowed",
                 onClick: () => handleStepClick(index),
               }))}
-              className="registration-steps"
             />
           </div>
         </div>
@@ -276,9 +280,11 @@ export default function PartnerRegistrationPage() {
             </Button>
             <Button
               type="primary"
-              onClick={currentStep === 3 ? handleSubmit : handleNext}
-              className="registration-btn-next"
-              disabled={!canProceed}
+              onClick={currentStep === 2 ? handleSubmit : handleNext}
+              className="!min-w-[180px] !h-[42px] !rounded-[10px] !font-semibold !text-sm"
+              disabled={!canProceed || submitting}
+              loading={submitting && currentStep === 2}
+              hidden={currentStep === 2}
             >
               {getButtonText()}
             </Button>

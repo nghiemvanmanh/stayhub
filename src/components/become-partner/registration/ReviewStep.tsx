@@ -1,42 +1,39 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Button, Checkbox, Tag } from "antd";
+import { Button, Checkbox } from "antd";
 import {
   UserOutlined,
-  TeamOutlined,
   SafetyCertificateOutlined,
-  CreditCardOutlined,
   EditOutlined,
   CheckCircleOutlined,
   QuestionCircleOutlined,
   ClockCircleOutlined,
+  IdcardOutlined,
+  MailOutlined,
+  PhoneOutlined,
+  FileProtectOutlined,
 } from "@ant-design/icons";
-import { bankOptions, type RegistrationFormData } from "./registrationData";
+import type { RegistrationFormData } from "./registrationData";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface ReviewStepProps {
   formData: RegistrationFormData;
   onSubmit: () => void;
   onGoToStep: (step: number) => void;
+  submitting?: boolean;
 }
 
-export default function ReviewStep({ formData, onSubmit, onGoToStep }: ReviewStepProps) {
+export default function ReviewStep({ formData, onSubmit, onGoToStep, submitting }: ReviewStepProps) {
   const { user } = useAuth();
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
-  const [agreeNotifications, setAgreeNotifications] = useState(false);
 
-  const { personal, verification, bank } = formData;
-
-  const bankLabel = useMemo(() => {
-    const found = bankOptions.find((b) => b.value === bank.bankCode);
-    return found?.label || bank.bankCode;
-  }, [bank.bankCode]);
+  const { personal, verification } = formData;
 
   const frontUrl = useMemo(() => (verification.frontCCCD ? URL.createObjectURL(verification.frontCCCD) : null), [verification.frontCCCD]);
   const backUrl = useMemo(() => (verification.backCCCD ? URL.createObjectURL(verification.backCCCD) : null), [verification.backCCCD]);
-  const selfieUrl = useMemo(() => (verification.selfie ? URL.createObjectURL(verification.selfie) : null), [verification.selfie]);
+  const licenseUrl = useMemo(() => (verification.businessLicense ? URL.createObjectURL(verification.businessLicense) : null), [verification.businessLicense]);
 
   const EditBtn = ({ step }: { step: number }) => (
     <button
@@ -47,10 +44,13 @@ export default function ReviewStep({ formData, onSubmit, onGoToStep }: ReviewSte
     </button>
   );
 
-  const InfoItem = ({ label, value, fullWidth }: { label: string; value: React.ReactNode; fullWidth?: boolean }) => (
-    <div className={`flex flex-col gap-1 ${fullWidth ? "col-span-full" : ""}`}>
-      <span className="text-xs text-gray-400">{label}</span>
-      <span className="text-sm text-gray-900 font-medium">{value}</span>
+  const InfoItem = ({ label, value, icon }: { label: string; value: React.ReactNode; icon?: React.ReactNode }) => (
+    <div className="flex items-start gap-3 py-2">
+      {icon && <span className="text-gray-400 mt-0.5">{icon}</span>}
+      <div className="flex flex-col gap-0.5">
+        <span className="text-xs text-gray-400">{label}</span>
+        <span className="text-sm text-gray-900 font-medium">{value}</span>
+      </div>
     </div>
   );
 
@@ -61,7 +61,7 @@ export default function ReviewStep({ formData, onSubmit, onGoToStep }: ReviewSte
         <div>
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Kiểm tra lại hồ sơ</h1>
           <p className="text-sm text-gray-500 leading-relaxed">
-            Vui lòng xem lại tất cả thông tin bạn đã cung cấp trước khi gửi hồ sơ để chúng tôi xét duyệt.
+            Vui lòng xem lại tất cả thông tin trước khi gửi hồ sơ đăng ký đối tác.
           </p>
         </div>
 
@@ -70,46 +70,47 @@ export default function ReviewStep({ formData, onSubmit, onGoToStep }: ReviewSte
           <div className="flex items-center justify-between mb-5 pb-4 border-b border-gray-100">
             <div className="flex items-center gap-2">
               <UserOutlined className="text-lg text-[#1890ff]" />
-              <h3 className="text-base font-semibold text-gray-900 m-0">Thông tin tài khoản</h3>
+              <h3 className="text-base font-semibold text-gray-900 m-0">Tài khoản đăng nhập</h3>
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <InfoItem label="Email đăng ký" value={user?.email || "nguyen.van.a@example.com"} />
-            <InfoItem label="Mật khẩu" value="••••••••••" />
-          </div>
+          <InfoItem label="Email đăng nhập" value={user?.email || "—"} icon={<MailOutlined />} />
         </div>
 
-        {/* Personal Info */}
+        {/* Contact Info */}
         <div className="bg-white border border-gray-200 rounded-xl p-6">
           <div className="flex items-center justify-between mb-5 pb-4 border-b border-gray-100">
             <div className="flex items-center gap-2">
-              <TeamOutlined className="text-lg text-[#1890ff]" />
-              <h3 className="text-base font-semibold text-gray-900 m-0">Thông tin cá nhân & Liên hệ</h3>
+              <MailOutlined className="text-lg text-[#1890ff]" />
+              <h3 className="text-base font-semibold text-gray-900 m-0">Thông tin liên hệ & Định danh</h3>
             </div>
             <EditBtn step={0} />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-            <InfoItem label="Họ và tên" value={personal.fullName} />
-            <InfoItem label="Số điện thoại" value={personal.phone} />
-            <InfoItem label="Loại tài khoản" value={<Tag color="blue">{personal.accountType === "personal" ? "Cá nhân" : "Doanh nghiệp"}</Tag>} />
-            <InfoItem label="Địa chỉ thường trú" value={`${personal.addressDetail}, ${personal.district}, ${personal.province}`} />
+          <div className="flex flex-col divide-y divide-gray-50">
+            <InfoItem label="Email CSKH" value={personal.supportEmail} icon={<MailOutlined />} />
+            <InfoItem label="Số điện thoại kinh doanh" value={personal.businessPhone} icon={<PhoneOutlined />} />
+            <InfoItem label="Số CCCD / CMND" value={personal.identityCardNumber} icon={<IdcardOutlined />} />
           </div>
         </div>
 
-        {/* KYC */}
+        {/* KYC & Business License */}
         <div className="bg-white border border-gray-200 rounded-xl p-6">
           <div className="flex items-center justify-between mb-5 pb-4 border-b border-gray-100">
             <div className="flex items-center gap-2">
               <SafetyCertificateOutlined className="text-lg text-[#1890ff]" />
-              <h3 className="text-base font-semibold text-gray-900 m-0">Xác minh danh tính (KYC)</h3>
+              <h3 className="text-base font-semibold text-gray-900 m-0">Xác minh & Giấy phép</h3>
             </div>
             <EditBtn step={1} />
           </div>
-          <div className="flex gap-4 flex-wrap">
+
+          {/* Business License Number */}
+          <InfoItem label="Số giấy phép kinh doanh" value={verification.businessLicenseNumber} icon={<FileProtectOutlined />} />
+
+          {/* File Previews */}
+          <div className="flex gap-4 flex-wrap mt-4">
             {[
-              { url: frontUrl, label: "Mặt trước CCCD", icon: <SafetyCertificateOutlined /> },
-              { url: backUrl, label: "Mặt sau CCCD", icon: <SafetyCertificateOutlined /> },
-              { url: selfieUrl, label: "Ảnh chân dung", icon: <UserOutlined /> },
+              { url: frontUrl, label: "Mặt trước CCCD", icon: <IdcardOutlined /> },
+              { url: backUrl, label: "Mặt sau CCCD", icon: <IdcardOutlined /> },
+              { url: licenseUrl, label: "Giấy phép KD", icon: <FileProtectOutlined /> },
             ].map((item) => (
               <div key={item.label} className="flex flex-col items-center gap-2">
                 <div className="w-[140px] h-[100px] rounded-[10px] bg-gradient-to-br from-green-100 to-green-200 flex items-center justify-center relative overflow-hidden">
@@ -127,24 +128,6 @@ export default function ReviewStep({ formData, onSubmit, onGoToStep }: ReviewSte
                 <span className="text-xs text-gray-500">{item.label}</span>
               </div>
             ))}
-          </div>
-        </div>
-
-        {/* Payment Info */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-5 pb-4 border-b border-gray-100">
-            <div className="flex items-center gap-2">
-              <CreditCardOutlined className="text-lg text-[#1890ff]" />
-              <h3 className="text-base font-semibold text-gray-900 m-0">Thông tin nhận thanh toán</h3>
-            </div>
-            <EditBtn step={2} />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-            <InfoItem label="Chủ tài khoản" value={bank.accountHolder} />
-            <InfoItem label="Tên ngân hàng" value={bankLabel} />
-            <InfoItem label="Số tài khoản" value={bank.accountNumber} />
-            <InfoItem label="Chi nhánh" value={bank.branch || "—"} />
-            <InfoItem label="Loại tiền tệ" value={bank.currency} fullWidth />
           </div>
         </div>
       </div>
@@ -172,11 +155,6 @@ export default function ReviewStep({ formData, onSubmit, onGoToStep }: ReviewSte
                 về việc thu thập và xử lý dữ liệu cá nhân.
               </span>
             </Checkbox>
-            <Checkbox checked={agreeNotifications} onChange={(e) => setAgreeNotifications(e.target.checked)}>
-              <span className="text-[13px] text-gray-700 leading-relaxed">
-                Nhận thông báo về trang thái hồ sơ và cập nhật quan trọng từ hệ thống qua Email/SMS.
-              </span>
-            </Checkbox>
           </div>
 
           <div className="flex items-center gap-2 px-3.5 py-2.5 bg-blue-100 rounded-lg mb-4">
@@ -192,13 +170,11 @@ export default function ReviewStep({ formData, onSubmit, onGoToStep }: ReviewSte
               block
               size="large"
               className="!rounded-[10px] !font-semibold !h-11 !bg-[#1890ff] !border-[#1890ff]"
-              disabled={!agreeTerms || !agreePrivacy}
+              disabled={!agreeTerms || !agreePrivacy || submitting}
               onClick={onSubmit}
+              loading={submitting}
             >
-              Gửi hồ sơ để duyệt
-            </Button>
-            <Button block size="large" className="!rounded-[10px] !font-medium !h-11 !text-gray-600 !border-gray-300">
-              Lưu tạm & Hoàn tất sau
+              {submitting ? "Đang gửi hồ sơ..." : "Gửi hồ sơ để duyệt"}
             </Button>
           </div>
 
