@@ -7,6 +7,7 @@ import {
   UserOutlined,
 } from "@ant-design/icons";
 import { useAuth } from "@/contexts/AuthContext";
+import Footer from "@/components/Footer";
 
 export default function RegistrationLayout({
   children,
@@ -14,17 +15,17 @@ export default function RegistrationLayout({
   children: React.ReactNode;
 }) {
   const { user, isLoggedIn } = useAuth();
-
+  console.log("User in RegistrationLayout:", user, "IsLoggedIn:", isLoggedIn);
   return (
     <div className="min-h-screen flex flex-col bg-[#f7f8fa]">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-[1200px] mx-auto px-6 flex items-center justify-between h-[64px]">
           <Link href="/" className="flex items-center gap-2 no-underline">
-            <div className="w-8 h-8 bg-[#1890ff] rounded-full flex items-center justify-center">
+            <div className="w-8 h-8 bg-[#2DD4A8] rounded-full flex items-center justify-center">
               <span className="text-white font-bold text-sm">H</span>
             </div>
-            <span className="text-lg font-bold text-[#1890ff]">
+            <span className="text-lg font-bold text-[#2DD4A8]">
               StayHub
             </span>
           </Link>
@@ -33,7 +34,7 @@ export default function RegistrationLayout({
             <Button
               type="text"
               icon={<QuestionCircleOutlined />}
-              className="text-sm text-gray-600 hover:text-[#1890ff]"
+              className="text-sm text-gray-600 hover:text-[#2DD4A8]"
             >
               Hỗ trợ & FAQ
             </Button>
@@ -41,7 +42,7 @@ export default function RegistrationLayout({
               size={36}
               icon={!isLoggedIn ? <UserOutlined /> : undefined}
               src={user?.avatarUrl}
-              className={isLoggedIn ? "bg-[#1890ff]" : "bg-gray-400"}
+              className={isLoggedIn ? "bg-[#2DD4A8]" : "bg-gray-400"}
             >
               {isLoggedIn && !user?.avatarUrl
                 ? user?.fullName?.charAt(0).toUpperCase()
@@ -55,33 +56,7 @@ export default function RegistrationLayout({
       <main className="flex-1">{children}</main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-200">
-        <div className="max-w-[1200px] mx-auto px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-2">
-          <p className="text-xs text-gray-400 m-0">
-            © 2026 StayHub Host. Bảo lưu mọi quyền.
-          </p>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/"
-              className="text-xs text-gray-500 no-underline hover:text-[#1890ff]"
-            >
-              Điều khoản
-            </Link>
-            <Link
-              href="/"
-              className="text-xs text-gray-500 no-underline hover:text-[#1890ff]"
-            >
-              Bảo mật
-            </Link>
-            <Link
-              href="/"
-              className="text-xs text-gray-500 no-underline hover:text-[#1890ff]"
-            >
-              Cookie Policy
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

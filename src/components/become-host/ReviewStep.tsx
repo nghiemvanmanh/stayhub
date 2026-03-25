@@ -23,7 +23,6 @@ interface ReviewStepProps {
   onGoToStep: (step: number) => void;
   submitting?: boolean;
 }
-
 export default function ReviewStep({ formData, onSubmit, onGoToStep, submitting }: ReviewStepProps) {
   const { user } = useAuth();
   const [agreeTerms, setAgreeTerms] = useState(false);
@@ -37,7 +36,7 @@ export default function ReviewStep({ formData, onSubmit, onGoToStep, submitting 
 
   const EditBtn = ({ step }: { step: number }) => (
     <button
-      className="bg-transparent border-none text-[#1890ff] text-[13px] font-medium cursor-pointer flex items-center gap-1 px-2 py-1 rounded-md transition-colors hover:bg-blue-50"
+      className="bg-transparent border-none text-[#2DD4A8] text-[13px] font-medium cursor-pointer flex items-center gap-1 px-2 py-1 rounded-md transition-colors hover:bg-blue-50"
       onClick={() => onGoToStep(step)}
     >
       <EditOutlined /> Chỉnh sửa
@@ -69,7 +68,7 @@ export default function ReviewStep({ formData, onSubmit, onGoToStep, submitting 
         <div className="bg-white border border-gray-200 rounded-xl p-6">
           <div className="flex items-center justify-between mb-5 pb-4 border-b border-gray-100">
             <div className="flex items-center gap-2">
-              <UserOutlined className="text-lg text-[#1890ff]" />
+              <UserOutlined className="text-lg text-[#2DD4A8]" />
               <h3 className="text-base font-semibold text-gray-900 m-0">Tài khoản đăng nhập</h3>
             </div>
           </div>
@@ -80,7 +79,7 @@ export default function ReviewStep({ formData, onSubmit, onGoToStep, submitting 
         <div className="bg-white border border-gray-200 rounded-xl p-6">
           <div className="flex items-center justify-between mb-5 pb-4 border-b border-gray-100">
             <div className="flex items-center gap-2">
-              <MailOutlined className="text-lg text-[#1890ff]" />
+              <MailOutlined className="text-lg text-[#2DD4A8]" />
               <h3 className="text-base font-semibold text-gray-900 m-0">Thông tin liên hệ & Định danh</h3>
             </div>
             <EditBtn step={0} />
@@ -96,7 +95,7 @@ export default function ReviewStep({ formData, onSubmit, onGoToStep, submitting 
         <div className="bg-white border border-gray-200 rounded-xl p-6">
           <div className="flex items-center justify-between mb-5 pb-4 border-b border-gray-100">
             <div className="flex items-center gap-2">
-              <SafetyCertificateOutlined className="text-lg text-[#1890ff]" />
+              <SafetyCertificateOutlined className="text-lg text-[#2DD4A8]" />
               <h3 className="text-base font-semibold text-gray-900 m-0">Xác minh & Giấy phép</h3>
             </div>
             <EditBtn step={1} />
@@ -135,31 +134,32 @@ export default function ReviewStep({ formData, onSubmit, onGoToStep, submitting 
       {/* Right Column - Sidebar */}
       <div className="flex flex-col gap-5 sticky top-[100px] max-lg:static">
         {/* Confirm & Commit */}
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-5">
+        <div className="border border-gray-200 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-3.5">
-            <CheckCircleOutlined className="text-lg text-[#1890ff]" />
+            <CheckCircleOutlined className="text-lg text-[#2DD4A8]" />
             <h4 className="text-[15px] font-semibold text-gray-900 m-0">Xác nhận & Cam kết</h4>
           </div>
-          <div className="flex flex-col gap-3 mb-4">
-            <Checkbox checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)}>
-              <span className="text-[13px] text-gray-700 leading-relaxed">
-                Tôi đồng ý với{" "}
-                <a href="/" className="text-[#1890ff] font-medium no-underline hover:underline">Điều khoản Dịch vụ</a>{" "}
-                cho Chủ nhà của HomestayBooking.
-              </span>
+          <div className="flex gap-3 mb-4">
+            <Checkbox  checked={agreeTerms} onChange={(e) => setAgreeTerms(e.target.checked)}>
             </Checkbox>
+            <span className="text-[13px] text-gray-700 leading-relaxed">
+              Tôi đồng ý với{" "}
+              <a href="/" className="text-[#2DD4A8] font-medium no-underline hover:underline">Điều khoản Dịch vụ</a>{" "}
+              cho Chủ nhà của HomestayBooking.
+            </span>
+            </div>
+             <div className="flex gap-3 mb-4">
             <Checkbox checked={agreePrivacy} onChange={(e) => setAgreePrivacy(e.target.checked)}>
-              <span className="text-[13px] text-gray-700 leading-relaxed">
-                Tôi đã đọc và hiểu{" "}
-                <a href="/" className="text-[#1890ff] font-medium no-underline hover:underline">Chính sách Bảo mật</a>{" "}
-                về việc thu thập và xử lý dữ liệu cá nhân.
-              </span>
             </Checkbox>
+            <span className="text-[13px] text-gray-700 leading-relaxed">
+                Tôi đã đọc và hiểu{" "}
+                <a href="/" className="text-[#2DD4A8] font-medium no-underline hover:underline">Chính sách Bảo mật</a>{" "}
+                về việc thu thập và xử lý dữ liệu cá nhân.
+            </span>
           </div>
-
-          <div className="flex items-center gap-2 px-3.5 py-2.5 bg-blue-100 rounded-lg mb-4">
-            <ClockCircleOutlined className="text-sm text-[#1890ff] shrink-0" />
-            <span className="text-xs text-[#1890ff] font-medium">
+          <div className="flex items-center gap-2 py-2.5 rounded-lg mb-4">
+            <ClockCircleOutlined className="text-sm text-[#2DD4A8] shrink-0" />
+            <span className="text-xs text-black font-medium">
               Thời gian xét duyệt dự kiến: 24 - 48 giờ làm việc.
             </span>
           </div>
@@ -169,7 +169,7 @@ export default function ReviewStep({ formData, onSubmit, onGoToStep, submitting 
               type="primary"
               block
               size="large"
-              className="!rounded-[10px] !font-semibold !h-11 !bg-[#1890ff] !border-[#1890ff]"
+              className="!rounded-[10px] !font-semibold !h-11 !bg-[#2DD4A8] !border-[#2DD4A8]"
               disabled={!agreeTerms || !agreePrivacy || submitting}
               onClick={onSubmit}
               loading={submitting}
@@ -195,7 +195,7 @@ export default function ReviewStep({ formData, onSubmit, onGoToStep, submitting 
               'Bạn có thể cập nhật thông tin sau khi hồ sơ được duyệt.',
               'Liên hệ hỗ trợ: 1900 1234 (8:00 - 22:00).',
             ].map((tip, i) => (
-              <li key={i} className="text-[13px] text-gray-600 leading-relaxed py-1 pl-4 relative before:content-['•'] before:absolute before:left-0 before:text-[#1890ff] before:font-bold">
+              <li key={i} className="text-[13px] text-gray-600 leading-relaxed py-1 pl-4 relative before:content-['•'] before:absolute before:left-0 before:text-[#2DD4A8] before:font-bold">
                 {tip}
               </li>
             ))}

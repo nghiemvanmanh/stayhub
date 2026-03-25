@@ -15,12 +15,12 @@ import {
   type VerificationData,
   type PresignedUrlRequest,
   type PresignedUrlResponse,
-} from "@/components/become-partner/registration/registrationData";
-import VerificationStep from "@/components/become-partner/registration/VerificationStep";
-import PersonalInfoStep from "@/components/become-partner/registration/PersonalInfoStep";
-import ReviewStep from "@/components/become-partner/registration/ReviewStep";
-import SuccessStep from "@/components/become-partner/registration/SuccessStep";
-import { fetcher } from "../../../../../utils/fetcher";
+} from "@/components/become-host/registrationData";
+import VerificationStep from "@/components/become-host/VerificationStep";
+import PersonalInfoStep from "@/components/become-host/PersonalInfoStep";
+import ReviewStep from "@/components/become-host/ReviewStep";
+import SuccessStep from "@/components/become-host/SuccessStep";
+import { fetcher } from "../../../../utils/fetcher";
 
 const stepItems = [
   { title: "Cá nhân", icon: <SolutionOutlined /> },
@@ -135,7 +135,7 @@ export default function PartnerRegistrationPage() {
     }
   };
 
-  const handleStepClick = (step: number) => {
+  const handleStepChange = (step: number) => {
     if (step <= highestStep) {
       setCurrentStep(step);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -251,11 +251,12 @@ export default function PartnerRegistrationPage() {
           <div className="max-w-[700px] mx-auto px-6">
             <Steps
               current={currentStep}
+              onChange={handleStepChange}
               items={stepItems.map((item, index) => ({
                 ...item,
                 className:
                   index <= highestStep ? "cursor-pointer" : "cursor-not-allowed",
-                onClick: () => handleStepClick(index),
+                disabled: index > highestStep,
               }))}
             />
           </div>

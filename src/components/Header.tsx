@@ -34,7 +34,14 @@ export default function Header() {
       messageApi.success("Đã đăng xuất thành công!");
     }
   };
-
+  const handleBecomeHost = () => {
+    if (!isLoggedIn) {
+      messageApi.warning("Vui lòng đăng nhập để trở thành đối tác homestay.");
+      setLoginOpen(true);
+    } else {
+      router.push("/become-host");
+    }
+  };
   const loggedInItems: MenuProps["items"] = [
     {
       key: "user-info",
@@ -125,7 +132,7 @@ export default function Header() {
               <Button
                 type="text"
                 className="hidden md:inline-flex text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-full"
-                onClick={() => router.push("/become-partner/registration")}
+                onClick={handleBecomeHost}
               >
                 Trở thành đối tác homestay
               </Button>

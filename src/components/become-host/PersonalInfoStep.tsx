@@ -35,7 +35,7 @@ export default function PersonalInfoStep({
         {/* Contact Info */}
         <div className="bg-white border border-gray-200 rounded-xl p-6">
           <div className="flex items-center gap-2 mb-5">
-            <MailOutlined className="text-lg text-[#1890ff]" />
+            <MailOutlined className="text-lg text-[#2DD4A8]" />
             <h3 className="text-base font-semibold text-gray-900 m-0">Thông tin liên hệ</h3>
           </div>
           <div className="flex flex-col gap-4">
@@ -75,7 +75,7 @@ export default function PersonalInfoStep({
         {/* Identity Card Number */}
         <div className="bg-white border border-gray-200 rounded-xl p-6">
           <div className="flex items-center gap-2 mb-5">
-            <IdcardOutlined className="text-lg text-[#1890ff]" />
+            <IdcardOutlined className="text-lg text-[#2DD4A8]" />
             <h3 className="text-base font-semibold text-gray-900 m-0">Thông tin định danh</h3>
           </div>
           <div className="flex flex-col gap-1.5">
@@ -113,7 +113,7 @@ export default function PersonalInfoStep({
             ].map((tip, i) => (
               <li
                 key={i}
-                className="text-[13px] text-gray-600 leading-relaxed py-1 pl-4 relative before:content-['•'] before:absolute before:left-0 before:text-[#1890ff] before:font-bold"
+                className="text-[13px] text-gray-600 leading-relaxed py-1 pl-4 relative before:content-['•'] before:absolute before:left-0 before:text-[#2DD4A8] before:font-bold"
               >
                 {tip}
               </li>
@@ -123,7 +123,7 @@ export default function PersonalInfoStep({
 
         <div className="bg-white border border-gray-200 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-3.5">
-            <SafetyCertificateOutlined className="text-lg text-[#1890ff]" />
+            <SafetyCertificateOutlined className="text-lg text-[#2DD4A8]" />
             <h4 className="text-[15px] font-semibold text-gray-900 m-0">Tại sao phải xác minh?</h4>
           </div>
           <p className="text-[13px] text-gray-600 leading-relaxed m-0">

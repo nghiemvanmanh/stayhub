@@ -50,7 +50,7 @@ export default function SuccessStep() {
         <div className="inline-flex items-center gap-3 px-5 py-2.5 bg-gray-50 rounded-full border border-gray-200">
           <span className="text-xs text-gray-400 font-medium tracking-wide">MÃ HỒ SƠ:</span>
           <span className="text-sm font-bold text-gray-900 font-mono">{applicationId}</span>
-          <span className="text-xs font-medium text-[#1890ff] px-2.5 py-0.5 bg-blue-50 rounded-xl border border-blue-200">
+          <span className="text-xs font-medium text-[#2DD4A8] px-2.5 py-0.5 bg-blue-50 rounded-xl border border-blue-200">
             Đang chờ duyệt
           </span>
         </div>
@@ -59,7 +59,7 @@ export default function SuccessStep() {
       {/* Review Process */}
       <div className="bg-white border border-gray-200 rounded-xl p-6">
         <div className="flex items-center gap-2 mb-6 flex-wrap">
-          <ClockCircleOutlined className="text-lg text-[#1890ff]" />
+          <ClockCircleOutlined className="text-lg text-[#2DD4A8]" />
           <h3 className="text-base font-semibold text-gray-900 m-0 flex-1">Quy trình xem xét hồ sơ</h3>
           <span className="text-[13px] text-gray-400 italic">Thời gian dự kiến: 1-3 ngày làm việc</span>
         </div>
@@ -69,17 +69,17 @@ export default function SuccessStep() {
       {/* Info Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="bg-white border border-gray-200 rounded-xl py-7 px-6 text-center">
-          <ClockCircleOutlined className="text-[28px] text-[#1890ff] mb-3" />
+          <ClockCircleOutlined className="text-[28px] text-[#2DD4A8] mb-3" />
           <h4 className="text-base font-semibold text-gray-900 mb-2">Theo dõi trạng thái</h4>
           <p className="text-[13px] text-gray-500 mb-4 leading-relaxed">
             Cập nhật tiến độ phê duyệt hồ sơ của bạn theo thời gian thực.
           </p>
-          <Button type="primary" block className="!rounded-[10px] !font-semibold !h-10 !bg-[#1890ff] !border-[#1890ff]">
+          <Button type="primary" block className="!rounded-[10px] !font-semibold !h-10 !bg-[#2DD4A8] !border-[#2DD4A8]">
             Xem chi tiết hồ sơ
           </Button>
         </div>
         <div className="bg-white border border-gray-200 rounded-xl py-7 px-6 text-center">
-          <MessageOutlined className="text-[28px] text-[#1890ff] mb-3" />
+          <MessageOutlined className="text-[28px] text-[#2DD4A8] mb-3" />
           <h4 className="text-base font-semibold text-gray-900 mb-2">Cần hỗ trợ?</h4>
           <p className="text-[13px] text-gray-500 mb-4 leading-relaxed">
             Mọi thắc mắc về quy trình đăng ký, vui lòng liên hệ đội ngũ hỗ trợ.
@@ -102,7 +102,7 @@ export default function SuccessStep() {
             <Link
               key={link.label}
               href="/"
-              className="text-[13px] text-[#1890ff] no-underline flex items-center gap-1.5 hover:underline"
+              className="text-[13px] text-[#2DD4A8] no-underline flex items-center gap-1.5 hover:underline"
             >
               <FileTextOutlined /> {link.label}
             </Link>
@@ -112,7 +112,7 @@ export default function SuccessStep() {
 
       {/* Back to Home */}
       <div className="text-center py-2">
-        <Link href="/" className="text-sm text-gray-500 no-underline hover:text-[#1890ff]">
+        <Link href="/" className="text-sm text-gray-500 no-underline hover:text-[#2DD4A8]">
           Quay về Trang chủ
         </Link>
       </div>

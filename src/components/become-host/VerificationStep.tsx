@@ -29,7 +29,7 @@ function ImagePreview({
 }) {
   const url = useMemo(() => URL.createObjectURL(file), [file]);
   return (
-    <div className="relative rounded-xl overflow-hidden border-2 border-[#1890ff] bg-blue-50 min-h-[180px] flex items-center justify-center">
+    <div className="relative rounded-xl overflow-hidden border-2 border-[#2DD4A8] bg-blue-50 min-h-[180px] flex items-center justify-center">
       <img src={url} alt={label} className="w-full h-full min-h-[180px] max-h-[240px] object-cover block" />
       <button
         className="absolute top-2 right-2 w-8 h-8 rounded-full bg-black/50 border-none text-white text-sm cursor-pointer flex items-center justify-center transition-colors hover:bg-red-500/90 z-[2]"
@@ -73,10 +73,10 @@ export default function VerificationStep({
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <IdcardOutlined className="text-lg text-[#1890ff]" />
+              <IdcardOutlined className="text-lg text-[#2DD4A8]" />
               <h3 className="text-base font-semibold text-gray-900 m-0">Giấy tờ tùy thân (CCCD/CMND)</h3>
             </div>
-            <span className="text-xs font-medium text-[#1890ff]">Bắt buộc</span>
+            <span className="text-xs font-medium text-[#2DD4A8]">Bắt buộc</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -89,7 +89,7 @@ export default function VerificationStep({
                 accept="image/*,.pdf"
                 beforeUpload={() => false}
                 onChange={(info) => handleFileChange("frontCCCD", info)}
-                className="!rounded-xl !border-2 !border-dashed !border-gray-300 !bg-gray-50 !min-h-[180px] hover:!border-[#1890ff] hover:!bg-blue-50"
+                className="!rounded-xl !border-2 !border-dashed !border-gray-300 !bg-gray-50 !min-h-[180px] hover:!border-[#2DD4A8] hover:!bg-blue-50"
               >
                 <div className="flex flex-col items-center text-center gap-1">
                   <div className="text-4xl text-gray-300 mb-2"><IdcardOutlined /></div>
@@ -97,7 +97,7 @@ export default function VerificationStep({
                   <p className="text-xs text-gray-400 m-0 leading-relaxed max-w-[200px]">
                     Ảnh chụp rõ ràng mặt trước, thấy rõ ảnh và thông tin
                   </p>
-                  <p className="text-[13px] text-[#1890ff] font-medium mt-1 m-0">Nhấp để tải lên</p>
+                  <p className="text-[13px] text-[#2DD4A8] font-medium mt-1 m-0">Nhấp để tải lên</p>
                 </div>
               </Upload.Dragger>
             )}
@@ -111,7 +111,7 @@ export default function VerificationStep({
                 accept="image/*,.pdf"
                 beforeUpload={() => false}
                 onChange={(info) => handleFileChange("backCCCD", info)}
-                className="!rounded-xl !border-2 !border-dashed !border-gray-300 !bg-gray-50 !min-h-[180px] hover:!border-[#1890ff] hover:!bg-blue-50"
+                className="!rounded-xl !border-2 !border-dashed !border-gray-300 !bg-gray-50 !min-h-[180px] hover:!border-[#2DD4A8] hover:!bg-blue-50"
               >
                 <div className="flex flex-col items-center text-center gap-1">
                   <div className="text-4xl text-gray-300 mb-2"><CameraOutlined /></div>
@@ -119,7 +119,7 @@ export default function VerificationStep({
                   <p className="text-xs text-gray-400 m-0 leading-relaxed max-w-[200px]">
                     Ảnh chụp rõ ràng mặt sau, thấy rõ mã vạch/chip
                   </p>
-                  <p className="text-[13px] text-[#1890ff] font-medium mt-1 m-0">Nhấp để tải lên</p>
+                  <p className="text-[13px] text-[#2DD4A8] font-medium mt-1 m-0">Nhấp để tải lên</p>
                 </div>
               </Upload.Dragger>
             )}
@@ -130,10 +130,10 @@ export default function VerificationStep({
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <FileProtectOutlined className="text-lg text-[#1890ff]" />
+              <FileProtectOutlined className="text-lg text-[#2DD4A8]" />
               <h3 className="text-base font-semibold text-gray-900 m-0">Giấy phép kinh doanh</h3>
             </div>
-            <span className="text-xs font-medium text-[#1890ff]">Bắt buộc</span>
+            <span className="text-xs font-medium text-[#2DD4A8]">Bắt buộc</span>
           </div>
           <p className="text-xs text-gray-500 m-0 -mt-2 leading-relaxed">
             Theo quy định pháp luật, kinh doanh lưu trú cần có giấy phép kinh doanh (Hộ kinh doanh / Doanh nghiệp).
@@ -163,7 +163,7 @@ export default function VerificationStep({
               accept="image/*,.pdf"
               beforeUpload={() => false}
               onChange={(info) => handleFileChange("businessLicense", info)}
-              className="!rounded-xl !border-2 !border-dashed !border-gray-300 !bg-gray-50 !min-h-[180px] hover:!border-[#1890ff] hover:!bg-blue-50"
+              className="!rounded-xl !border-2 !border-dashed !border-gray-300 !bg-gray-50 !min-h-[180px] hover:!border-[#2DD4A8] hover:!bg-blue-50"
             >
               <div className="flex flex-col items-center text-center gap-1">
                 <div className="text-[40px] text-gray-300 mb-2"><FileProtectOutlined /></div>
@@ -171,7 +171,7 @@ export default function VerificationStep({
                 <p className="text-xs text-gray-400 m-0 leading-relaxed max-w-[240px]">
                   Ảnh chụp hoặc scan rõ ràng giấy phép kinh doanh lưu trú (PDF, JPG, PNG)
                 </p>
-                <p className="text-[13px] text-[#1890ff] font-medium mt-1 m-0">Nhấp để tải lên</p>
+                <p className="text-[13px] text-[#2DD4A8] font-medium mt-1 m-0">Nhấp để tải lên</p>
               </div>
             </Upload.Dragger>
           )}
@@ -180,12 +180,12 @@ export default function VerificationStep({
         {/* Consent */}
         <div className="bg-gray-50 border border-gray-200 rounded-xl p-5">
           <Checkbox checked={data.agreed} onChange={(e) => onChange({ agreed: e.target.checked })}>
-            <span className="text-[13px] text-gray-700 leading-relaxed">
-              Tôi đồng ý để HomestayBooking thu thập, xử lý và lưu trữ thông
-              tin định danh cá nhân của tôi theo{" "}
-              <a href="/" className="text-[#1890ff] font-medium no-underline hover:underline">Chính sách bảo mật</a>.
-            </span>
           </Checkbox>
+          <span className="text-[13px] ml-2 text-gray-700 leading-relaxed">
+            Tôi đồng ý để HomestayBooking thu thập, xử lý và lưu trữ thông
+            tin định danh cá nhân của tôi theo{" "}
+            <a href="/" className="text-[#2DD4A8] font-medium no-underline hover:underline">Chính sách bảo mật</a>.
+          </span>
           <p className="text-xs text-gray-400 mt-2 ml-6 italic m-0">
             * Thông tin của bạn được mã hóa AES-256 và bảo vệ nghiêm ngặt.
           </p>
@@ -208,7 +208,7 @@ export default function VerificationStep({
               'Giấy tờ phải còn hạn sử dụng ít nhất 3 tháng.',
               'Giấy phép kinh doanh phải rõ số đăng ký và tên chủ sở hữu.',
             ].map((tip, i) => (
-              <li key={i} className="text-[13px] text-gray-600 leading-relaxed py-1 pl-4 relative before:content-['•'] before:absolute before:left-0 before:text-[#1890ff] before:font-bold">
+              <li key={i} className="text-[13px] text-gray-600 leading-relaxed py-1 pl-4 relative before:content-['•'] before:absolute before:left-0 before:text-[#2DD4A8] before:font-bold">
                 {tip}
               </li>
             ))}
@@ -217,7 +217,7 @@ export default function VerificationStep({
 
         <div className="bg-white border border-gray-200 rounded-xl p-5">
           <div className="flex items-center gap-2 mb-3.5">
-            <LockOutlined className="text-lg text-[#1890ff]" />
+            <LockOutlined className="text-lg text-[#2DD4A8]" />
             <h4 className="text-[15px] font-semibold text-gray-900 m-0">Bảo mật tuyệt đối</h4>
           </div>
           <p className="text-[13px] text-gray-600 leading-relaxed m-0">

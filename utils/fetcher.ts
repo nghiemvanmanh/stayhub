@@ -1,3 +1,4 @@
+import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY } from "@/constants/cookie";
 import axios from "axios";
 import Cookies from "js-cookie";
 
@@ -8,7 +9,8 @@ export const fetcher = axios.create({
 
 fetcher.interceptors.request.use(
   (config) => {
-    const token = Cookies.get("accessToken");
+    const token = Cookies.get(ACCESS_TOKEN_KEY);
+    console.log("Attaching token to request:", token);
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }
@@ -26,7 +28,7 @@ fetcher.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
-        const refreshToken = Cookies.get("refreshToken");
+        const refreshToken = Cookies.get(REFRESH_TOKEN_KEY);
         if (refreshToken) {
           const response = await axios.post(
             `${baseURL}/auth/refresh-token`,
@@ -36,13 +38,13 @@ fetcher.interceptors.response.use(
             }
           );
           const { accessToken } = response.data;
-          Cookies.set("accessToken", accessToken);
+          Cookies.set(ACCESS_TOKEN_KEY, accessToken);
           originalRequest.headers["Authorization"] = `Bearer ${accessToken}`;
           return fetcher(originalRequest);
         }
       } catch (refreshError) {
-        Cookies.remove("accessToken");
-        Cookies.remove("refreshToken");
+        Cookies.remove(ACCESS_TOKEN_KEY);
+        Cookies.remove(REFRESH_TOKEN_KEY);
         return Promise.reject(refreshError);
       }
     }
