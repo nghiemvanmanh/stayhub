@@ -11,7 +11,7 @@ const PROTECTED_ROUTES = ["/profile", "/bookings", "/host"];
 // Các route chỉ dành cho chưa đăng nhập (đã login không vào được)
 const AUTH_ONLY_ROUTES = ["/auth/login", "/auth/register-guest"];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Đọc accessToken từ cookie (server-side)
