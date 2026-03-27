@@ -1,12 +1,11 @@
 "use client";
 
 import { useMemo } from "react";
-import { Input, Select, InputNumber, Skeleton } from "antd";
+import { Input, InputNumber, Select, Skeleton } from "antd";
 import { useQuery } from "@tanstack/react-query";
 import {
   HomeOutlined,
   EnvironmentOutlined,
-  TeamOutlined,
   BulbOutlined,
 } from "@ant-design/icons";
 import {
@@ -25,15 +24,6 @@ interface PropertyInfoStepProps {
 }
 
 export default function PropertyInfoStep({ data, onChange }: PropertyInfoStepProps) {
-  // Fetch categories from API
-  const { data: categories, isLoading: loadingCategories } = useQuery<CategoryItem[]>({
-    queryKey: ["public-categories"],
-    queryFn: async () => {
-      const res = await fetcher.get("/public/categories");
-      return res.data?.data ?? res.data;
-    },
-  });
-
   // Fetch rental types from API
   const { data: rentalTypes, isLoading: loadingRentalTypes } = useQuery<RentalTypeItem[]>({
     queryKey: ["public-rental-types"],
@@ -42,14 +32,14 @@ export default function PropertyInfoStep({ data, onChange }: PropertyInfoStepPro
       return res.data?.data ?? res.data;
     },
   });
-
-  const categoryOptions = useMemo(
-    () => (categories ?? []).filter((c) => c.isActive).map((c) => ({ value: c.id, label: c.name })),
-    [categories]
-  );
+  const categoryOptions = useMemo(() => {
+    if (!data.rentalTypeId || !rentalTypes) return [];
+    const selectedRentalType = rentalTypes.find(r => r.id === data.rentalTypeId);
+    return (selectedRentalType?.categoryResponses ?? []).map((c) => ({ value: c.id, label: c.name }));
+  }, [data.rentalTypeId, rentalTypes]);
 
   const rentalTypeOptions = useMemo(
-    () => (rentalTypes ?? []).filter((r) => r.isActive).map((r) => ({ value: r.id, label: r.name })),
+    () => (rentalTypes ?? []).map((r) => ({ value: r.id, label: r.name })),
     [rentalTypes]
   );
 
@@ -116,7 +106,7 @@ export default function PropertyInfoStep({ data, onChange }: PropertyInfoStepPro
                 <label className="text-[13px] font-medium text-gray-700">
                   Loại hình lưu trú <span className="text-red-500">*</span>
                 </label>
-                {loadingCategories ? (
+                {loadingRentalTypes ? (
                   <Skeleton.Input active size="large" block />
                 ) : (
                   <Select
@@ -125,6 +115,7 @@ export default function PropertyInfoStep({ data, onChange }: PropertyInfoStepPro
                     options={categoryOptions}
                     value={data.categoryId ?? undefined}
                     onChange={(v) => onChange({ categoryId: v })}
+                    disabled={!data.rentalTypeId || categoryOptions.length === 0}
                   />
                 )}
               </div>
@@ -140,7 +131,11 @@ export default function PropertyInfoStep({ data, onChange }: PropertyInfoStepPro
                     placeholder="Chọn hình thức"
                     options={rentalTypeOptions}
                     value={data.rentalTypeId ?? undefined}
-                    onChange={(v) => onChange({ rentalTypeId: v })}
+                    onChange={(v) => {
+                      if (v !== data.rentalTypeId) {
+                        onChange({ rentalTypeId: v, categoryId: null });
+                      }
+                    }}
                   />
                 )}
               </div>
@@ -218,36 +213,38 @@ export default function PropertyInfoStep({ data, onChange }: PropertyInfoStepPro
                 onChange={(e) => onChange({ addressDetail: e.target.value })}
               />
             </div>
-          </div>
-        </div>
-
-        {/* Capacity */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6">
-          <div className="flex items-center gap-2 mb-5">
-            <TeamOutlined className="text-lg text-[#2DD4A8]" />
-            <h3 className="text-base font-semibold text-gray-900 m-0">Sức chứa</h3>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            {[
-              { label: "Số khách tối đa", key: "maxGuests" as const, icon: "👥" },
-              { label: "Phòng ngủ", key: "numBedrooms" as const, icon: "🛏️" },
-              { label: "Giường", key: "numBeds" as const, icon: "🛌" },
-              { label: "Phòng tắm", key: "numBathrooms" as const, icon: "🚿" },
-            ].map((item) => (
-              <div key={item.key} className="flex flex-col gap-1.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
                 <label className="text-[13px] font-medium text-gray-700">
-                  {item.icon} {item.label}
+                  Vĩ độ (Latitude) <span className="text-red-500">*</span>
                 </label>
                 <InputNumber
                   size="large"
-                  min={1}
-                  max={50}
-                  value={data[item.key]}
-                  onChange={(v) => onChange({ [item.key]: v || 1 })}
                   className="!w-full"
+                  placeholder="Ví dụ: 10.762622"
+                  min={-90}
+                  max={90}
+                  step={0.000001}
+                  value={data.latitude}
+                  onChange={(v) => onChange({ latitude: v })}
                 />
               </div>
-            ))}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-medium text-gray-700">
+                  Kinh độ (Longitude) <span className="text-red-500">*</span>
+                </label>
+                <InputNumber
+                  size="large"
+                  className="!w-full"
+                  placeholder="Ví dụ: 106.660172"
+                  min={-180}
+                  max={180}
+                  step={0.000001}
+                  value={data.longitude}
+                  onChange={(v) => onChange({ longitude: v })}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -10,7 +10,6 @@ export const fetcher = axios.create({
 fetcher.interceptors.request.use(
   (config) => {
     const token = Cookies.get(ACCESS_TOKEN_KEY);
-    console.log("Attaching token to request:", token);
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`;
     }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Upload, Checkbox, Skeleton } from "antd";
 import type { UploadFile } from "antd";
 import { useQuery } from "@tanstack/react-query";
@@ -9,33 +9,22 @@ import {
   AppstoreOutlined,
   DeleteOutlined,
   BulbOutlined,
+  EditOutlined
 } from "@ant-design/icons";
 import {
-  Wifi,
-  Tv,
-  Microwave,
-  WashingMachine,
-  CircleParking,
-  Snowflake,
-  Briefcase,
-  WavesLadder,
-  Bath,
-  Aperture,
-  Drumstick,
-  Flame,
-  Dumbbell,
-  FireExtinguisher,
-  Disc3,
-  BriefcaseMedical,
-  Radar,
-  type LucideIcon,
+  Wifi, Tv, Microwave, WashingMachine, CircleParking, Snowflake, Briefcase,
+  WavesLadder, Bath, Aperture, Drumstick, Flame, Dumbbell, FireExtinguisher,
+  Disc3, BriefcaseMedical, Radar, type LucideIcon
 } from "lucide-react";
-import { type PropertyAmenitiesData, type AmenityItem } from "./registrationData";
+import { type PropertyAmenitiesData, type AmenityItem, type RoomData, type RentalTypeItem } from "./registrationData";
 import { fetcher } from "../../../utils/fetcher";
+import RoomModal from "./RoomModal";
 
 interface PropertyAmenitiesStepProps {
   data: PropertyAmenitiesData;
   onChange: (data: Partial<PropertyAmenitiesData>) => void;
+  rentalTypeId: number | null;
+  rentalTypes: RentalTypeItem[];
 }
 
 const amenityIconMap: Record<string, LucideIcon> = {
@@ -78,7 +67,14 @@ function ImageThumb({ file, onRemove, index }: { file: File; onRemove: () => voi
   );
 }
 
-export default function PropertyAmenitiesStep({ data, onChange }: PropertyAmenitiesStepProps) {
+export default function PropertyAmenitiesStep({ data, onChange, rentalTypeId, rentalTypes }: PropertyAmenitiesStepProps) {
+  const [roomModalVisible, setRoomModalVisible] = useState(false);
+  const [editingRoomIndex, setEditingRoomIndex] = useState<number | null>(null);
+
+  const isPrivateRoom = useMemo(() => {
+    const selectedType = rentalTypes.find(r => r.id === rentalTypeId);
+    return selectedType?.slug === "thue-theo-phong";
+  }, [rentalTypeId, rentalTypes]);
   // Fetch amenities from API
   const { data: amenities, isLoading: loadingAmenities } = useQuery<AmenityItem[]>({
     queryKey: ["public-amenities"],
@@ -87,7 +83,6 @@ export default function PropertyAmenitiesStep({ data, onChange }: PropertyAmenit
       return res.data?.data ?? res.data;
     },
   });
-
   const amenityList = amenities ?? [];
 
   const handleAmenityToggle = (amenityId: number) => {
@@ -103,6 +98,35 @@ export default function PropertyAmenitiesStep({ data, onChange }: PropertyAmenit
     const newImages = [...data.images];
     newImages.splice(index, 1);
     onChange({ images: newImages });
+  };
+
+  const openRoomModal = (index: number | null = null) => {
+    setEditingRoomIndex(index);
+    setRoomModalVisible(true);
+  };
+
+  const handleSaveRoom = (room: RoomData) => {
+    const newRooms = [...data.rooms];
+    if (editingRoomIndex !== null) {
+      newRooms[editingRoomIndex] = room;
+    } else {
+      newRooms.push(room);
+    }
+    onChange({ rooms: newRooms });
+    setRoomModalVisible(false);
+    setEditingRoomIndex(null);
+  };
+
+  const handleDeleteRoom = (index: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const newRooms = [...data.rooms];
+    newRooms.splice(index, 1);
+    onChange({ rooms: newRooms });
+  };
+
+  const handleCloseRoomModal = () => {
+    setRoomModalVisible(false);
+    setEditingRoomIndex(null);
   };
 
   return (
@@ -141,7 +165,7 @@ export default function PropertyAmenitiesStep({ data, onChange }: PropertyAmenit
                     className={`border-2 rounded-xl p-3 cursor-pointer transition-all text-center ${
                       isSelected
                         ? "border-[#2DD4A8] bg-blue-50 shadow-sm"
-                        : "border-gray-200 hover:border-blue-300"
+                        : "border-gray-200 hover:border-[#2DD4A8]"
                     }`}
                     onClick={() => handleAmenityToggle(amenity.id)}
                   >
@@ -207,6 +231,58 @@ export default function PropertyAmenitiesStep({ data, onChange }: PropertyAmenit
             </Upload.Dragger>
           )}
         </div>
+        {/* Rooms (Conditionally Rendered) */}
+        {isPrivateRoom && (
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <AppstoreOutlined className="text-lg text-[#2DD4A8]" />
+                <h3 className="text-base font-semibold text-gray-900 m-0">
+                  Thông tin phòng <span className="text-red-500">*</span>
+                </h3>
+              </div>
+              <span className="text-xs text-gray-400">Tối thiểu 2 phòng</span>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              {data.rooms.map((room, i) => (
+                <div key={i} className="flex gap-4 p-4 border border-gray-200 rounded-xl hover:border-[#2DD4A8] transition-colors cursor-pointer" onClick={() => openRoomModal(i)}>
+                  <div className="w-[120px] h-[90px] rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                    {room.images?.[0] ? (
+                      <img src={URL.createObjectURL(room.images[0])} alt={room.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400"><PictureOutlined className="text-2xl" /></div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0 flex flex-col justify-between">
+                    <div>
+                      <div className="flex justify-between items-start">
+                        <h4 className="text-[15px] font-semibold text-gray-900 m-0 truncate pr-2">{room.name}</h4>
+                        <button className="text-red-500 hover:text-red-600 border-none bg-transparent cursor-pointer p-0 shrink-0" onClick={(e) => handleDeleteRoom(i, e)}>
+                          <DeleteOutlined />
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-500 truncate m-0 mt-1">{room.description}</p>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-gray-600 mt-2">
+                      <span className="flex items-center gap-1">👥 {room.maxGuests}</span>
+                      <span className="flex items-center gap-1">🛌 {room.numBeds}</span>
+                      <span className="flex items-center gap-1">🚿 {room.numBathrooms}</span>
+                      <span className="font-semibold text-[#2DD4A8] ml-auto">{room.pricePerNight.toLocaleString()} ₫</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <button
+                className="w-full py-3 border-2 border-dashed border-[#2DD4A8] text-[#2DD4A8] rounded-xl font-medium bg-transparent cursor-pointer hover:bg-blue-50 transition-colors flex items-center justify-center gap-2"
+                onClick={() => openRoomModal(null)}
+              >
+                + Thêm phòng mới
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Sidebar */}
@@ -232,6 +308,15 @@ export default function PropertyAmenitiesStep({ data, onChange }: PropertyAmenit
           </ul>
         </div>
       </div>
+
+      <RoomModal
+        visible={roomModalVisible}
+        onCancel={handleCloseRoomModal}
+        onSave={handleSaveRoom}
+        initialData={editingRoomIndex !== null ? data.rooms[editingRoomIndex] : undefined}
+        amenities={amenityList}
+      />
     </div>
+
   );
 }

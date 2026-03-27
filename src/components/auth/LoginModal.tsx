@@ -32,7 +32,6 @@ export default function LoginModal({
         setLoading(true);
         try {
             const res = await fetcher.post('/auth/login', values);
-            console.log("Login response:", res);
             const data = res.data.data;
             login(data.userInfResponse, { accessToken: data.accessToken, refreshToken: data.refreshToken });
             messageApi.success(`Chào mừng trở lại, ${data?.userInfResponse?.fullName}! 👋`);

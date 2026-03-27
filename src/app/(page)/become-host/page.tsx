@@ -2,12 +2,13 @@
 
 import { useState, useMemo, useCallback } from "react";
 import { Steps, Button, message } from "antd";
+import { useQuery } from "@tanstack/react-query";
 import {
   SolutionOutlined,
   SafetyCertificateOutlined,
   CheckCircleOutlined,
-  ArrowLeftOutlined,
   HomeOutlined,
+  ArrowLeftOutlined,
   AppstoreOutlined,
   DollarOutlined,
 } from "@ant-design/icons";
@@ -20,6 +21,7 @@ import {
   type PropertyAmenitiesData,
   type PropertyPricingData,
   type PresignedUrlResponse,
+  type RentalTypeItem,
 } from "@/components/become-host/registrationData";
 import PersonalInfoStep from "@/components/become-host/PersonalInfoStep";
 import VerificationStep from "@/components/become-host/VerificationStep";
@@ -57,7 +59,9 @@ function isStep2Valid(d: PropertyInfoData): boolean {
     d.province &&
     d.district &&
     d.ward &&
-    d.addressDetail.trim()
+    d.addressDetail.trim() &&
+    d.latitude !== null &&
+    d.longitude !== null
   );
 }
 
@@ -65,7 +69,11 @@ function isStep3Valid(d: PropertyAmenitiesData): boolean {
   return d.amenityIds.length > 0 && d.images.length >= 5;
 }
 
-function isStep4Valid(d: PropertyPricingData): boolean {
+function isStep4Valid(d: PropertyPricingData, rentalTypeId: number | null, rentalTypes: RentalTypeItem[]): boolean {
+  const isPrivateRoom = rentalTypes.find(r => r.id === rentalTypeId)?.name.toLowerCase() === "theo phòng riêng" || rentalTypes.find(r => r.id === rentalTypeId)?.slug === "private-room";
+  if (isPrivateRoom) {
+     return d.cancellationPolicyId !== null;
+  }
   return d.pricePerNight > 0 && d.cancellationPolicyId !== null;
 }
 
@@ -127,6 +135,16 @@ export default function PartnerRegistrationPage() {
     []
   );
 
+  // === Fetch Categories/Rental Types For Validation & Passing Props ===
+  const { data: rentalTypesData } = useQuery<RentalTypeItem[]>({
+    queryKey: ["public-rental-types"],
+    queryFn: async () => {
+      const res = await fetcher.get("/public/rental-types");
+      return res.data?.data ?? res.data;
+    },
+  });
+  const rentalTypes = rentalTypesData ?? [];
+
   // === Validation ===
   const canProceed = useMemo(() => {
     switch (currentStep) {
@@ -134,11 +152,11 @@ export default function PartnerRegistrationPage() {
       case 1: return isStep1Valid(formData.verification);
       case 2: return isStep2Valid(formData.propertyInfo);
       case 3: return isStep3Valid(formData.propertyAmenities);
-      case 4: return isStep4Valid(formData.propertyPricing);
+      case 4: return isStep4Valid(formData.propertyPricing, formData.propertyInfo.rentalTypeId, rentalTypes);
       case 5: return true;
       default: return false;
     }
-  }, [currentStep, formData]);
+  }, [currentStep, formData, rentalTypes]);
 
   // === Navigation ===
   const handleNext = () => {
@@ -185,51 +203,67 @@ export default function PartnerRegistrationPage() {
         uploadFileToS3(verification.businessLicense!),
       ]);
 
-      // 2. Submit host application
-      const hostBody = {
-        businessPhone: personal.businessPhone,
-        supportEmail: personal.supportEmail,
-        identityCardNumber: personal.identityCardNumber,
-        identityCardFrontUrl,
-        identityCardBackUrl,
-        businessLicenseNumber: verification.businessLicenseNumber,
-        businessLicenseUrl,
-      };
-
-      console.log("=== HOST APPLICATION BODY ===", hostBody);
-      await fetcher.post("/auth/host-applications", hostBody);
-
-      // 3. Upload property images (all in parallel)
+      // 2. Upload property images (all in parallel)
       const imageUrls = await Promise.all(
         propertyAmenities.images.map((file) => uploadFileToS3(file))
       );
 
-      // 4. Submit property
-      const propertyBody = {
-        categoryId: propertyInfo.categoryId,
-        rentalTypeId: propertyInfo.rentalTypeId,
-        province: propertyInfo.province,
-        district: propertyInfo.district,
-        ward: propertyInfo.ward,
-        addressDetail: propertyInfo.addressDetail,
-        maxGuests: propertyInfo.maxGuests,
-        numBedrooms: propertyInfo.numBedrooms,
-        numBeds: propertyInfo.numBeds,
-        numBathrooms: propertyInfo.numBathrooms,
-        name: propertyInfo.name,
-        description: propertyInfo.description,
-        pricePerNight: propertyPricing.pricePerNight,
-        weekendSurchargePercentage: propertyPricing.weekendSurchargePercentage,
-        cleaningFee: propertyPricing.cleaningFee,
-        isPayAtCheckinAllowed: propertyPricing.isPayAtCheckinAllowed,
-        depositPercentage: propertyPricing.depositPercentage,
-        cancellationPolicyId: propertyPricing.cancellationPolicyId,
-        amenityIds: propertyAmenities.amenityIds,
-        imageUrls,
-      };
+      // 3. Upload room images in parallel
+      const roomsWithImageUrls = await Promise.all(
+        propertyAmenities.rooms.map(async (room) => {
+          const roomImageUrls = await Promise.all(
+             room.images.map((file) => uploadFileToS3(file))
+          );
+          return {
+             ...room,
+             imageUrls: roomImageUrls,
+          };
+        })
+      );
 
-      console.log("=== PROPERTY BODY ===", propertyBody);
-      await fetcher.post("/properties", propertyBody);
+      // 4. Construct unified payload
+      const hostBody = {
+        hostDetails: {
+          businessPhone: personal.businessPhone,
+          supportEmail: personal.supportEmail,
+          identityCardNumber: personal.identityCardNumber,
+          identityCardFrontUrl,
+          identityCardBackUrl,
+          businessLicenseNumber: verification.businessLicenseNumber,
+          businessLicenseUrl,
+        },
+        firstProperty: {
+          categoryId: propertyInfo.categoryId,
+          rentalTypeId: propertyInfo.rentalTypeId,
+          province: propertyInfo.province,
+          district: propertyInfo.district,
+          ward: propertyInfo.ward,
+          addressDetail: propertyInfo.addressDetail,
+          latitude: propertyInfo.latitude,
+          longitude: propertyInfo.longitude,
+          name: propertyInfo.name,
+          description: propertyInfo.description,
+          weekendSurchargePercentage: propertyPricing.weekendSurchargePercentage,
+          cleaningFee: propertyPricing.cleaningFee,
+          isPayAtCheckinAllowed: propertyPricing.isPayAtCheckinAllowed,
+          depositPercentage: propertyPricing.depositPercentage,
+          cancellationPolicyId: propertyPricing.cancellationPolicyId,
+          amenityIds: propertyAmenities.amenityIds,
+          imageUrls,
+          pricePerNight: propertyPricing.pricePerNight || 0,
+          rooms: roomsWithImageUrls.map(r => ({
+             name: r.name,
+             description: r.description,
+             pricePerNight: r.pricePerNight,
+             maxGuests: r.maxGuests,
+             numBeds: r.numBeds,
+             numBathrooms: r.numBathrooms,
+             amenityIds: r.amenityIds,
+             imageUrls: r.imageUrls
+          }))
+        }
+      };
+      await fetcher.post("/auth/host-applications", hostBody);
 
       messageApi.success("Đăng ký đối tác & tạo cơ sở thành công!");
       setSubmitted(true);
@@ -261,9 +295,9 @@ export default function PartnerRegistrationPage() {
       case 0: return <PersonalInfoStep data={formData.personal} onChange={updatePersonal} />;
       case 1: return <VerificationStep data={formData.verification} onChange={updateVerification} />;
       case 2: return <PropertyInfoStep data={formData.propertyInfo} onChange={updatePropertyInfo} />;
-      case 3: return <PropertyAmenitiesStep data={formData.propertyAmenities} onChange={updatePropertyAmenities} />;
-      case 4: return <PropertyPricingStep data={formData.propertyPricing} onChange={updatePropertyPricing} />;
-      case 5: return <ReviewStep formData={formData} onSubmit={handleSubmit} onGoToStep={goToStep} submitting={submitting} />;
+      case 3: return <PropertyAmenitiesStep data={formData.propertyAmenities} onChange={updatePropertyAmenities} rentalTypeId={formData.propertyInfo.rentalTypeId} rentalTypes={rentalTypes} />;
+      case 4: return <PropertyPricingStep data={formData.propertyPricing} onChange={updatePropertyPricing} rentalTypeId={formData.propertyInfo.rentalTypeId} rentalTypes={rentalTypes} />;
+      case 5: return <ReviewStep formData={formData} onSubmit={handleSubmit} onGoToStep={goToStep} submitting={submitting} rentalTypes={rentalTypes} />;
       default: return null;
     }
   };

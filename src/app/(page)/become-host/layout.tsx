@@ -15,7 +15,6 @@ export default function RegistrationLayout({
   children: React.ReactNode;
 }) {
   const { user, isLoggedIn } = useAuth();
-  console.log("User in RegistrationLayout:", user, "IsLoggedIn:", isLoggedIn);
   return (
     <div className="min-h-screen flex flex-col bg-[#f7f8fa]">
       {/* Header */}

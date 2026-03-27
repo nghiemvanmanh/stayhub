@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { Button, Checkbox, Tag } from "antd";
-import { useQueries } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import {
   UserOutlined,
   SafetyCertificateOutlined,
@@ -55,6 +55,7 @@ interface ReviewStepProps {
   onSubmit: () => void;
   onGoToStep: (step: number) => void;
   submitting?: boolean;
+  rentalTypes: RentalTypeItem[];
 }
 
 const amenityIconMap: Record<string, LucideIcon> = {
@@ -77,42 +78,20 @@ const amenityIconMap: Record<string, LucideIcon> = {
   Radar,
 };
 
-export default function ReviewStep({ formData, onSubmit, onGoToStep, submitting }: ReviewStepProps) {
+export default function ReviewStep({ formData, onSubmit, onGoToStep, submitting, rentalTypes }: ReviewStepProps) {
   const { user } = useAuth();
   const [agreeTerms, setAgreeTerms] = useState(false);
   const [agreePrivacy, setAgreePrivacy] = useState(false);
 
   const { personal, verification, propertyInfo, propertyAmenities, propertyPricing } = formData;
 
-  const [
-    { data: categories },
-    { data: rentalTypes },
-    { data: amenities },
-  ] = useQueries({
-    queries: [
-      {
-        queryKey: ["public-categories"],
-        queryFn: async () => {
-          const res = await fetcher.get("/public/categories");
-          return res.data?.data ?? res.data;
-        },
-      },
-      {
-        queryKey: ["public-rental-types"],
-        queryFn: async () => {
-          const res = await fetcher.get("/public/rental-types");
-          return res.data?.data ?? res.data;
-        },
-      },
-      {
-        queryKey: ["public-amenities"],
-        queryFn: async () => {
-          const res = await fetcher.get("/public/amenities");
-          return res.data?.data ?? res.data;
-        },
-      },
-    ],
-  })
+  const { data: amenities } = useQuery<AmenityItem[]>({
+    queryKey: ["public-amenities"],
+    queryFn: async () => {
+      const res = await fetcher.get("/public/amenities");
+      return res.data?.data ?? res.data;
+    },
+  });
 
 
   const frontUrl = useMemo(() => verification.frontCCCD ? URL.createObjectURL(verification.frontCCCD) : null, [verification.frontCCCD]);
@@ -120,11 +99,20 @@ export default function ReviewStep({ formData, onSubmit, onGoToStep, submitting 
   const licenseUrl = useMemo(() => verification.businessLicense ? URL.createObjectURL(verification.businessLicense) : null, [verification.businessLicense]);
   const imageUrls = useMemo(() => propertyAmenities.images.map((f) => URL.createObjectURL(f)), [propertyAmenities.images]);
 
-  const categoryLabel = (categories ?? []).find((c : CategoryItem) => c.id === propertyInfo.categoryId)?.name || "—";
+  const isPrivateRoom = useMemo(() => {
+    const selectedType = rentalTypes.find(r => r.id === propertyInfo.rentalTypeId);
+    return selectedType?.name.toLowerCase() === "theo phòng riêng" || selectedType?.slug === "private-room";
+  }, [propertyInfo.rentalTypeId, rentalTypes]);
+
+  const categoryLabel = useMemo(() => {
+    const selectedType = rentalTypes.find(r => r.id === propertyInfo.rentalTypeId);
+    if (!selectedType) return "—";
+    const category = (selectedType.categoryResponses ?? []).find(c => c.id === propertyInfo.categoryId);
+    return category?.name || "—";
+  }, [rentalTypes, propertyInfo.rentalTypeId, propertyInfo.categoryId]);
   const rentalTypeLabel = (rentalTypes ?? []).find((r : RentalTypeItem) => r.id === propertyInfo.rentalTypeId)?.name || "—";
   const cancellationLabel = cancellationPolicyOptions.find((c) => c.value === propertyPricing.cancellationPolicyId)?.label || "—";
   const selectedAmenities = (amenities ?? []).filter((a : AmenityItem) => propertyAmenities.amenityIds.includes(a.id));
-  console.log(propertyAmenities);
   const formatVND = (n: number) => n.toLocaleString("vi-VN") + " ₫";
 
   const EditBtn = ({ step }: { step: number }) => (
@@ -221,12 +209,8 @@ export default function ReviewStep({ formData, onSubmit, onGoToStep, submitting 
             <Info label="Loại hình" value={<Tag color="blue">{categoryLabel}</Tag>} />
             <Info label="Hình thức cho thuê" value={<Tag color="geekblue">{rentalTypeLabel}</Tag>} />
             <Info label="Vị trí" value={`${propertyInfo.addressDetail}, ${propertyInfo.ward}, ${propertyInfo.district}, ${propertyInfo.province}`} icon={<EnvironmentOutlined />} />
-          </div>
-          <div className="flex gap-4 mt-2 pt-2 border-t border-gray-50">
-            <Info label="Khách" value={propertyInfo.maxGuests} icon={<TeamOutlined />} />
-            <Info label="Phòng ngủ" value={propertyInfo.numBedrooms} />
-            <Info label="Giường" value={propertyInfo.numBeds} />
-            <Info label="Phòng tắm" value={propertyInfo.numBathrooms} />
+            <Info label="Vĩ độ" value={propertyInfo.latitude ?? "—"} />
+            <Info label="Kinh độ" value={propertyInfo.longitude ?? "—"} />
           </div>
           {propertyInfo.description && (
             <p className="text-xs text-gray-500 mt-3 pt-3 border-t border-gray-50 m-0 leading-relaxed line-clamp-3">
@@ -274,6 +258,29 @@ export default function ReviewStep({ formData, onSubmit, onGoToStep, submitting 
               )}
             </div>
           )}
+          {isPrivateRoom && propertyAmenities.rooms.length > 0 && (
+             <div className="mt-4 pt-4 border-t border-gray-100">
+               <h4 className="text-sm font-semibold text-gray-900 mb-3">Thông tin phòng ({propertyAmenities.rooms.length})</h4>
+               <div className="flex flex-col gap-3">
+                 {propertyAmenities.rooms.map((room, idx) => (
+                   <div key={idx} className="flex gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                     <div className="w-[80px] h-[60px] rounded bg-gray-200 flex-shrink-0 overflow-hidden">
+                       {room.images?.[0] ? <img src={URL.createObjectURL(room.images[0])} alt={room.name} className="w-full h-full object-cover"/> : null}
+                     </div>
+                     <div className="flex-1 min-w-0">
+                       <h5 className="text-[13px] font-semibold text-gray-900 m-0 truncate">{room.name}</h5>
+                       <div className="flex gap-2 text-[11px] text-gray-500 mt-1">
+                          <span>👥 {room.maxGuests}</span>
+                          <span>🛌 {room.numBeds}</span>
+                          <span>🚿 {room.numBathrooms}</span>
+                       </div>
+                       <div className="text-[12px] font-semibold text-[#2DD4A8] mt-1">{formatVND(room.pricePerNight)}</div>
+                     </div>
+                   </div>
+                 ))}
+               </div>
+             </div>
+          )}
         </div>
 
         {/* 5. Pricing */}
@@ -286,7 +293,9 @@ export default function ReviewStep({ formData, onSubmit, onGoToStep, submitting 
             <EditBtn step={4} />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
-            <Info label="Giá / đêm" value={formatVND(propertyPricing.pricePerNight)} />
+            {!isPrivateRoom && (
+               <Info label="Giá / đêm" value={formatVND(propertyPricing.pricePerNight)} />
+            )}
             <Info label="Phụ thu cuối tuần" value={`${propertyPricing.weekendSurchargePercentage}%`} />
             <Info label="Phí dọn dẹp" value={formatVND(propertyPricing.cleaningFee)} />
             <Info label="Đặt cọc" value={`${propertyPricing.depositPercentage}%`} />

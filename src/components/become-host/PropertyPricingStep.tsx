@@ -7,14 +7,17 @@ import {
   SafetyCertificateOutlined,
   BulbOutlined,
 } from "@ant-design/icons";
-import { cancellationPolicyOptions, type PropertyPricingData } from "./registrationData";
+import { cancellationPolicyOptions, type PropertyPricingData, type RentalTypeItem } from "./registrationData";
 
 interface PropertyPricingStepProps {
   data: PropertyPricingData;
   onChange: (data: Partial<PropertyPricingData>) => void;
+  rentalTypeId: number | null;
+  rentalTypes: RentalTypeItem[];
 }
 
-export default function PropertyPricingStep({ data, onChange }: PropertyPricingStepProps) {
+export default function PropertyPricingStep({ data, onChange, rentalTypeId, rentalTypes }: PropertyPricingStepProps) {
+  const isPrivateRoom = rentalTypes.find(r => r.id === rentalTypeId)?.name.toLowerCase() === "theo phòng riêng" || rentalTypes.find(r => r.id === rentalTypeId)?.slug === "private-room";
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8 items-start">
       <div className="flex flex-col gap-6">
@@ -32,24 +35,26 @@ export default function PropertyPricingStep({ data, onChange }: PropertyPricingS
             <h3 className="text-base font-semibold text-gray-900 m-0">Bảng giá</h3>
           </div>
           <div className="flex flex-col gap-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-medium text-gray-700">
-                  Giá mỗi đêm (VNĐ) <span className="text-red-500">*</span>
-                </label>
-                <InputNumber
-                  size="large"
-                  min={0}
-                  step={50000}
-                  value={data.pricePerNight}
-                  onChange={(v) => onChange({ pricePerNight: v || 0 })}
-                  formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
-                  parser={(value) => Number(value?.replace(/,/g, "") || 0)}
-                  className="!w-full"
-                  placeholder="500,000"
-                />
-                <span className="text-xs text-gray-400">Giá cơ bản cho ngày thường</span>
-              </div>
+            <div className={`grid grid-cols-1 ${!isPrivateRoom ? "sm:grid-cols-2" : ""} gap-4`}>
+              {!isPrivateRoom && (
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[13px] font-medium text-gray-700">
+                    Giá mỗi đêm (VNĐ) <span className="text-red-500">*</span>
+                  </label>
+                  <InputNumber
+                    size="large"
+                    min={0}
+                    step={50000}
+                    value={data.pricePerNight}
+                    onChange={(v) => onChange({ pricePerNight: v || 0 })}
+                    formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
+                    parser={(value) => Number(value?.replace(/,/g, "") || 0)}
+                    className="!w-full"
+                    placeholder="500,000"
+                  />
+                  <span className="text-xs text-gray-400">Giá cơ bản cho ngày thường</span>
+                </div>
+              )}
               <div className="flex flex-col gap-1.5">
                 <label className="text-[13px] font-medium text-gray-700">
                   Phụ thu cuối tuần (%)
@@ -141,7 +146,7 @@ export default function PropertyPricingStep({ data, onChange }: PropertyPricingS
                   className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${
                     isSelected
                       ? "border-[#2DD4A8] bg-blue-50 shadow-sm"
-                      : "border-gray-200 hover:border-blue-300"
+                      : "border-gray-200 hover:border-[#2DD4A8]"
                   }`}
                   onClick={() => onChange({ cancellationPolicyId: policy.value })}
                 >

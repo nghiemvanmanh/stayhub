@@ -1,6 +1,5 @@
-// Types matching BE APIs:
-// POST /auth/host-applications
-// POST /properties
+// Types matching BE API:
+// POST /auth/host-applications (combined host + firstProperty)
 
 export interface PersonalInfoData {
   supportEmail: string;
@@ -16,6 +15,17 @@ export interface VerificationData {
   agreed: boolean;
 }
 
+export interface RoomData {
+  name: string;
+  description: string;
+  pricePerNight: number;
+  maxGuests: number;
+  numBeds: number;
+  numBathrooms: number;
+  amenityIds: number[];
+  images: File[];
+}
+
 export interface PropertyInfoData {
   name: string;
   description: string;
@@ -25,15 +35,14 @@ export interface PropertyInfoData {
   district: string;
   ward: string;
   addressDetail: string;
-  maxGuests: number;
-  numBedrooms: number;
-  numBeds: number;
-  numBathrooms: number;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 export interface PropertyAmenitiesData {
   amenityIds: number[];
   images: File[];
+  rooms: RoomData[];
 }
 
 export interface PropertyPricingData {
@@ -75,14 +84,13 @@ export const initialFormData: RegistrationFormData = {
     district: "",
     ward: "",
     addressDetail: "",
-    maxGuests: 1,
-    numBedrooms: 1,
-    numBeds: 1,
-    numBathrooms: 1,
+    latitude: null,
+    longitude: null,
   },
   propertyAmenities: {
     amenityIds: [],
     images: [],
+    rooms: [],
   },
   propertyPricing: {
     pricePerNight: 0,
@@ -123,6 +131,7 @@ export interface RentalTypeItem {
   description: string;
   iconName: string;
   isActive: boolean;
+  categoryResponses?: CategoryItem[];
 }
 
 // API response types: GET /public/amenities
