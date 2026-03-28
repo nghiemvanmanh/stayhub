@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button, Steps } from "antd";
 import {
@@ -29,9 +30,13 @@ const reviewSteps = [
 ];
 
 export default function SuccessStep() {
-  const applicationId = `HSB-${new Date().getFullYear()}-${Math.floor(
-    1000 + Math.random() * 9000
-  )}-XT`;
+  const [applicationId, setApplicationId] = useState("");
+
+  useEffect(() => {
+    setApplicationId(`HSB-${new Date().getFullYear()}-${Math.floor(
+      1000 + Math.random() * 9000
+    )}-XT`);
+  }, []);
 
   return (
     <div className="max-w-[800px] mx-auto flex flex-col gap-7 pb-10">

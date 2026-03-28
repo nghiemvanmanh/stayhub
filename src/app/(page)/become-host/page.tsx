@@ -23,7 +23,7 @@ import {
   type PropertyPricingData,
   type PresignedUrlResponse,
   type RentalTypeItem,
-} from "@/components/become-host/registrationData";
+} from "@/components/common/property-form/propertyData";
 import PersonalInfoStep from "@/components/become-host/PersonalInfoStep";
 import VerificationStep from "@/components/become-host/VerificationStep";
 import PropertyInfoStep from "@/components/become-host/PropertyInfoStep";

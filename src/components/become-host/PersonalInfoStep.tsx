@@ -9,7 +9,7 @@ import {
   BulbOutlined,
   SafetyCertificateOutlined,
 } from "@ant-design/icons";
-import type { PersonalInfoData } from "./registrationData";
+import type { PersonalInfoData } from "@/components/common/property-form/propertyData";
 import { validateEmail, validatePhone, validateCCCD } from "@/constants/validation";
 
 interface PersonalInfoStepProps {

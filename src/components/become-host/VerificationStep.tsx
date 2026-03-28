@@ -11,7 +11,7 @@ import {
   DeleteOutlined,
   FileProtectOutlined,
 } from "@ant-design/icons";
-import type { VerificationData } from "./registrationData";
+import type { VerificationData } from "@/components/common/property-form/propertyData";
 import { validateBusinessLicense } from "@/constants/validation";
 
 interface VerificationStepProps {

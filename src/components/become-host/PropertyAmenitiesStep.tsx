@@ -1,22 +1,17 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Upload, Checkbox, Skeleton } from "antd";
-import type { UploadFile } from "antd";
+import { PropertyAmenitiesFields } from "@/components/common/property-form/PropertyAmenitiesFields";
+import { PropertyImagesFields } from "@/components/common/property-form/PropertyImagesFields";
+import { PropertyRoomsFields } from "@/components/common/property-form/PropertyRoomsFields";
 import { useQuery } from "@tanstack/react-query";
 import {
   PictureOutlined,
   AppstoreOutlined,
   DeleteOutlined,
   BulbOutlined,
-  EditOutlined
 } from "@ant-design/icons";
-import {
-  Wifi, Tv, Microwave, WashingMachine, CircleParking, Snowflake, Briefcase,
-  WavesLadder, Bath, Aperture, Drumstick, Flame, Dumbbell, FireExtinguisher,
-  Disc3, BriefcaseMedical, Radar, type LucideIcon
-} from "lucide-react";
-import { type PropertyAmenitiesData, type AmenityItem, type RoomData, type RentalTypeItem } from "./registrationData";
+import { type PropertyAmenitiesData, type AmenityItem, type RoomData, type RentalTypeItem } from "@/components/common/property-form/propertyData";
 import { fetcher } from "../../../utils/fetcher";
 import RoomModal from "./RoomModal";
 
@@ -27,45 +22,7 @@ interface PropertyAmenitiesStepProps {
   rentalTypes: RentalTypeItem[];
 }
 
-const amenityIconMap: Record<string, LucideIcon> = {
-  Wifi,
-  Tv,
-  Microwave,
-  WashingMachine,
-  CircleParking,
-  Snowflake,
-  Briefcase,
-  WavesLadder,
-  Bath,
-  Aperture,
-  Drumstick,
-  Flame,
-  Dumbbell,
-  FireExtinguisher,
-  Disc3,
-  BriefcaseMedical,
-  Radar,
-};
-
-function ImageThumb({ file, onRemove, index }: { file: File; onRemove: () => void; index: number }) {
-  const url = useMemo(() => URL.createObjectURL(file), [file]);
-  return (
-    <div className={`relative rounded-xl overflow-hidden border-2 border-[#2DD4A8] bg-blue-50 flex items-center justify-center ${index === 0 ? "col-span-2 row-span-2 min-h-[260px]" : "min-h-[120px]"}`}>
-      <img src={url} alt={`Ảnh ${index + 1}`} className="w-full h-full object-cover block" />
-      <button
-        className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/50 border-none text-white text-xs cursor-pointer flex items-center justify-center transition-colors hover:bg-red-500/90 z-[2]"
-        onClick={onRemove}
-      >
-        <DeleteOutlined />
-      </button>
-      {index === 0 && (
-        <span className="absolute bottom-2 left-2 text-xs font-semibold text-white bg-black/50 px-2 py-0.5 rounded">
-          Ảnh bìa
-        </span>
-      )}
-    </div>
-  );
-}
+ 
 
 export default function PropertyAmenitiesStep({ data, onChange, rentalTypeId, rentalTypes }: PropertyAmenitiesStepProps) {
   const [roomModalVisible, setRoomModalVisible] = useState(false);
@@ -85,20 +42,7 @@ export default function PropertyAmenitiesStep({ data, onChange, rentalTypeId, re
   });
   const amenityList = amenities ?? [];
 
-  const handleAmenityToggle = (amenityId: number) => {
-    const current = data.amenityIds;
-    if (current.includes(amenityId)) {
-      onChange({ amenityIds: current.filter((id) => id !== amenityId) });
-    } else {
-      onChange({ amenityIds: [...current, amenityId] });
-    }
-  };
-
-  const removeImage = (index: number) => {
-    const newImages = [...data.images];
-    newImages.splice(index, 1);
-    onChange({ images: newImages });
-  };
+ 
 
   const openRoomModal = (index: number | null = null) => {
     setEditingRoomIndex(index);
@@ -148,139 +92,39 @@ export default function PropertyAmenitiesStep({ data, onChange, rentalTypeId, re
             </h3>
           </div>
 
-          {loadingAmenities ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-              {Array.from({ length: 10 }).map((_, i) => (
-                <Skeleton.Button key={i} active block style={{ height: 72, borderRadius: 12 }} />
-              ))}
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-              {amenityList.map((amenity) => {
-                const isSelected = data.amenityIds.includes(amenity.id);
-                const AmenityIcon = amenityIconMap[amenity.iconName];
-                return (
-                  <div
-                    key={amenity.id}
-                    className={`border-2 rounded-xl p-3 cursor-pointer transition-all text-center ${
-                      isSelected
-                        ? "border-[#2DD4A8] bg-blue-50 shadow-sm"
-                        : "border-gray-200 hover:border-[#2DD4A8]"
-                    }`}
-                    onClick={() => handleAmenityToggle(amenity.id)}
-                  >
-                    <Checkbox checked={isSelected} className="!hidden" />
-                    <div className="text-2xl mb-1 flex items-center justify-center">
-                      {AmenityIcon ? <AmenityIcon className="w-6 h-6" /> : <AppstoreOutlined />}
-                    </div>
-                    <span className="text-xs font-medium text-gray-700">{amenity.name}</span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-          {data.amenityIds.length > 0 && (
-            <p className="text-xs text-gray-400 mt-3 m-0">
-              Đã chọn {data.amenityIds.length} tiện ích
-            </p>
-          )}
+          <PropertyAmenitiesFields
+            data={data}
+            onChange={onChange}
+            amenityList={amenityList}
+            loadingAmenities={loadingAmenities}
+          />
         </div>
 
         {/* Images */}
         <div className="bg-white border border-gray-200 rounded-xl p-6">
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-2">
-              <PictureOutlined className="text-lg text-[#2DD4A8]" />
-              <h3 className="text-base font-semibold text-gray-900 m-0">
-                Hình ảnh cơ sở <span className="text-red-500">*</span>
-              </h3>
-            </div>
-            <span className="text-xs text-gray-400">Tối thiểu 5 ảnh, tối đa 20 ảnh</span>
+          <div className="flex items-center gap-2 mb-5">
+            <PictureOutlined className="text-lg text-[#2DD4A8]" />
+            <h3 className="text-base font-semibold text-gray-900 m-0">
+              Hình ảnh cơ sở <span className="text-red-500">*</span>
+            </h3>
           </div>
-
-          {data.images.length > 0 && (
-            <div className="grid grid-cols-3 gap-3 mb-4">
-              {data.images.map((file, i) => (
-                <ImageThumb key={i} file={file} index={i} onRemove={() => removeImage(i)} />
-              ))}
-            </div>
-          )}
-
-          {data.images.length < 20 && (
-            <Upload.Dragger
-              showUploadList={false}
-              multiple
-              accept="image/*"
-              beforeUpload={() => false}
-              fileList={[]}
-              onChange={({ fileList }) => {
-                const newFiles = fileList
-                  .map((f) => f.originFileObj as File)
-                  .filter(Boolean);
-                onChange({ images: [...data.images, ...newFiles].slice(0, 20) });
-              }}
-              className="!rounded-xl !border-2 !border-dashed !border-gray-300 !bg-gray-50 hover:!bg-blue-50"
-            >
-              <div className="flex flex-col items-center text-center gap-1 py-4">
-                <div className="text-4xl text-gray-300 mb-2"><PictureOutlined /></div>
-                <p className="text-sm font-semibold text-gray-700 m-0">Kéo thả hoặc nhấp để tải ảnh lên</p>
-                <p className="text-xs text-gray-400 m-0">
-                  JPG, PNG — Ảnh đầu tiên sẽ là ảnh bìa ({data.images.length}/20)
-                </p>
-              </div>
-            </Upload.Dragger>
-          )}
+          <PropertyImagesFields data={data} onChange={onChange} />
         </div>
+
         {/* Rooms (Conditionally Rendered) */}
         {isPrivateRoom && (
           <div className="bg-white border border-gray-200 rounded-xl p-6">
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-2">
-                <AppstoreOutlined className="text-lg text-[#2DD4A8]" />
-                <h3 className="text-base font-semibold text-gray-900 m-0">
-                  Thông tin phòng <span className="text-red-500">*</span>
-                </h3>
-              </div>
-              <span className="text-xs text-gray-400">Tối thiểu 2 phòng</span>
+            <div className="flex items-center gap-2 mb-5">
+              <AppstoreOutlined className="text-lg text-[#2DD4A8]" />
+              <h3 className="text-base font-semibold text-gray-900 m-0">
+                Thông tin phòng <span className="text-red-500">*</span>
+              </h3>
             </div>
-
-            <div className="flex flex-col gap-4">
-              {data.rooms.map((room, i) => (
-                <div key={i} className="flex gap-4 p-4 border border-gray-200 rounded-xl hover:border-[#2DD4A8] transition-colors cursor-pointer" onClick={() => openRoomModal(i)}>
-                  <div className="w-[120px] h-[90px] rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                    {room.images?.[0] ? (
-                      <img src={URL.createObjectURL(room.images[0])} alt={room.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-gray-400"><PictureOutlined className="text-2xl" /></div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0 flex flex-col justify-between">
-                    <div>
-                      <div className="flex justify-between items-start">
-                        <h4 className="text-[15px] font-semibold text-gray-900 m-0 truncate pr-2">{room.name}</h4>
-                        <button className="text-red-500 hover:text-red-600 border-none bg-transparent cursor-pointer p-0 shrink-0" onClick={(e) => handleDeleteRoom(i, e)}>
-                          <DeleteOutlined />
-                        </button>
-                      </div>
-                      <p className="text-xs text-gray-500 truncate m-0 mt-1">{room.description}</p>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-gray-600 mt-2">
-                      <span className="flex items-center gap-1">👥 {room.maxGuests}</span>
-                      <span className="flex items-center gap-1">🛌 {room.numBeds}</span>
-                      <span className="flex items-center gap-1">🚿 {room.numBathrooms}</span>
-                      <span className="font-semibold text-[#2DD4A8] ml-auto">{room.pricePerNight.toLocaleString()} ₫</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-
-              <button
-                className="w-full py-3 border-2 border-dashed border-[#2DD4A8] text-[#2DD4A8] rounded-xl font-medium bg-transparent cursor-pointer hover:bg-blue-50 transition-colors flex items-center justify-center gap-2"
-                onClick={() => openRoomModal(null)}
-              >
-                + Thêm phòng mới
-              </button>
-            </div>
+            <PropertyRoomsFields
+              data={data}
+              onOpenRoomModal={openRoomModal}
+              onDeleteRoom={handleDeleteRoom}
+            />
           </div>
         )}
       </div>

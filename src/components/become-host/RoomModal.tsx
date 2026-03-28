@@ -1,7 +1,7 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Modal, Input, InputNumber, Checkbox, Upload, message, Button } from "antd";
 import { PictureOutlined, DeleteOutlined, AppstoreOutlined } from "@ant-design/icons";
-import { type RoomData, type AmenityItem } from "./registrationData";
+import { type RoomData, type AmenityItem } from "@/components/common/property-form/propertyData";
 import {
   Wifi, Tv, Microwave, WashingMachine, CircleParking, Snowflake, Briefcase,
   WavesLadder, Bath, Aperture, Drumstick, Flame, Dumbbell, FireExtinguisher,
@@ -57,7 +57,7 @@ export default function RoomModal({ visible, onCancel, onSave, initialData, amen
   const [data, setData] = useState<RoomData>(initialData || emptyRoom);
 
   // Reset form when opened with new initialData
-  useMemo(() => {
+  useEffect(() => {
     if (visible) {
       setData(initialData || emptyRoom);
     }
@@ -138,7 +138,7 @@ export default function RoomModal({ visible, onCancel, onSave, initialData, amen
               return (
                 <div
                   key={amenity.id}
-                  className={`border rounded-lg p-2 cursor-pointer transition-all text-center flex flex-col items-center justify-center gap-1 min-h-[64px] ${isSelected ? "border-[#2DD4A8] bg-blue-50" : "border-gray-200 hover:border-blue-300"}`}
+                  className={`border rounded-lg p-2 cursor-pointer transition-all text-center flex flex-col items-center justify-center gap-1 min-h-[64px] ${isSelected ? "border-[#2DD4A8] bg-[#2DD4A8]/10" : "border-gray-200 hover:border-[#2DD4A8]"}`}
                   onClick={() => handleAmenityToggle(amenity.id)}
                 >
                   {AmenityIcon ? <AmenityIcon className="w-5 h-5 text-gray-600" /> : <AppstoreOutlined className="text-gray-600" />}
@@ -174,7 +174,7 @@ export default function RoomModal({ visible, onCancel, onSave, initialData, amen
                 const newFiles = fileList.map(f => f.originFileObj as File).filter(Boolean);
                 updateData({ images: [...data.images, ...newFiles].slice(0, 10) });
               }}
-              className="!rounded-lg !border-dashed !border-gray-300 !bg-gray-50 hover:!bg-blue-50 !py-2"
+              className="!rounded-lg !border-dashed !border-gray-300 !bg-gray-50 !py-2"
             >
               <div className="flex flex-col items-center justify-center gap-1">
                 <PictureOutlined className="text-xl text-gray-300" />

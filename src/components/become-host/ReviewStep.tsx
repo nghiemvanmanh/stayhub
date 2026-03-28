@@ -47,7 +47,7 @@ import {
   type AmenityItem,
   cancellationPolicyOptions,
   isPrivateRoomRentalType,
-} from "./registrationData";
+} from "@/components/common/property-form/propertyData";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetcher } from "../../../utils/fetcher";
 
