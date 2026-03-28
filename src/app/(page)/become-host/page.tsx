@@ -14,6 +14,7 @@ import {
 } from "@ant-design/icons";
 import {
   initialFormData,
+  isPrivateRoomRentalType,
   type RegistrationFormData,
   type PersonalInfoData,
   type VerificationData,
@@ -31,7 +32,7 @@ import PropertyPricingStep from "@/components/become-host/PropertyPricingStep";
 import ReviewStep from "@/components/become-host/ReviewStep";
 import SuccessStep from "@/components/become-host/SuccessStep";
 import { fetcher } from "../../../../utils/fetcher";
-import { validateEmail, validatePhone, validateCCCD, validateBusinessLicense } from "@/constants/validation";
+import { validateEmail, validatePhone, validateCCCD, validateBusinessLicense, validatePrice } from "@/constants/validation";
 
 const stepItems = [
   { title: "Cá nhân", icon: <SolutionOutlined /> },
@@ -70,12 +71,9 @@ function isStep3Valid(d: PropertyAmenitiesData): boolean {
   return d.amenityIds.length > 0 && d.images.length >= 5;
 }
 
-function isStep4Valid(d: PropertyPricingData, rentalTypeId: number | null, rentalTypes: RentalTypeItem[]): boolean {
-  const isPrivateRoom = rentalTypes.find(r => r.id === rentalTypeId)?.name.toLowerCase() === "theo phòng riêng" || rentalTypes.find(r => r.id === rentalTypeId)?.slug === "private-room";
-  if (isPrivateRoom) {
-     return d.cancellationPolicyId !== null;
-  }
-  return d.pricePerNight > 0 && d.cancellationPolicyId !== null;
+function isStep4Valid(d: PropertyPricingData, isPrivateRoom: boolean): boolean {
+  if (isPrivateRoom) return !!d.cancellationPolicyId;
+  return validatePrice(d.pricePerNight).isValid && !!d.cancellationPolicyId;
 }
 
 // === File upload helper ===
@@ -148,12 +146,14 @@ export default function PartnerRegistrationPage() {
 
   // === Validation ===
   const canProceed = useMemo(() => {
+    const selectedType = rentalTypes.find(r => r.id === formData.propertyInfo.rentalTypeId);
+    const isPrivateRoom = isPrivateRoomRentalType(selectedType);
     switch (currentStep) {
       case 0: return isStep0Valid(formData.personal);
       case 1: return isStep1Valid(formData.verification);
       case 2: return isStep2Valid(formData.propertyInfo);
       case 3: return isStep3Valid(formData.propertyAmenities);
-      case 4: return isStep4Valid(formData.propertyPricing, formData.propertyInfo.rentalTypeId, rentalTypes);
+      case 4: return isStep4Valid(formData.propertyPricing, isPrivateRoom);
       case 5: return true;
       default: return false;
     }

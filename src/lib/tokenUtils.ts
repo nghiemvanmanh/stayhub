@@ -7,6 +7,7 @@ interface JwtPayload {
   roles?: string[];
   role?: string;
   authorities?: string[];
+  exp?: number;
   [key: string]: unknown;
 }
 
@@ -47,4 +48,16 @@ export function getRolesFromToken(token: string): string[] {
   if (Array.isArray(payload.authorities)) return payload.authorities;
 
   return [];
+}
+
+/**
+ * Return true when JWT is expired (or invalid).
+ * `leewaySeconds` helps avoid edge cases near expiry.
+ */
+export function isTokenExpired(token: string, leewaySeconds = 10): boolean {
+  const payload = decodeToken(token);
+  if (!payload || typeof payload.exp !== "number") return true;
+
+  const now = Math.floor(Date.now() / 1000);
+  return now >= payload.exp - leewaySeconds;
 }

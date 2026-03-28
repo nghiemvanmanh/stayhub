@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
-import { Input, InputNumber, Select, Skeleton } from "antd";
+import { useMemo, useState } from "react";
+import { Input, Select, Skeleton } from "antd";
 import { useQuery } from "@tanstack/react-query";
 import {
   HomeOutlined,
@@ -11,10 +11,17 @@ import {
 import {
   provinceData,
   type PropertyInfoData,
-  type CategoryItem,
   type RentalTypeItem,
 } from "./registrationData";
 import { fetcher } from "../../../utils/fetcher";
+import {
+  validatePropertyName,
+  validateDescription,
+  validateLatitude,
+  validateLongitude,
+  validateRequired,
+  validateSelect,
+} from "@/constants/validation";
 
 const { TextArea } = Input;
 
@@ -23,8 +30,18 @@ interface PropertyInfoStepProps {
   onChange: (data: Partial<PropertyInfoData>) => void;
 }
 
+function FieldError({ message }: { message: string }) {
+  if (!message) return null;
+  return <span className="text-xs text-red-500 mt-1 block">{message}</span>;
+}
+
 export default function PropertyInfoStep({ data, onChange }: PropertyInfoStepProps) {
-  // Fetch rental types from API
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  const markTouched = (field: string) => {
+    if (!touched[field]) setTouched(prev => ({ ...prev, [field]: true }));
+  };
+
   const { data: rentalTypes, isLoading: loadingRentalTypes } = useQuery<RentalTypeItem[]>({
     queryKey: ["public-rental-types"],
     queryFn: async () => {
@@ -32,6 +49,7 @@ export default function PropertyInfoStep({ data, onChange }: PropertyInfoStepPro
       return res.data?.data ?? res.data;
     },
   });
+
   const categoryOptions = useMemo(() => {
     if (!data.rentalTypeId || !rentalTypes) return [];
     const selectedRentalType = rentalTypes.find(r => r.id === data.rentalTypeId);
@@ -58,6 +76,20 @@ export default function PropertyInfoStep({ data, onChange }: PropertyInfoStepPro
     return provinceData[data.province][data.district].map((w) => ({ value: w, label: w }));
   }, [data.province, data.district]);
 
+  // Validations
+  const nameVal = touched.name ? validatePropertyName(data.name) : null;
+  const descVal = touched.description ? validateDescription(data.description) : null;
+  const rentalTypeVal = touched.rentalTypeId ? validateSelect(data.rentalTypeId, "hình thức cho thuê") : null;
+  const categoryVal = touched.categoryId ? validateSelect(data.categoryId, "loại hình lưu trú") : null;
+
+  const provinceVal = touched.province ? validateRequired(data.province, "tỉnh/thành phố") : null;
+  const districtVal = touched.district ? validateRequired(data.district, "quận/huyện") : null;
+  const wardVal = touched.ward ? validateRequired(data.ward, "phường/xã") : null;
+  const addressVal = touched.addressDetail ? validateRequired(data.addressDetail, "địa chỉ chi tiết") : null;
+
+  const latVal = touched.latitude ? validateLatitude(data.latitude) : null;
+  const lngVal = touched.longitude ? validateLongitude(data.longitude) : null;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8 items-start">
       <div className="flex flex-col gap-6">
@@ -83,10 +115,13 @@ export default function PropertyInfoStep({ data, onChange }: PropertyInfoStepPro
                 size="large"
                 placeholder="Ví dụ: Biệt thự Đồi Thông Đà Lạt"
                 value={data.name}
+                status={nameVal && !nameVal.isValid ? "error" : undefined}
                 onChange={(e) => onChange({ name: e.target.value })}
+                onBlur={() => markTouched("name")}
                 maxLength={100}
                 showCount
               />
+              {nameVal && !nameVal.isValid && <FieldError message={nameVal.message} />}
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-[13px] font-medium text-gray-700">
@@ -96,29 +131,15 @@ export default function PropertyInfoStep({ data, onChange }: PropertyInfoStepPro
                 placeholder="Mô tả về không gian, vị trí, điểm nổi bật..."
                 rows={4}
                 value={data.description}
+                status={descVal && !descVal.isValid ? "error" : undefined}
                 onChange={(e) => onChange({ description: e.target.value })}
+                onBlur={() => markTouched("description")}
                 maxLength={2000}
                 showCount
               />
+              {descVal && !descVal.isValid && <FieldError message={descVal.message} />}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[13px] font-medium text-gray-700">
-                  Loại hình lưu trú <span className="text-red-500">*</span>
-                </label>
-                {loadingRentalTypes ? (
-                  <Skeleton.Input active size="large" block />
-                ) : (
-                  <Select
-                    size="large"
-                    placeholder="Chọn loại hình"
-                    options={categoryOptions}
-                    value={data.categoryId ?? undefined}
-                    onChange={(v) => onChange({ categoryId: v })}
-                    disabled={!data.rentalTypeId || categoryOptions.length === 0}
-                  />
-                )}
-              </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-[13px] font-medium text-gray-700">
                   Hình thức cho thuê <span className="text-red-500">*</span>
@@ -126,17 +147,44 @@ export default function PropertyInfoStep({ data, onChange }: PropertyInfoStepPro
                 {loadingRentalTypes ? (
                   <Skeleton.Input active size="large" block />
                 ) : (
-                  <Select
-                    size="large"
-                    placeholder="Chọn hình thức"
-                    options={rentalTypeOptions}
-                    value={data.rentalTypeId ?? undefined}
-                    onChange={(v) => {
-                      if (v !== data.rentalTypeId) {
-                        onChange({ rentalTypeId: v, categoryId: null });
-                      }
-                    }}
-                  />
+                  <>
+                    <Select
+                      size="large"
+                      placeholder="Chọn hình thức"
+                      options={rentalTypeOptions}
+                      value={data.rentalTypeId ?? undefined}
+                      status={rentalTypeVal && !rentalTypeVal.isValid ? "error" : undefined}
+                      onChange={(v) => {
+                        if (v !== data.rentalTypeId) {
+                          onChange({ rentalTypeId: v, categoryId: null });
+                        }
+                      }}
+                      onBlur={() => markTouched("rentalTypeId")}
+                    />
+                    {rentalTypeVal && !rentalTypeVal.isValid && <FieldError message={rentalTypeVal.message} />}
+                  </>
+                )}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-medium text-gray-700">
+                  Loại hình lưu trú <span className="text-red-500">*</span>
+                </label>
+                {loadingRentalTypes ? (
+                  <Skeleton.Input active size="large" block />
+                ) : (
+                  <>
+                    <Select
+                      size="large"
+                      placeholder="Chọn loại hình"
+                      options={categoryOptions}
+                      value={data.categoryId ?? undefined}
+                      status={categoryVal && !categoryVal.isValid ? "error" : undefined}
+                      onChange={(v) => onChange({ categoryId: v })}
+                      onBlur={() => markTouched("categoryId")}
+                      disabled={!data.rentalTypeId || categoryOptions.length === 0}
+                    />
+                    {categoryVal && !categoryVal.isValid && <FieldError message={categoryVal.message} />}
+                  </>
                 )}
               </div>
             </div>
@@ -160,12 +208,15 @@ export default function PropertyInfoStep({ data, onChange }: PropertyInfoStepPro
                   placeholder="Chọn tỉnh/TP"
                   options={provinceOptions}
                   value={data.province || undefined}
+                  status={provinceVal && !provinceVal.isValid ? "error" : undefined}
                   onChange={(v) => onChange({ province: v, district: "", ward: "" })}
+                  onBlur={() => markTouched("province")}
                   showSearch
                   filterOption={(input, option) =>
                     (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
                   }
                 />
+                {provinceVal && !provinceVal.isValid && <FieldError message={provinceVal.message} />}
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-[13px] font-medium text-gray-700">
@@ -176,13 +227,16 @@ export default function PropertyInfoStep({ data, onChange }: PropertyInfoStepPro
                   placeholder="Chọn quận/huyện"
                   options={districtOptions}
                   value={data.district || undefined}
+                  status={districtVal && !districtVal.isValid ? "error" : undefined}
                   onChange={(v) => onChange({ district: v, ward: "" })}
+                  onBlur={() => markTouched("district")}
                   disabled={!data.province}
                   showSearch
                   filterOption={(input, option) =>
                     (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
                   }
                 />
+                {districtVal && !districtVal.isValid && <FieldError message={districtVal.message} />}
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-[13px] font-medium text-gray-700">
@@ -193,13 +247,16 @@ export default function PropertyInfoStep({ data, onChange }: PropertyInfoStepPro
                   placeholder="Chọn phường/xã"
                   options={wardOptions}
                   value={data.ward || undefined}
+                  status={wardVal && !wardVal.isValid ? "error" : undefined}
                   onChange={(v) => onChange({ ward: v })}
+                  onBlur={() => markTouched("ward")}
                   disabled={!data.district}
                   showSearch
                   filterOption={(input, option) =>
                     (option?.label ?? "").toLowerCase().includes(input.toLowerCase())
                   }
                 />
+                {wardVal && !wardVal.isValid && <FieldError message={wardVal.message} />}
               </div>
             </div>
             <div className="flex flex-col gap-1.5">
@@ -210,39 +267,42 @@ export default function PropertyInfoStep({ data, onChange }: PropertyInfoStepPro
                 size="large"
                 placeholder="Số nhà, tên đường..."
                 value={data.addressDetail}
+                status={addressVal && !addressVal.isValid ? "error" : undefined}
                 onChange={(e) => onChange({ addressDetail: e.target.value })}
+                onBlur={() => markTouched("addressDetail")}
               />
+              {addressVal && !addressVal.isValid && <FieldError message={addressVal.message} />}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-[13px] font-medium text-gray-700">
                   Vĩ độ (Latitude) <span className="text-red-500">*</span>
                 </label>
-                <InputNumber
+                <Input
                   size="large"
                   className="!w-full"
                   placeholder="Ví dụ: 10.762622"
-                  min={-90}
-                  max={90}
-                  step={0.000001}
-                  value={data.latitude}
-                  onChange={(v) => onChange({ latitude: v })}
+                  value={data.latitude?.toString()}
+                  status={latVal && !latVal.isValid ? "error" : undefined}
+                  onChange={(e) => onChange({ latitude: e.target.value })}
+                  onBlur={() => markTouched("latitude")}
                 />
+                {latVal && !latVal.isValid && <FieldError message={latVal.message} />}
               </div>
               <div className="flex flex-col gap-1.5">
                 <label className="text-[13px] font-medium text-gray-700">
                   Kinh độ (Longitude) <span className="text-red-500">*</span>
                 </label>
-                <InputNumber
+                <Input
                   size="large"
                   className="!w-full"
                   placeholder="Ví dụ: 106.660172"
-                  min={-180}
-                  max={180}
-                  step={0.000001}
-                  value={data.longitude}
-                  onChange={(v) => onChange({ longitude: v })}
+                  value={data.longitude?.toString()}
+                  status={lngVal && !lngVal.isValid ? "error" : undefined}
+                  onChange={(e) => onChange({ longitude: e.target.value })}
+                  onBlur={() => markTouched("longitude")}
                 />
+                {lngVal && !lngVal.isValid && <FieldError message={lngVal.message} />}
               </div>
             </div>
           </div>

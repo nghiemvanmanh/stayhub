@@ -1,13 +1,20 @@
 "use client";
 
-import { InputNumber, Select, Switch } from "antd";
+import { useState } from "react";
+import { InputNumber, Switch } from "antd";
 import {
   DollarOutlined,
   PercentageOutlined,
   SafetyCertificateOutlined,
   BulbOutlined,
 } from "@ant-design/icons";
-import { cancellationPolicyOptions, type PropertyPricingData, type RentalTypeItem } from "./registrationData";
+import {
+  cancellationPolicyOptions,
+  isPrivateRoomRentalType,
+  type PropertyPricingData,
+  type RentalTypeItem,
+} from "./registrationData";
+import { validatePrice, validateSelect } from "@/constants/validation";
 
 interface PropertyPricingStepProps {
   data: PropertyPricingData;
@@ -16,8 +23,24 @@ interface PropertyPricingStepProps {
   rentalTypes: RentalTypeItem[];
 }
 
+function FieldError({ message }: { message: string }) {
+  if (!message) return null;
+  return <span className="text-xs text-red-500 mt-1 block">{message}</span>;
+}
+
 export default function PropertyPricingStep({ data, onChange, rentalTypeId, rentalTypes }: PropertyPricingStepProps) {
-  const isPrivateRoom = rentalTypes.find(r => r.id === rentalTypeId)?.name.toLowerCase() === "theo phòng riêng" || rentalTypes.find(r => r.id === rentalTypeId)?.slug === "private-room";
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  const markTouched = (field: string) => {
+    if (!touched[field]) setTouched(prev => ({ ...prev, [field]: true }));
+  };
+
+  const selectedType = rentalTypes.find(r => r.id === rentalTypeId);
+  const isPrivateRoom = isPrivateRoomRentalType(selectedType);
+
+  const priceVal = touched.pricePerNight ? validatePrice(data.pricePerNight) : null;
+  const policyVal = touched.cancellationPolicyId ? validateSelect(data.cancellationPolicyId, "chính sách hủy phòng") : null;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8 items-start">
       <div className="flex flex-col gap-6">
@@ -46,12 +69,15 @@ export default function PropertyPricingStep({ data, onChange, rentalTypeId, rent
                     min={0}
                     step={50000}
                     value={data.pricePerNight}
-                    onChange={(v) => onChange({ pricePerNight: v || 0 })}
+                    status={priceVal && !priceVal.isValid ? "error" : undefined}
+                    onChange={(v) => onChange({ pricePerNight: v ?? "" })}
+                    onBlur={() => markTouched("pricePerNight")}
                     formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                     parser={(value) => Number(value?.replace(/,/g, "") || 0)}
                     className="!w-full"
                     placeholder="500,000"
                   />
+                  {priceVal && !priceVal.isValid && <FieldError message={priceVal.message} />}
                   <span className="text-xs text-gray-400">Giá cơ bản cho ngày thường</span>
                 </div>
               )}
@@ -64,7 +90,7 @@ export default function PropertyPricingStep({ data, onChange, rentalTypeId, rent
                   min={0}
                   max={100}
                   value={data.weekendSurchargePercentage}
-                  onChange={(v) => onChange({ weekendSurchargePercentage: v || 0 })}
+                  onChange={(v) => onChange({ weekendSurchargePercentage: v ?? "" })}
                   formatter={(value) => `${value}%`}
                   parser={(value) => Number(value?.replace("%", "") || 0)}
                   className="!w-full"
@@ -82,7 +108,7 @@ export default function PropertyPricingStep({ data, onChange, rentalTypeId, rent
                 min={0}
                 step={50000}
                 value={data.cleaningFee}
-                onChange={(v) => onChange({ cleaningFee: v || 0 })}
+                onChange={(v) => onChange({ cleaningFee: v ?? "" })}
                 formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
                 parser={(value) => Number(value?.replace(/,/g, "") || 0)}
                 className="!w-full sm:!w-1/2"
@@ -119,7 +145,7 @@ export default function PropertyPricingStep({ data, onChange, rentalTypeId, rent
                 min={0}
                 max={100}
                 value={data.depositPercentage}
-                onChange={(v) => onChange({ depositPercentage: v || 0 })}
+                onChange={(v) => onChange({ depositPercentage: v ?? "" })}
                 formatter={(value) => `${value}%`}
                 parser={(value) => Number(value?.replace("%", "") || 0)}
                 className="!w-full sm:!w-1/2"
@@ -146,9 +172,12 @@ export default function PropertyPricingStep({ data, onChange, rentalTypeId, rent
                   className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${
                     isSelected
                       ? "border-[#2DD4A8] bg-blue-50 shadow-sm"
-                      : "border-gray-200 hover:border-[#2DD4A8]"
+                      : (policyVal && !policyVal.isValid ? "border-red-400 hover:border-red-500" : "border-gray-200 hover:border-[#2DD4A8]")
                   }`}
-                  onClick={() => onChange({ cancellationPolicyId: policy.value })}
+                  onClick={() => {
+                    markTouched("cancellationPolicyId");
+                    onChange({ cancellationPolicyId: policy.value });
+                  }}
                 >
                   <div className="flex items-center gap-3">
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
@@ -163,6 +192,7 @@ export default function PropertyPricingStep({ data, onChange, rentalTypeId, rent
                 </div>
               );
             })}
+            {policyVal && !policyVal.isValid && <FieldError message={policyVal.message} />}
           </div>
         </div>
       </div>

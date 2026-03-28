@@ -4,6 +4,7 @@ import {
   REFRESH_TOKEN_KEY,
   USER_INFO,
 } from "@/constants/cookie";
+import { getRolesFromToken } from "@/lib/tokenUtils";
 
 // Các route cần đăng nhập mới vào được
 const PROTECTED_ROUTES = ["/profile", "/bookings", "/host"];
@@ -19,6 +20,14 @@ export function proxy(request: NextRequest) {
   const refreshToken = request.cookies.get(REFRESH_TOKEN_KEY)?.value;
 
   const isLoggedIn = !!accessToken;
+
+  // Chặn Host vào trang đăng ký Host (become-host)
+  if (pathname.startsWith("/become-host") && accessToken) {
+    const roles = getRolesFromToken(accessToken);
+    if (roles.includes("ROLE_HOST")) {
+      return NextResponse.redirect(new URL("/host/dashboard", request.url));
+    }
+  }
 
   // Nếu đang ở route auth-only mà đã login → redirect về home
   if (AUTH_ONLY_ROUTES.some((route) => pathname.startsWith(route))) {

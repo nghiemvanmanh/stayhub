@@ -39,7 +39,7 @@ export default function Header() {
       messageApi.warning("Vui lòng đăng nhập để trở thành đối tác homestay.");
       setLoginOpen(true);
     } else if (isHost) {
-      router.push("/host/properties");
+      router.push("/host/dashboard");
     } else {
       router.push("/become-host");
     }

@@ -35,8 +35,8 @@ export interface PropertyInfoData {
   district: string;
   ward: string;
   addressDetail: string;
-  latitude: number | null;
-  longitude: number | null;
+  latitude: number | string | null;
+  longitude: number | string | null;
 }
 
 export interface PropertyAmenitiesData {
@@ -46,11 +46,11 @@ export interface PropertyAmenitiesData {
 }
 
 export interface PropertyPricingData {
-  pricePerNight: number;
-  weekendSurchargePercentage: number;
-  cleaningFee: number;
+  pricePerNight: number | string;
+  weekendSurchargePercentage: number | string;
+  cleaningFee: number | string;
   isPayAtCheckinAllowed: boolean;
-  depositPercentage: number;
+  depositPercentage: number | string;
   cancellationPolicyId: number | null;
 }
 
@@ -132,6 +132,15 @@ export interface RentalTypeItem {
   iconName: string;
   isActive: boolean;
   categoryResponses?: CategoryItem[];
+}
+
+export function isPrivateRoomRentalType(rentalType?: RentalTypeItem | null): boolean {
+  if (!rentalType) return false;
+
+  const slug = rentalType.slug?.toLowerCase() ?? "";
+  const name = rentalType.name?.toLowerCase() ?? "";
+
+  return slug === "thue-theo-phong" || name === "thuê theo phòng";
 }
 
 // API response types: GET /public/amenities

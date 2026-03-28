@@ -46,6 +46,7 @@ import {
   type RentalTypeItem,
   type AmenityItem,
   cancellationPolicyOptions,
+  isPrivateRoomRentalType,
 } from "./registrationData";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetcher } from "../../../utils/fetcher";
@@ -101,7 +102,7 @@ export default function ReviewStep({ formData, onSubmit, onGoToStep, submitting,
 
   const isPrivateRoom = useMemo(() => {
     const selectedType = rentalTypes.find(r => r.id === propertyInfo.rentalTypeId);
-    return selectedType?.name.toLowerCase() === "theo phòng riêng" || selectedType?.slug === "private-room";
+    return isPrivateRoomRentalType(selectedType);
   }, [propertyInfo.rentalTypeId, rentalTypes]);
 
   const categoryLabel = useMemo(() => {
@@ -113,7 +114,7 @@ export default function ReviewStep({ formData, onSubmit, onGoToStep, submitting,
   const rentalTypeLabel = (rentalTypes ?? []).find((r : RentalTypeItem) => r.id === propertyInfo.rentalTypeId)?.name || "—";
   const cancellationLabel = cancellationPolicyOptions.find((c) => c.value === propertyPricing.cancellationPolicyId)?.label || "—";
   const selectedAmenities = (amenities ?? []).filter((a : AmenityItem) => propertyAmenities.amenityIds.includes(a.id));
-  const formatVND = (n: number) => n.toLocaleString("vi-VN") + " ₫";
+  const formatVND = (n: number | string) => Number(n || 0).toLocaleString("vi-VN") + " ₫";
 
   const EditBtn = ({ step }: { step: number }) => (
     <button

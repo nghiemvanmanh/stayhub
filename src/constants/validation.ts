@@ -69,20 +69,26 @@ export function validateDescription(value: string): ValidationResult {
     return VALID;
 }
 
-export function validateLatitude(value: number | null): ValidationResult {
-    if (value === null || value === undefined) return { isValid: false, message: "Vui lòng nhập vĩ độ" };
-    if (value < -90 || value > 90) return { isValid: false, message: "Vĩ độ phải từ -90 đến 90" };
+export function validateLatitude(value: number | string | null): ValidationResult {
+    if (value === null || value === undefined || value === "") return { isValid: false, message: "Vui lòng nhập vĩ độ" };
+    const num = Number(value);
+    if (isNaN(num)) return { isValid: false, message: "Vĩ độ sai định dạng" };
+    if (num < -90 || num > 90) return { isValid: false, message: "Vĩ độ phải từ -90 đến 90" };
     return VALID;
 }
 
-export function validateLongitude(value: number | null): ValidationResult {
-    if (value === null || value === undefined) return { isValid: false, message: "Vui lòng nhập kinh độ" };
-    if (value < -180 || value > 180) return { isValid: false, message: "Kinh độ phải từ -180 đến 180" };
+export function validateLongitude(value: number | string | null): ValidationResult {
+    if (value === null || value === undefined || value === "") return { isValid: false, message: "Vui lòng nhập kinh độ" };
+    const num = Number(value);
+    if (isNaN(num)) return { isValid: false, message: "Kinh độ sai định dạng" };
+    if (num < -180 || num > 180) return { isValid: false, message: "Kinh độ phải từ -180 đến 180" };
     return VALID;
 }
 
-export function validatePrice(value: number): ValidationResult {
-    if (!value || value <= 0) return { isValid: false, message: "Giá phải lớn hơn 0" };
+export function validatePrice(value: number | string | null): ValidationResult {
+    if (value === null || value === undefined || value === "") return { isValid: false, message: "Vui lòng nhập giá" };
+    const num = Number(value);
+    if (isNaN(num) || num <= 0) return { isValid: false, message: "Giá bị bỏ trống hoặc không được nhỏ hơn 0" };
     return VALID;
 }
 

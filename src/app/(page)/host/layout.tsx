@@ -116,32 +116,6 @@ export default function HostLayout({ children }: { children: ReactNode }) {
         items={antdMenuItems}
         className="border-none bg-transparent py-2 custom-host-menu"
       />
-      {/* Quick custom styles for the menu to make it look modern */}
-      <style jsx global>{`
-        .custom-host-menu .ant-menu-item {
-          border-radius: 12px !important;
-          margin-inline: 16px !important;
-          width: calc(100% - 32px) !important;
-          margin-bottom: 8px !important;
-          height: 44px !important;
-          line-height: 44px !important;
-        }
-        .custom-host-menu .ant-menu-item-selected {
-          background-color: #e6faf4 !important;
-          color: #2DD4A8 !important;
-          font-weight: 500 !important;
-        }
-        .custom-host-menu .ant-menu-item-selected .anticon {
-          color: #2DD4A8 !important;
-        }
-        .custom-host-menu .ant-menu-item:not(.ant-menu-item-selected, .ant-menu-item-danger) {
-          color: #4b5563 !important;
-        }
-        .custom-host-menu .ant-menu-item:not(.ant-menu-item-selected, .ant-menu-item-danger):hover {
-          background-color: #f3f4f6 !important;
-          color: #111827 !important;
-        }
-      `}</style>
     </div>
   );
 
