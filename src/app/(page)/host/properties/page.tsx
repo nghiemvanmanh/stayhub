@@ -13,16 +13,6 @@ import {
 import { useSearchParams } from "next/navigation";
 import CreatePropertyDrawer from "@/components/host/properties/CreatePropertyDrawer";
 
-// TODO: Gọi API GET /properties/{id_host} để lấy danh sách bài đăng
-// const { data: listings } = useQuery({
-//   queryKey: ["my-listings", user?.id],
-//   queryFn: async () => {
-//     const res = await fetcher.get(`/properties/${user?.id}`);
-//     return res.data?.data ?? res.data;
-//   },
-//   enabled: !!user?.id,
-// });
-
 export default function HostPropertiesPage() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [filter, setFilter] = useState("all");
@@ -30,21 +20,19 @@ export default function HostPropertiesPage() {
   const [messageApi, contextHolder] = message.useMessage();
   const searchParams = useSearchParams();
 
-  // Open drawer if navigated with ?action=create (from sidebar)
   useEffect(() => {
     if (searchParams.get("action") === "create") {
       setDrawerOpen(true);
     }
   }, [searchParams]);
 
-  // Empty listings for now — will be populated from API
   const listings: any[] = [];
 
   const stats = [
     { label: "TỔNG BÀI ĐĂNG", value: listings.length },
     { label: "ĐANG HOẠT ĐỘNG", value: listings.filter((l: any) => l.status === "active").length },
     { label: "BẢN NHÁP", value: listings.filter((l: any) => l.status === "draft").length },
-    { label: "THU NHẬP THÁNG NÀY", value: "0đ", isHighlight: true },
+    { label: "THU NHẬP THÁNG", value: "0đ", isHighlight: true },
   ];
 
   const columns = [
@@ -53,7 +41,7 @@ export default function HostPropertiesPage() {
       dataIndex: "name",
       key: "name",
       render: (_: any, record: any) => (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 min-w-[200px]">
           <div className="w-[80px] h-[60px] rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
             {record.imageUrl ? (
               <img src={record.imageUrl} alt={record.name} className="w-full h-full object-cover" />
@@ -64,8 +52,8 @@ export default function HostPropertiesPage() {
             )}
           </div>
           <div>
-            <p className="font-semibold text-gray-900 m-0 text-sm">{record.name}</p>
-            <p className="text-xs text-gray-500 m-0 mt-0.5">📍 {record.location}</p>
+            <p className="font-semibold text-gray-900 m-0 text-sm whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">{record.name}</p>
+            <p className="text-xs text-gray-500 m-0 mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis max-w-[200px]">📍 {record.location}</p>
           </div>
         </div>
       ),
@@ -89,7 +77,7 @@ export default function HostPropertiesPage() {
       dataIndex: "pricePerNight",
       key: "pricePerNight",
       render: (price: number) => (
-        <span className="font-medium">{price?.toLocaleString()}đ</span>
+        <span className="font-medium whitespace-nowrap">{price?.toLocaleString()}đ</span>
       ),
     },
     {
@@ -97,7 +85,7 @@ export default function HostPropertiesPage() {
       dataIndex: "performance",
       key: "performance",
       render: (_: any, record: any) => (
-        <div>
+        <div className="whitespace-nowrap">
           <span className="text-[#2DD4A8] font-semibold text-xs">{record.bookings || 0} đặt phòng</span>
           {record.rating && (
             <p className="text-xs text-gray-500 m-0">★ {record.rating} đánh giá</p>
@@ -109,13 +97,15 @@ export default function HostPropertiesPage() {
       title: "Cập nhật",
       dataIndex: "updatedAt",
       key: "updatedAt",
-      render: (date: string) => <span className="text-xs text-gray-500">{date || "—"}</span>,
+      render: (date: string) => <span className="text-xs text-gray-500 whitespace-nowrap">{date || "—"}</span>,
     },
     {
       title: "Thao tác",
       key: "actions",
+      fixed: "right" as const,
+      width: 100,
       render: () => (
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button type="text" size="small" icon={<EyeOutlined />} />
           <Button type="text" size="small" icon={<EditOutlined />} />
           <Button type="text" size="small" icon={<MoreOutlined />} />
@@ -133,8 +123,8 @@ export default function HostPropertiesPage() {
   return (
     <>
       {contextHolder}
-      {/* Page Header */}
-      <div className="flex items-start justify-between mb-8">
+      {/* Page Header (Hidden on mobile as Top Bar handles it) */}
+      <div className="hidden md:flex items-start justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 m-0">Bất động sản của bạn</h1>
           <p className="text-sm text-gray-500 mt-1 m-0">
@@ -152,18 +142,18 @@ export default function HostPropertiesPage() {
         </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
+      {/* Stats Cards - Responsive Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
         {stats.map((stat, i) => (
           <div
             key={i}
-            className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow"
+            className="bg-white rounded-xl border border-gray-200 p-4 md:p-5 hover:shadow-md transition-shadow"
           >
-            <p className="text-[11px] font-semibold text-gray-400 tracking-wider m-0 uppercase">
+            <p className="text-[10px] md:text-[11px] font-semibold text-gray-400 tracking-wider m-0 uppercase truncate">
               {stat.label}
             </p>
             <p
-              className={`text-2xl font-bold m-0 mt-2 ${
+              className={`text-xl md:text-2xl font-bold m-0 mt-1.5 md:mt-2 truncate ${
                 stat.isHighlight ? "text-[#2DD4A8]" : "text-gray-900"
               }`}
             >
@@ -173,32 +163,34 @@ export default function HostPropertiesPage() {
         ))}
       </div>
 
-      {/* Search + Filters */}
-      <div className="flex items-center justify-between mb-5">
+      {/* Search + Filters - Responsive Flex */}
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between mb-5 gap-4">
         <Input
           prefix={<SearchOutlined className="text-gray-400" />}
-          placeholder="Tìm kiếm theo tên hoặc địa điểm..."
+          placeholder="Tìm kiếm tên, địa điểm..."
           value={searchText}
           onChange={(e) => setSearchText(e.target.value)}
-          className="!w-[360px] !rounded-lg"
+          className="!w-full lg:!w-[360px] !rounded-lg"
           size="large"
         />
-        <Segmented
-          value={filter}
-          onChange={(v) => setFilter(v as string)}
-          options={[
-            { label: "Tất cả", value: "all" },
-            { label: "Hoạt động", value: "active" },
-            { label: "Nháp", value: "draft" },
-            { label: "Tạm dừng", value: "paused" },
-          ]}
-        />
+        <div className="overflow-x-auto pb-1 -mx-1 px-1">
+          <Segmented
+            value={filter}
+            onChange={(v) => setFilter(v as string)}
+            options={[
+              { label: "Tất cả", value: "all" },
+              { label: "Hoạt động", value: "active" },
+              { label: "Nháp", value: "draft" },
+              { label: "Tạm dừng", value: "paused" },
+            ]}
+          />
+        </div>
       </div>
 
       {/* Listings Table */}
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
         {listings.length === 0 ? (
-          <div className="py-16 flex flex-col items-center justify-center">
+          <div className="py-12 md:py-16 flex flex-col items-center justify-center px-4">
             <Empty
               image={Empty.PRESENTED_IMAGE_SIMPLE}
               description={
@@ -214,7 +206,7 @@ export default function HostPropertiesPage() {
                 type="primary"
                 icon={<PlusOutlined />}
                 onClick={() => setDrawerOpen(true)}
-                className="!bg-[#2DD4A8] !border-[#2DD4A8] !rounded-lg !mt-2"
+                className="!bg-[#2DD4A8] !border-[#2DD4A8] !rounded-lg !mt-4"
               >
                 Tạo bài đăng mới
               </Button>
@@ -225,9 +217,10 @@ export default function HostPropertiesPage() {
             columns={columns}
             dataSource={listings}
             rowKey="id"
+            scroll={{ x: 800 }} // Enable horizontal scroll on mobile
             pagination={{
               pageSize: 5,
-              showTotal: (total) => `Hiển thị ${Math.min(5, total)} trên tổng số ${total} bài đăng`,
+              showTotal: (total) => `Hiển thị ${Math.min(5, total)} trên tổng số ${total} bài`,
             }}
           />
         )}

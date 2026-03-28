@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Input, Upload, Checkbox } from "antd";
 import type { UploadFile } from "antd";
 import {
@@ -12,10 +12,16 @@ import {
   FileProtectOutlined,
 } from "@ant-design/icons";
 import type { VerificationData } from "./registrationData";
+import { validateBusinessLicense } from "@/constants/validation";
 
 interface VerificationStepProps {
   data: VerificationData;
   onChange: (data: Partial<VerificationData>) => void;
+}
+
+function FieldError({ message }: { message: string }) {
+  if (!message) return null;
+  return <span className="text-xs text-red-500 mt-1 block">{message}</span>;
 }
 
 function ImagePreview({
@@ -45,6 +51,14 @@ export default function VerificationStep({
   data,
   onChange,
 }: VerificationStepProps) {
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  const markTouched = (field: string) => {
+    if (!touched[field]) setTouched(prev => ({ ...prev, [field]: true }));
+  };
+
+  const licenseValidation = touched.businessLicenseNumber ? validateBusinessLicense(data.businessLicenseNumber) : null;
+
   const handleFileChange = (
     key: "frontCCCD" | "backCCCD" | "businessLicense",
     info: { fileList: UploadFile[] }
@@ -149,8 +163,13 @@ export default function VerificationStep({
               placeholder="Nhập số giấy phép kinh doanh"
               prefix={<FileProtectOutlined className="text-gray-300" />}
               value={data.businessLicenseNumber}
+              status={licenseValidation && !licenseValidation.isValid ? "error" : undefined}
               onChange={(e) => onChange({ businessLicenseNumber: e.target.value })}
+              onBlur={() => markTouched("businessLicenseNumber")}
             />
+            {licenseValidation && !licenseValidation.isValid && (
+              <FieldError message={licenseValidation.message} />
+            )}
           </div>
 
           {/* Business License Upload */}

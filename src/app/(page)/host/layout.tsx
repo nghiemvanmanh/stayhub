@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import {
   PlusOutlined,
@@ -9,18 +9,19 @@ import {
   CalendarOutlined,
   SettingOutlined,
   LogoutOutlined,
+  MenuOutlined,
 } from "@ant-design/icons";
-import { message } from "antd";
+import { message, Menu, Drawer, Button } from "antd";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetcher } from "../../../../utils/fetcher";
 
-const sidebarItems = [
-  { key: "dashboard", label: "Tổng quan", icon: <DashboardOutlined />, href: "/host/dashboard" },
-  { key: "properties", label: "Cơ sở lưu trú", icon: <HomeOutlined />, href: "/host/properties" },
-  { key: "bookings", label: "Đặt phòng", icon: <CalendarOutlined />, href: "/host/bookings" },
-  { key: "settings", label: "Cài đặt", icon: <SettingOutlined />, href: "/host/settings" },
+const menuItems = [
+  { key: "dashboard", icon: <DashboardOutlined />, label: "Tổng quan", href: "/host/dashboard" },
+  { key: "properties", icon: <HomeOutlined />, label: "Cơ sở lưu trú", href: "/host/properties" },
+  { key: "bookings", icon: <CalendarOutlined />, label: "Đặt phòng", href: "/host/bookings" },
+  { key: "settings", icon: <SettingOutlined />, label: "Cài đặt", href: "/host/settings" },
 ];
 
 export default function HostLayout({ children }: { children: ReactNode }) {
@@ -28,9 +29,15 @@ export default function HostLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [messageApi, contextHolder] = message.useMessage();
+  const [drawerVisible, setDrawerVisible] = useState(false);
 
-  // Determine active menu from current pathname
-  const activeKey = sidebarItems.find(item => pathname.startsWith(item.href))?.key || "dashboard";
+  // Close drawer when route changes (mobile)
+  useEffect(() => {
+    setDrawerVisible(false);
+  }, [pathname]);
+
+  const activeKey = menuItems.find(item => pathname.startsWith(item.href))?.key || "dashboard";
+  const activeLabel = menuItems.find(item => item.key === activeKey)?.label || "";
 
   const handleLogout = async () => {
     try {
@@ -42,7 +49,6 @@ export default function HostLayout({ children }: { children: ReactNode }) {
     }
   };
 
-  // Loading state
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -51,16 +57,15 @@ export default function HostLayout({ children }: { children: ReactNode }) {
     );
   }
 
-  // Role guard: only ROLE_HOST can access
   if (!isLoggedIn || !isHost) {
     return (
       <>
         <Header />
-        <div className="min-h-[calc(100vh-72px)] bg-[#f8f9fb] flex flex-col items-center justify-center">
+        <div className="min-h-[calc(100vh-72px)] bg-[#f8f9fb] flex flex-col items-center justify-center px-4">
           <div className="text-center">
-            <h1 className="text-[120px] font-bold text-[#2DD4A8] m-0 leading-none">404</h1>
-            <h2 className="text-2xl font-bold text-gray-900 mt-4 m-0">Không tìm thấy trang</h2>
-            <p className="text-gray-500 mt-2 mb-6">
+            <h1 className="text-[80px] md:text-[120px] font-bold text-[#2DD4A8] m-0 leading-none">404</h1>
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900 mt-4 m-0">Không tìm thấy trang</h2>
+            <p className="text-gray-500 mt-2 mb-6 text-sm md:text-base">
               Bạn không có quyền truy cập trang này hoặc trang không tồn tại.
             </p>
             <button
@@ -76,50 +81,106 @@ export default function HostLayout({ children }: { children: ReactNode }) {
     );
   }
 
+  const antdMenuItems = [
+    ...menuItems.map(item => ({
+      key: item.key,
+      icon: item.icon,
+      label: item.label,
+      onClick: () => router.push(item.href),
+    })),
+    { type: 'divider' as const },
+    {
+      key: "logout",
+      icon: <LogoutOutlined />,
+      label: "Đăng xuất",
+      onClick: handleLogout,
+      danger: true,
+    }
+  ];
+
+  const sidebarContent = (
+    <div className="flex flex-col h-full">
+      <div className="p-4 pb-2">
+        <Button
+          type="primary"
+          icon={<PlusOutlined />}
+          onClick={() => router.push("/host/properties?action=create")}
+          className="w-full !bg-[#e6faf4] !text-[#2DD4A8] hover:!bg-[#d4f5ec] !border-none !rounded-xl !h-12 !font-semibold !shadow-none"
+        >
+          Tạo bài đăng
+        </Button>
+      </div>
+      <Menu
+        mode="inline"
+        selectedKeys={[activeKey]}
+        items={antdMenuItems}
+        className="border-none bg-transparent py-2 custom-host-menu"
+      />
+      {/* Quick custom styles for the menu to make it look modern */}
+      <style jsx global>{`
+        .custom-host-menu .ant-menu-item {
+          border-radius: 12px !important;
+          margin-inline: 16px !important;
+          width: calc(100% - 32px) !important;
+          margin-bottom: 8px !important;
+          height: 44px !important;
+          line-height: 44px !important;
+        }
+        .custom-host-menu .ant-menu-item-selected {
+          background-color: #e6faf4 !important;
+          color: #2DD4A8 !important;
+          font-weight: 500 !important;
+        }
+        .custom-host-menu .ant-menu-item-selected .anticon {
+          color: #2DD4A8 !important;
+        }
+        .custom-host-menu .ant-menu-item:not(.ant-menu-item-selected, .ant-menu-item-danger) {
+          color: #4b5563 !important;
+        }
+        .custom-host-menu .ant-menu-item:not(.ant-menu-item-selected, .ant-menu-item-danger):hover {
+          background-color: #f3f4f6 !important;
+          color: #111827 !important;
+        }
+      `}</style>
+    </div>
+  );
+
   return (
     <>
       {contextHolder}
       <Header />
-      <div className="min-h-[calc(100vh-72px)] bg-[#f8f9fb] flex">
-        {/* Sidebar */}
-        <aside className="w-[220px] bg-white border-r border-gray-200 py-6 px-3 flex flex-col justify-between flex-shrink-0 sticky top-[72px] h-[calc(100vh-72px)]">
-          <div className="flex flex-col gap-1">
-            {/* Create Listing Button */}
-            <button
-              onClick={() => router.push("/host/properties?action=create")}
-              className="flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-semibold text-[#2DD4A8] bg-[#e6faf4] border-none cursor-pointer hover:bg-[#d4f5ec] transition-colors mb-4"
-            >
-              <PlusOutlined />
-              Tạo bài đăng
-            </button>
 
-            {sidebarItems.map((item) => (
-              <button
-                key={item.key}
-                onClick={() => router.push(item.href)}
-                className={`flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-medium border-none cursor-pointer transition-all ${
-                  activeKey === item.key
-                    ? "bg-[#e6faf4] text-[#2DD4A8]"
-                    : "bg-transparent text-gray-600 hover:bg-gray-50"
-                }`}
-              >
-                {item.icon}
-                {item.label}
-              </button>
-            ))}
-          </div>
+      {/* Mobile Top Bar (Only visible on small screens) */}
+      <div className="md:hidden sticky top-[72px] z-10 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+        <h2 className="text-lg font-bold text-gray-900 m-0">{activeLabel}</h2>
+        <Button 
+          type="text" 
+          icon={<MenuOutlined />} 
+          onClick={() => setDrawerVisible(true)}
+          className="!text-gray-600 !p-0"
+        />
+      </div>
 
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl text-sm font-medium text-gray-500 bg-transparent border-none cursor-pointer hover:bg-gray-50 transition-colors"
-          >
-            <LogoutOutlined />
-            Đăng xuất
-          </button>
+      <div className="min-h-[calc(100vh-72px)] bg-[#f8f9fb] flex flex-col md:flex-row">
+        {/* Desktop Sidebar */}
+        <aside className="hidden md:block w-[240px] bg-white border-r border-gray-200 flex-shrink-0 sticky top-[72px] h-[calc(100vh-72px)] overflow-y-auto">
+          {sidebarContent}
         </aside>
 
+        {/* Mobile Sidebar Drawer */}
+        <Drawer
+          title={<span className="font-bold text-gray-900">Menu quản lý</span>}
+          placement="left"
+          onClose={() => setDrawerVisible(false)}
+          open={drawerVisible}
+          width={280}
+          styles={{ body: { padding: 0 } }}
+        >
+          {sidebarContent}
+        </Drawer>
+
         {/* Main Content */}
-        <main className="flex-1 px-8 py-8">
+        <main className="flex-1 p-4 md:p-8 w-full max-w-[1200px] mx-auto">
           {children}
         </main>
       </div>

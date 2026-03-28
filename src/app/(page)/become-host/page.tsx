@@ -31,6 +31,7 @@ import PropertyPricingStep from "@/components/become-host/PropertyPricingStep";
 import ReviewStep from "@/components/become-host/ReviewStep";
 import SuccessStep from "@/components/become-host/SuccessStep";
 import { fetcher } from "../../../../utils/fetcher";
+import { validateEmail, validatePhone, validateCCCD, validateBusinessLicense } from "@/constants/validation";
 
 const stepItems = [
   { title: "Cá nhân", icon: <SolutionOutlined /> },
@@ -43,11 +44,11 @@ const stepItems = [
 
 // === Validation helpers ===
 function isStep0Valid(d: PersonalInfoData): boolean {
-  return !!(d.supportEmail.trim() && d.businessPhone.trim() && d.identityCardNumber.trim());
+  return validateEmail(d.supportEmail).isValid && validatePhone(d.businessPhone).isValid && validateCCCD(d.identityCardNumber).isValid;
 }
 
 function isStep1Valid(d: VerificationData): boolean {
-  return !!(d.frontCCCD && d.backCCCD && d.businessLicenseNumber.trim() && d.businessLicense && d.agreed);
+  return !!(d.frontCCCD && d.backCCCD && validateBusinessLicense(d.businessLicenseNumber).isValid && d.businessLicense && d.agreed);
 }
 
 function isStep2Valid(d: PropertyInfoData): boolean {

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Input } from "antd";
 import {
   MailOutlined,
@@ -9,16 +10,32 @@ import {
   SafetyCertificateOutlined,
 } from "@ant-design/icons";
 import type { PersonalInfoData } from "./registrationData";
+import { validateEmail, validatePhone, validateCCCD } from "@/constants/validation";
 
 interface PersonalInfoStepProps {
   data: PersonalInfoData;
   onChange: (data: Partial<PersonalInfoData>) => void;
 }
 
+function FieldError({ message }: { message: string }) {
+  if (!message) return null;
+  return <span className="text-xs text-red-500 mt-1 block">{message}</span>;
+}
+
 export default function PersonalInfoStep({
   data,
   onChange,
 }: PersonalInfoStepProps) {
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  const markTouched = (field: string) => {
+    if (!touched[field]) setTouched(prev => ({ ...prev, [field]: true }));
+  };
+
+  const emailValidation = touched.supportEmail ? validateEmail(data.supportEmail) : null;
+  const phoneValidation = touched.businessPhone ? validatePhone(data.businessPhone) : null;
+  const cccdValidation = touched.identityCardNumber ? validateCCCD(data.identityCardNumber) : null;
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-8 items-start">
       {/* Left Column */}
@@ -48,11 +65,17 @@ export default function PersonalInfoStep({
                 placeholder="Ví dụ: cskh@homestay.vn"
                 prefix={<MailOutlined className="text-gray-300" />}
                 value={data.supportEmail}
+                status={emailValidation && !emailValidation.isValid ? "error" : undefined}
                 onChange={(e) => onChange({ supportEmail: e.target.value })}
+                onBlur={() => markTouched("supportEmail")}
               />
-              <span className="text-xs text-gray-400 mt-0.5">
-                Email này sẽ được dùng để liên hệ hỗ trợ khách hàng và nhận thông báo đặt phòng.
-              </span>
+              {emailValidation && !emailValidation.isValid ? (
+                <FieldError message={emailValidation.message} />
+              ) : (
+                <span className="text-xs text-gray-400 mt-0.5">
+                  Email này sẽ được dùng để liên hệ hỗ trợ khách hàng và nhận thông báo đặt phòng.
+                </span>
+              )}
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-[13px] font-medium text-gray-700">
@@ -63,11 +86,22 @@ export default function PersonalInfoStep({
                 placeholder="090 123 4567"
                 prefix={<PhoneOutlined className="text-gray-300" />}
                 value={data.businessPhone}
-                onChange={(e) => onChange({ businessPhone: e.target.value })}
+                status={phoneValidation && !phoneValidation.isValid ? "error" : undefined}
+                onChange={(e) => {
+                  // Only allow digits and spaces
+                  const val = e.target.value.replace(/[^\d\s\-]/g, "");
+                  onChange({ businessPhone: val });
+                }}
+                onBlur={() => markTouched("businessPhone")}
+                maxLength={15}
               />
-              <span className="text-xs text-gray-400 mt-0.5">
-                Số điện thoại này để khách hàng và đội ngũ hỗ trợ liên hệ khi cần.
-              </span>
+              {phoneValidation && !phoneValidation.isValid ? (
+                <FieldError message={phoneValidation.message} />
+              ) : (
+                <span className="text-xs text-gray-400 mt-0.5">
+                  Số điện thoại này để khách hàng và đội ngũ hỗ trợ liên hệ khi cần.
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -87,12 +121,22 @@ export default function PersonalInfoStep({
               placeholder="Nhập số CCCD (12 chữ số)"
               prefix={<IdcardOutlined className="text-gray-300" />}
               value={data.identityCardNumber}
-              onChange={(e) => onChange({ identityCardNumber: e.target.value })}
+              status={cccdValidation && !cccdValidation.isValid ? "error" : undefined}
+              onChange={(e) => {
+                // Only allow digits
+                const val = e.target.value.replace(/\D/g, "");
+                onChange({ identityCardNumber: val });
+              }}
+              onBlur={() => markTouched("identityCardNumber")}
               maxLength={12}
             />
-            <span className="text-xs text-gray-400 mt-0.5">
-              Số CCCD dùng để xác minh danh tính khi đối chiếu với ảnh CCCD ở bước sau.
-            </span>
+            {cccdValidation && !cccdValidation.isValid ? (
+              <FieldError message={cccdValidation.message} />
+            ) : (
+              <span className="text-xs text-gray-400 mt-0.5">
+                Số CCCD dùng để xác minh danh tính khi đối chiếu với ảnh CCCD ở bước sau.
+              </span>
+            )}
           </div>
         </div>
       </div>
