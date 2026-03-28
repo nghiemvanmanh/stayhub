@@ -8,8 +8,6 @@ import { getRolesFromToken } from "@/lib/tokenUtils";
 // Các route cần đăng nhập mới vào được
 const PROTECTED_ROUTES = ["/become-host", "/host"];
 
-// Các route chỉ dành cho chưa đăng nhập (đã login không vào được)
-const AUTH_ONLY_ROUTES = ["/homestay", "search"];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -26,14 +24,6 @@ export function proxy(request: NextRequest) {
     if (roles.includes("ROLE_HOST")) {
       return NextResponse.redirect(new URL("/host/dashboard", request.url));
     }
-  }
-
-  // Nếu đang ở route auth-only mà đã login → redirect về home
-  if (AUTH_ONLY_ROUTES.some((route) => pathname.startsWith(route))) {
-    if (isLoggedIn) {
-      return NextResponse.redirect(new URL("/", request.url));
-    }
-    return NextResponse.next();
   }
 
   // Nếu đang ở route protected mà chưa login → redirect về home (hoặc login)
