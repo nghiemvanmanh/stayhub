@@ -5,12 +5,11 @@ import {
   USER_INFO,
 } from "@/constants/cookie";
 import { getRolesFromToken } from "@/lib/tokenUtils";
-
 // Các route cần đăng nhập mới vào được
-const PROTECTED_ROUTES = ["/profile", "/bookings", "/host"];
+const PROTECTED_ROUTES = ["/become-host", "/host"];
 
 // Các route chỉ dành cho chưa đăng nhập (đã login không vào được)
-const AUTH_ONLY_ROUTES = ["/auth/login", "/auth/register-guest"];
+const AUTH_ONLY_ROUTES = ["/homestay", "search"];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
