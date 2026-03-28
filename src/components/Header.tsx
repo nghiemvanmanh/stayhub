@@ -21,7 +21,7 @@ import { fetcher } from "../../utils/fetcher";
 import { useRouter } from "next/navigation";
 
 export default function Header() {
-  const { user, isLoggedIn, logout } = useAuth();
+  const { user, isLoggedIn, isHost, logout } = useAuth();
   const [loginOpen, setLoginOpen] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
@@ -38,6 +38,8 @@ export default function Header() {
     if (!isLoggedIn) {
       messageApi.warning("Vui lòng đăng nhập để trở thành đối tác homestay.");
       setLoginOpen(true);
+    } else if (isHost) {
+      router.push("/host/properties");
     } else {
       router.push("/become-host");
     }
@@ -134,7 +136,7 @@ export default function Header() {
                 className="hidden md:inline-flex text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-full"
                 onClick={handleBecomeHost}
               >
-                Trở thành đối tác homestay
+                {isLoggedIn && isHost ? "Cơ sở lưu trú của tôi" : "Trở thành đối tác homestay"}
               </Button>
               <Button
                 type="text"
