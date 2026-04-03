@@ -21,7 +21,10 @@ fetcher.interceptors.request.use(
 );
 
 let isRefreshing = false;
-let failedQueue: Array<{ resolve: (value?: unknown) => void; reject: (reason?: any) => void }> = [];
+let failedQueue: Array<{
+  resolve: (value?: unknown) => void;
+  reject: (reason?: any) => void;
+}> = [];
 
 const processQueue = (error: any, token: string | null = null) => {
   failedQueue.forEach((prom) => {
@@ -40,11 +43,6 @@ fetcher.interceptors.response.use(
     const originalRequest = error.config;
 
     if (!originalRequest) {
-      return Promise.reject(error);
-    }
-
-    if (error.response?.status >= 500 && window?.location?.pathname !== '/500') {
-      window.location.href = "/500";
       return Promise.reject(error);
     }
 
