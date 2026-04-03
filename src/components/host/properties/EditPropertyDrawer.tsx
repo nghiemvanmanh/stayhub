@@ -31,6 +31,8 @@ import {
   type RentalTypeItem,
   type AmenityItem,
   type PresignedUrlResponse,
+  type EntirePlaceData,
+  isEntirePlaceRentalType,
 } from "@/components/common/property-form/propertyData";
 import RoomModal from "@/components/become-host/RoomModal";
 import { fetcher } from "../../../../utils/fetcher";
@@ -90,6 +92,7 @@ export default function EditPropertyDrawer({ open, onClose, onSuccess, slug }: E
 
   const [amenities, setAmenities] = useState<PropertyAmenitiesData>({
     amenityIds: [], images: [], rooms: [],
+    entirePlace: { maxGuests: 1, numBedrooms: 1, numBeds: 1, numBathrooms: 1, roomCount: 1 },
   });
 
   const [pricing, setPricing] = useState<PropertyPricingData>({
@@ -143,7 +146,7 @@ export default function EditPropertyDrawer({ open, onClose, onSuccess, slug }: E
 
   const resetForm = () => {
     setPropertyInfo({ name: "", description: "", categoryId: null, rentalTypeId: null, province: "", district: "", ward: "", addressDetail: "", latitude: null, longitude: null });
-    setAmenities({ amenityIds: [], images: [], rooms: [] });
+    setAmenities({ amenityIds: [], images: [], rooms: [], entirePlace: { maxGuests: 1, numBedrooms: 1, numBeds: 1, numBathrooms: 1, roomCount: 1 } });
     setPricing({ pricePerNight: 0, weekendSurchargePercentage: 0, cleaningFee: 0, isPayAtCheckinAllowed: false, depositPercentage: 50, cancellationPolicyId: null });
     setTouched({});
   };
@@ -192,6 +195,13 @@ export default function EditPropertyDrawer({ open, onClose, onSuccess, slug }: E
           images: r.thumbnailUrl ? [r.thumbnailUrl] : (r.imageUrls || []),
           amenityIds: r.amenities ? r.amenities.map((a: any) => a.id) : []
         })) : [],
+        entirePlace: {
+          maxGuests: detailData.rooms?.[0]?.maxGuests || 1,
+          numBedrooms: detailData.rooms?.[0]?.numBedrooms || detailData.numBedrooms || 1,
+          numBeds: detailData.rooms?.[0]?.numBeds || 1,
+          numBathrooms: detailData.rooms?.[0]?.numBathrooms || 1,
+          roomCount: detailData.roomCount || 1,
+        },
       });
       
       setPricing({
@@ -207,7 +217,7 @@ export default function EditPropertyDrawer({ open, onClose, onSuccess, slug }: E
     }
   }, [open, detailData, rentalTypesData]);
 
-  const { errors, canSubmit, isPrivateRoom } = usePropertyValidation({
+  const { errors, canSubmit, isPrivateRoom, isEntirePlace } = usePropertyValidation({
     propertyInfo,
     amenities,
     pricing,

@@ -75,6 +75,8 @@ export interface PropertyDetailRoom {
   maxGuests: number;
   numBeds: number;
   numBathrooms: number;
+  numBedrooms?: number;
+  roomCount?: number;
   amenities: Amenity[];
   thumbnailUrl: string;
   cancellationPolicyResponse: CancellationPolicyResponse;
@@ -99,6 +101,7 @@ export interface PropertyDetail {
   numBedrooms: number;
   numBeds: number;
   numBathrooms: number;
+  roomCount?: number;
   cleaningFee: number;
   weekendSurchargePercentage: number;
   depositPercentage: number;

@@ -4,6 +4,7 @@ import {
   type PropertyAmenitiesData,
   type PropertyPricingData,
   isPrivateRoomRentalType,
+  isEntirePlaceRentalType,
   type RentalTypeItem,
 } from './propertyData';
 import {
@@ -35,6 +36,7 @@ export function usePropertyValidation({
 }: PropertyValidationParams) {
   const selectedType = rentalTypes.find((r) => r.id === propertyInfo.rentalTypeId);
   const isPrivateRoom = isPrivateRoomRentalType(selectedType);
+  const isEntirePlace = isEntirePlaceRentalType(selectedType);
 
   // Property Info
   const nameVal = touched.name ? validatePropertyName(propertyInfo.name) : null;
@@ -82,8 +84,15 @@ export function usePropertyValidation({
                   validateCleaningFee(pricing.cleaningFee).isValid;
     }
 
-    return infoOk && amenitiesOk && pricingOk;
-  }, [propertyInfo, amenities, pricing, isPrivateRoom]);
+    // For entire place, also validate entirePlace fields
+    let entirePlaceOk = true;
+    if (isEntirePlace) {
+      entirePlaceOk = amenities.entirePlace.maxGuests >= 1 && 
+                      amenities.entirePlace.numBeds >= 1;
+    }
+
+    return infoOk && amenitiesOk && pricingOk && entirePlaceOk;
+  }, [propertyInfo, amenities, pricing, isPrivateRoom, isEntirePlace]);
 
   const errors = {
     name: nameVal,
@@ -102,5 +111,5 @@ export function usePropertyValidation({
     cancellationPolicyId: policyVal,
   };
 
-  return { errors, canSubmit, isPrivateRoom };
+  return { errors, canSubmit, isPrivateRoom, isEntirePlace };
 }

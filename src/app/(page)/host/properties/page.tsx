@@ -164,9 +164,14 @@ export default function HostPropertiesPage() {
       width: 100,
       render: (_: any, record: any) => (
         <div className="flex items-center gap-1">
-          <Link href={`/homestay/${record.slug}`} target="_blank">
-            <Button type="text" size="small" icon={<EyeOutlined />} />
-          </Link>
+          <Button type="text" size="small" icon={<EyeOutlined />} onClick={() => {
+            if (record.status === PROPERTY_STATUS.PUBLISHED) {
+              window.open(`/homestay/${record.slug}`, '_blank');
+            } else {
+              const statusLabel = PROPERTY_STATUS_MAP[record.status]?.label || record.status;
+              messageApi.warning(`Chỉ có thể xem chi tiết khi bài đăng ở trạng thái "Đang hoạt động". Trạng thái hiện tại: ${statusLabel}`);
+            }
+          }} />
           <Button type="text" size="small" icon={<EditOutlined />} onClick={() => {
             setEditingPropertySlug(record.slug);
             setEditDrawerOpen(true);

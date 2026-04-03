@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import {
   Drawer,
   Button,
+  InputNumber,
   message,
 } from "antd";
 import { useQuery } from "@tanstack/react-query";
@@ -31,6 +32,8 @@ import {
   type RentalTypeItem,
   type AmenityItem,
   type PresignedUrlResponse,
+  type EntirePlaceData,
+  isEntirePlaceRentalType,
 } from "@/components/common/property-form/propertyData";
 import RoomModal from "@/components/become-host/RoomModal";
 import { fetcher } from "../../../../utils/fetcher";
@@ -89,6 +92,7 @@ export default function CreatePropertyDrawer({ open, onClose, onSuccess }: Creat
 
   const [amenities, setAmenities] = useState<PropertyAmenitiesData>({
     amenityIds: [], images: [], rooms: [],
+    entirePlace: { maxGuests: 1, numBedrooms: 1, numBeds: 1, numBathrooms: 1, roomCount: 1 },
   });
 
   const [pricing, setPricing] = useState<PropertyPricingData>({
@@ -140,9 +144,16 @@ export default function CreatePropertyDrawer({ open, onClose, onSuccess }: Creat
     updateAmenities({ rooms });
   };
 
+  const selectedRentalType = rentalTypes.find(r => r.id === propertyInfo.rentalTypeId);
+  const isEntirePlace = isEntirePlaceRentalType(selectedRentalType);
+
+  const updateEntirePlace = (partial: Partial<EntirePlaceData>) => {
+    setAmenities(prev => ({ ...prev, entirePlace: { ...prev.entirePlace, ...partial } }));
+  };
+
   const resetForm = () => {
     setPropertyInfo({ name: "", description: "", categoryId: null, rentalTypeId: null, province: "", district: "", ward: "", addressDetail: "", latitude: null, longitude: null });
-    setAmenities({ amenityIds: [], images: [], rooms: [] });
+    setAmenities({ amenityIds: [], images: [], rooms: [], entirePlace: { maxGuests: 1, numBedrooms: 1, numBeds: 1, numBathrooms: 1, roomCount: 1 } });
     setPricing({ pricePerNight: 0, weekendSurchargePercentage: 0, cleaningFee: 0, isPayAtCheckinAllowed: false, depositPercentage: 50, cancellationPolicyId: null });
     setTouched({});
   };
@@ -166,7 +177,29 @@ export default function CreatePropertyDrawer({ open, onClose, onSuccess }: Creat
         return { ...room, imageUrls: roomImageUrls };
       }));
 
-      const body = {
+      // Build rooms based on rental type
+      let finalRooms;
+      if (isEntirePlace) {
+        finalRooms = [{
+          name: propertyInfo.name,
+          description: propertyInfo.description,
+          pricePerNight: Number(pricing.pricePerNight) || 0,
+          maxGuests: amenities.entirePlace.maxGuests,
+          numBeds: amenities.entirePlace.numBeds,
+          numBathrooms: amenities.entirePlace.numBathrooms,
+          numBedrooms: amenities.entirePlace.numBedrooms,
+          amenityIds: amenities.amenityIds,
+          imageUrls: imageUrls,
+        }];
+      } else if (isPrivateRoom) {
+        finalRooms = roomsWithUrls.map(r => ({
+          name: r.name, description: r.description, pricePerNight: r.pricePerNight,
+          maxGuests: r.maxGuests, numBeds: r.numBeds, numBathrooms: r.numBathrooms,
+          amenityIds: r.amenityIds, imageUrls: r.imageUrls,
+        }));
+      }
+
+      const body: Record<string, unknown> = {
         rentalTypeId: propertyInfo.rentalTypeId,
         categoryId: propertyInfo.categoryId,
         amenityIds: amenities.amenityIds,
@@ -181,10 +214,12 @@ export default function CreatePropertyDrawer({ open, onClose, onSuccess }: Creat
         weekendSurchargePercentage: pricing.weekendSurchargePercentage,
         cleaningFee: pricing.cleaningFee,
         imageUrls,
-        ...(isPrivateRoom
-          ? { rooms: roomsWithUrls.map(r => ({ name: r.name, description: r.description, pricePerNight: r.pricePerNight, maxGuests: r.maxGuests, numBeds: r.numBeds, numBathrooms: r.numBathrooms, amenityIds: r.amenityIds, imageUrls: r.imageUrls })) }
-          : { pricePerNight: pricing.pricePerNight }),
+        pricePerNight: Number(pricing.pricePerNight) || 0,
       };
+
+      if (finalRooms) {
+        body.rooms = finalRooms;
+      }
 
       await fetcher.post("/properties", body);
       messageApi.success("Tạo cơ sở lưu trú thành công!");
@@ -272,7 +307,39 @@ export default function CreatePropertyDrawer({ open, onClose, onSuccess }: Creat
             />
           </Section>
 
-          {/* SECTION 5: Rooms (Conditional) */}
+          {/* SECTION 5a: Entire Place Info (Conditional) */}
+          {isEntirePlace && (
+            <Section icon={<HomeOutlined />} title="Thông tin chỗ ở">
+              <p className="text-xs text-gray-400 mb-4 -mt-2">
+                Nhập thông tin tổng thể cho toàn bộ chỗ ở của bạn.
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                {([
+                  { label: "Số phòng", field: "roomCount" as const, min: 1 },
+                  { label: "Số khách tối đa", field: "maxGuests" as const, min: 1 },
+                  { label: "Số phòng ngủ", field: "numBedrooms" as const, min: 0 },
+                  { label: "Số giường", field: "numBeds" as const, min: 1 },
+                  { label: "Số phòng tắm", field: "numBathrooms" as const, min: 0 },
+                ] as const).map(({ label, field, min }) => (
+                  <div key={field} className="flex flex-col gap-1.5">
+                    <label className="text-[13px] font-medium text-gray-700">
+                      {label} <span className="text-red-500">*</span>
+                    </label>
+                    <InputNumber
+                      size="large"
+                      min={min}
+                      max={50}
+                      value={amenities.entirePlace[field]}
+                      onChange={(v) => updateEntirePlace({ [field]: v ?? min })}
+                      className="!w-full"
+                    />
+                  </div>
+                ))}
+              </div>
+            </Section>
+          )}
+
+          {/* SECTION 5b: Rooms (Private Room Only) */}
           {isPrivateRoom && (
             <Section icon={<AppstoreOutlined />} title="Thông tin phòng">
               <PropertyRoomsFields

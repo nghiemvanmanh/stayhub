@@ -15,6 +15,14 @@ export interface VerificationData {
   agreed: boolean;
 }
 
+export interface EntirePlaceData {
+  maxGuests: number;
+  numBedrooms: number;
+  numBeds: number;
+  numBathrooms: number;
+  roomCount: number;
+}
+
 export interface RoomData {
   name: string;
   description: string;
@@ -43,6 +51,7 @@ export interface PropertyAmenitiesData {
   amenityIds: number[];
   images: (File | string)[];
   rooms: RoomData[];
+  entirePlace: EntirePlaceData;
 }
 
 export interface PropertyPricingData {
@@ -91,6 +100,13 @@ export const initialFormData: RegistrationFormData = {
     amenityIds: [],
     images: [],
     rooms: [],
+    entirePlace: {
+      maxGuests: 1,
+      numBedrooms: 1,
+      numBeds: 1,
+      numBathrooms: 1,
+      roomCount: 1,
+    },
   },
   propertyPricing: {
     pricePerNight: 0,
@@ -143,6 +159,14 @@ export function isPrivateRoomRentalType(
   const name = rentalType.name?.toLowerCase() ?? "";
 
   return slug === "thue-theo-phong" || name === "thuê theo phòng";
+}
+
+export function isEntirePlaceRentalType(
+  rentalType?: RentalTypeItem | null,
+): boolean {
+  if (!rentalType) return false;
+  const slug = rentalType.slug?.toLowerCase() ?? "";
+  return slug === "toan-bo-cho-o";
 }
 
 // API response types: GET /public/amenities

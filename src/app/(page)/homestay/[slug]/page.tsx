@@ -148,6 +148,7 @@ export default function HomestayDetailPage() {
     const nights = dates ? dates[1].diff(dates[0], "day") : 0;
 
     const rooms = property?.rooms || [];
+    const isEntirePlace = property?.rentalTypeSlug === "toan-bo-cho-o";
 
     // Images for gallery
     const images = useMemo(() => {
@@ -197,18 +198,27 @@ export default function HomestayDetailPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [roomAvailability]);
 
-    const selectedRooms = rooms.filter((r) => selectedRoomIds.has(r.id));
+    // For entire place, auto-select the single room
+    const entirePlaceRoom = isEntirePlace && rooms.length > 0 ? rooms[0] : null;
+
+    const selectedRooms = isEntirePlace
+        ? (entirePlaceRoom ? [entirePlaceRoom] : [])
+        : rooms.filter((r) => selectedRoomIds.has(r.id));
     const hasSelection = selectedRooms.length > 0;
-    const pricePerNight = selectedRooms.reduce((s, r) => s + r.pricePerNight, 0);
-    const maxGuestsLimit = selectedRooms.length > 0
-        ? selectedRooms.reduce((s, r) => s + r.maxGuests, 0)
-        : totalMaxGuests;
+    const pricePerNight = isEntirePlace
+        ? (entirePlaceRoom?.pricePerNight || 0)
+        : selectedRooms.reduce((s, r) => s + r.pricePerNight, 0);
+    const maxGuestsLimit = isEntirePlace
+        ? (entirePlaceRoom?.maxGuests || totalMaxGuests)
+        : (selectedRooms.length > 0
+            ? selectedRooms.reduce((s, r) => s + r.maxGuests, 0)
+            : totalMaxGuests);
     const subtotal = pricePerNight * nights;
     const cleaningFee = property?.cleaningFee ?? 0;
     const serviceFeeRate = 0.1;
     const serviceFee = Math.round(pricePerNight * serviceFeeRate) * nights;
     const total = subtotal + cleaningFee + serviceFee;
-    const canBook = hasSelection && nights > 0;
+    const canBook = isEntirePlace ? (hasSelection && nights > 0) : (hasSelection && nights > 0);
 
     const handleToggleRoom = (roomId: string | number) => {
         if (!roomAvailability.get(roomId)) return;
@@ -341,11 +351,37 @@ export default function HomestayDetailPage() {
                                             <Users size={14} />
                                             {totalMaxGuests} khách
                                         </span>
-                                        <span>·</span>
-                                        <span className="flex items-center gap-1">
-                                            <DoorOpen size={14} />
-                                            {rooms.length} phòng
-                                        </span>
+                                        {!isEntirePlace && (
+                                            <>
+                                                <span>·</span>
+                                                <span className="flex items-center gap-1">
+                                                    <DoorOpen size={14} />
+                                                    {rooms.length} phòng
+                                                </span>
+                                            </>
+                                        )}
+                                        {isEntirePlace && (
+                                            <>
+                                                {(property?.roomCount || entirePlaceRoom?.roomCount) && (
+                                                    <>
+                                                        <span>·</span>
+                                                        <span className="flex items-center gap-1">
+                                                            <DoorOpen size={14} />
+                                                            {property?.roomCount || entirePlaceRoom?.roomCount} phòng
+                                                        </span>
+                                                    </>
+                                                )}
+                                                {(entirePlaceRoom?.numBedrooms || property?.numBedrooms) && (
+                                                    <>
+                                                        <span>·</span>
+                                                        <span className="flex items-center gap-1">
+                                                            <DoorOpen size={14} />
+                                                            {entirePlaceRoom?.numBedrooms || property?.numBedrooms} phòng ngủ
+                                                        </span>
+                                                    </>
+                                                )}
+                                            </>
+                                        )}
                                         <span>·</span>
                                         <span className="flex items-center gap-1">
                                             <BedDouble size={14} />
@@ -525,8 +561,8 @@ export default function HomestayDetailPage() {
                                     },
                                 ]}
                             />
-
-                            {/* ── Room Selection ──────────────────────────── */}
+                            {/* ── Room Selection (Private Room / Shared) ──────────────────────────── */}
+                            {!isEntirePlace && (
                             <div className="mb-8">
                                 <div className="flex items-center justify-between mb-4">
                                     <h3 className="text-xl font-bold text-gray-900">
@@ -730,6 +766,81 @@ export default function HomestayDetailPage() {
                                     })}
                                 </div>
                             </div>
+                            )}
+
+                            {/* ── Entire Place: Mobile Date + Booking ──────── */}
+                            {isEntirePlace && (
+                                <div className="mb-8">
+                                    {/* Mobile Date Picker for Entire Place */}
+                                    <div id="mobile-date-picker" className="lg:hidden mb-6 bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+                                        <p className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">
+                                            Ngày nhận — trả phòng
+                                        </p>
+                                        <RangePicker
+                                            className="w-full !rounded-xl"
+                                            size="large"
+                                            format="DD/MM/YYYY"
+                                            placeholder={["Nhận phòng", "Trả phòng"]}
+                                            disabledDate={disabledDate}
+                                            value={dates}
+                                            onChange={(vals) => {
+                                                if (vals?.[0] && vals?.[1]) {
+                                                    setDates([vals[0], vals[1]]);
+                                                } else {
+                                                    setDates(null);
+                                                }
+                                            }}
+                                        />
+                                        {!dates ? (
+                                            <p className="text-[11px] text-amber-600 mt-2 m-0 bg-amber-50 px-2 py-1 rounded-md inline-block">
+                                                👆 Chọn ngày để đặt chỗ
+                                            </p>
+                                        ) : (
+                                            <p className="text-xs text-[#2DD4A8] mt-2 font-medium m-0">
+                                                ✓ {nights} đêm: {dates[0].format("DD/MM")} → {dates[1].format("DD/MM/YYYY")}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* Mobile Booking Button for Entire Place */}
+                                    <div className="lg:hidden">
+                                        <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+                                            <div className="flex items-baseline justify-between mb-3">
+                                                <div>
+                                                    <span className="text-xl font-bold text-gray-900">
+                                                        {pricePerNight.toLocaleString("vi-VN")}đ
+                                                    </span>
+                                                    <span className="text-gray-500 text-sm"> / đêm</span>
+                                                </div>
+                                            </div>
+                                            {canBook && dates ? (
+                                                <Link
+                                                    href={`/payment/${property.id}?checkin=${dates[0].format("YYYY-MM-DD")}&checkout=${dates[1].format("YYYY-MM-DD")}&guests=${guests}&roomIds=${entirePlaceRoom?.id}`}
+                                                >
+                                                    <Button
+                                                        type="primary"
+                                                        block
+                                                        size="large"
+                                                        className="!rounded-xl !h-12 !text-base !font-semibold !bg-[#2DD4A8] !border-[#2DD4A8] hover:!bg-[#25bc95]"
+                                                    >
+                                                        Đặt ngay
+                                                    </Button>
+                                                </Link>
+                                            ) : (
+                                                <Button
+                                                    type="primary"
+                                                    block
+                                                    size="large"
+                                                    disabled
+                                                    className="!rounded-xl !h-12 !text-base !font-semibold"
+                                                >
+                                                    Chọn ngày để đặt
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Reviews */}
                             <div className="mb-8 pb-8 border-b border-gray-200">
@@ -795,7 +906,7 @@ export default function HomestayDetailPage() {
                                 {/* Price header */}
                                 <div className="flex items-baseline justify-between mb-3">
                                     <div>
-                                        {hasSelection ? (
+                                        {(isEntirePlace || hasSelection) ? (
                                             <>
                                                 <span className="text-2xl font-bold text-gray-900">
                                                     {pricePerNight.toLocaleString("vi-VN")}đ
@@ -818,7 +929,13 @@ export default function HomestayDetailPage() {
                                 </div>
 
                                 {/* Selection indicator */}
-                                {hasSelection ? (
+                                {isEntirePlace ? (
+                                    <div className="mb-3 bg-[#E6FAF5] border border-[#2DD4A8] rounded-xl px-3 py-2">
+                                        <span className="text-xs text-[#2DD4A8] font-semibold flex items-center gap-1">
+                                            <CheckCircleFilled /> Toàn bộ chỗ ở
+                                        </span>
+                                    </div>
+                                ) : hasSelection ? (
                                     <div className="mb-3 bg-[#E6FAF5] border border-[#2DD4A8] rounded-xl px-3 py-2">
                                         <span className="text-xs text-[#2DD4A8] font-semibold flex items-center gap-1">
                                             <CheckCircleFilled /> {selectedRooms.length} phòng đã chọn
@@ -904,9 +1021,9 @@ export default function HomestayDetailPage() {
                                 </div>
 
                                 {/* CTA */}
-                                {canBook && dates ? (
+                                {(canBook || (isEntirePlace && nights > 0)) && dates ? (
                                     <Link
-                                        href={`/payment/${property.id}?checkin=${dates[0].format("YYYY-MM-DD")}&checkout=${dates[1].format("YYYY-MM-DD")}&guests=${guests}&roomIds=${Array.from(selectedRoomIds).join(",")}`}
+                                        href={`/payment/${property.id}?checkin=${dates[0].format("YYYY-MM-DD")}&checkout=${dates[1].format("YYYY-MM-DD")}&guests=${guests}&roomIds=${isEntirePlace ? entirePlaceRoom?.id : Array.from(selectedRoomIds).join(",")}`}
                                     >
                                         <Button
                                             type="primary"
@@ -914,7 +1031,7 @@ export default function HomestayDetailPage() {
                                             size="large"
                                             className="!rounded-xl !h-12 !text-base !font-semibold mb-3 !bg-[#2DD4A8] !border-[#2DD4A8] hover:!bg-[#25bc95]"
                                         >
-                                            Đặt ngay · {selectedRooms.length} phòng
+                                            {isEntirePlace ? "Đặt ngay" : `Đặt ngay · ${selectedRooms.length} phòng`}
                                         </Button>
                                     </Link>
                                 ) : (
@@ -925,9 +1042,11 @@ export default function HomestayDetailPage() {
                                         disabled
                                         className="!rounded-xl !h-12 !text-base !font-semibold mb-3"
                                     >
-                                        {!hasSelection
-                                            ? "Chọn phòng để đặt"
-                                            : "Chọn ngày để đặt"}
+                                        {isEntirePlace
+                                            ? "Chọn ngày để đặt"
+                                            : (!hasSelection
+                                                ? "Chọn phòng để đặt"
+                                                : "Chọn ngày để đặt")}
                                     </Button>
                                 )}
                                 {canBook && (

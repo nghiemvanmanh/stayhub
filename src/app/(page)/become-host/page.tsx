@@ -15,6 +15,7 @@ import {
 import {
   initialFormData,
   isPrivateRoomRentalType,
+  isEntirePlaceRentalType,
   type RegistrationFormData,
   type PersonalInfoData,
   type VerificationData,
@@ -67,8 +68,12 @@ function isStep2Valid(d: PropertyInfoData): boolean {
   );
 }
 
-function isStep3Valid(d: PropertyAmenitiesData): boolean {
-  return d.amenityIds.length > 0 && d.images.length >= 5;
+function isStep3Valid(d: PropertyAmenitiesData, isEntirePlace: boolean): boolean {
+  const base = d.amenityIds.length > 0 && d.images.length >= 5;
+  if (isEntirePlace) {
+    return base && d.entirePlace.maxGuests >= 1 && d.entirePlace.numBeds >= 1;
+  }
+  return base;
 }
 
 function isStep4Valid(d: PropertyPricingData, isPrivateRoom: boolean): boolean {
@@ -148,11 +153,12 @@ export default function PartnerRegistrationPage() {
   const canProceed = useMemo(() => {
     const selectedType = rentalTypes.find(r => r.id === formData.propertyInfo.rentalTypeId);
     const isPrivateRoom = isPrivateRoomRentalType(selectedType);
+    const isEntirePlace = isEntirePlaceRentalType(selectedType);
     switch (currentStep) {
       case 0: return isStep0Valid(formData.personal);
       case 1: return isStep1Valid(formData.verification);
       case 2: return isStep2Valid(formData.propertyInfo);
-      case 3: return isStep3Valid(formData.propertyAmenities);
+      case 3: return isStep3Valid(formData.propertyAmenities, isEntirePlace);
       case 4: return isStep4Valid(formData.propertyPricing, isPrivateRoom);
       case 5: return true;
       default: return false;
@@ -222,7 +228,39 @@ export default function PartnerRegistrationPage() {
         })
       );
 
-      // 4. Construct unified payload
+      // 4. Determine rental type
+      const selectedType = rentalTypes.find(r => r.id === propertyInfo.rentalTypeId);
+      const isEntirePlace = isEntirePlaceRentalType(selectedType);
+
+      // 5. Build rooms array based on rental type
+      let finalRooms;
+      if (isEntirePlace) {
+        // Entire place: create 1 room from entirePlace data + pricePerNight
+        finalRooms = [{
+          name: propertyInfo.name,
+          description: propertyInfo.description,
+          pricePerNight: Number(propertyPricing.pricePerNight) || 0,
+          maxGuests: propertyAmenities.entirePlace.maxGuests,
+          numBeds: propertyAmenities.entirePlace.numBeds,
+          numBathrooms: propertyAmenities.entirePlace.numBathrooms,
+          numBedrooms: propertyAmenities.entirePlace.numBedrooms,
+          amenityIds: propertyAmenities.amenityIds,
+          imageUrls: imageUrls,
+        }];
+      } else {
+        finalRooms = roomsWithImageUrls.map(r => ({
+          name: r.name,
+          description: r.description,
+          pricePerNight: r.pricePerNight,
+          maxGuests: r.maxGuests,
+          numBeds: r.numBeds,
+          numBathrooms: r.numBathrooms,
+          amenityIds: r.amenityIds,
+          imageUrls: r.imageUrls,
+        }));
+      }
+
+      // 6. Construct unified payload
       const hostBody = {
         hostDetails: {
           businessPhone: personal.businessPhone,
@@ -251,17 +289,8 @@ export default function PartnerRegistrationPage() {
           cancellationPolicyId: propertyPricing.cancellationPolicyId,
           amenityIds: propertyAmenities.amenityIds,
           imageUrls,
-          pricePerNight: propertyPricing.pricePerNight || 0,
-          rooms: roomsWithImageUrls.map(r => ({
-             name: r.name,
-             description: r.description,
-             pricePerNight: r.pricePerNight,
-             maxGuests: r.maxGuests,
-             numBeds: r.numBeds,
-             numBathrooms: r.numBathrooms,
-             amenityIds: r.amenityIds,
-             imageUrls: r.imageUrls
-          }))
+          pricePerNight: Number(propertyPricing.pricePerNight) || 0,
+          rooms: finalRooms,
         }
       };
       await fetcher.post("/auth/host-applications", hostBody);

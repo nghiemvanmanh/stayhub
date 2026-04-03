@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { InputNumber } from "antd";
 import { PropertyAmenitiesFields } from "@/components/common/property-form/PropertyAmenitiesFields";
 import { PropertyImagesFields } from "@/components/common/property-form/PropertyImagesFields";
 import { PropertyRoomsFields } from "@/components/common/property-form/PropertyRoomsFields";
@@ -8,10 +9,17 @@ import { useQuery } from "@tanstack/react-query";
 import {
   PictureOutlined,
   AppstoreOutlined,
-  DeleteOutlined,
   BulbOutlined,
+  HomeOutlined,
 } from "@ant-design/icons";
-import { type PropertyAmenitiesData, type AmenityItem, type RoomData, type RentalTypeItem } from "@/components/common/property-form/propertyData";
+import {
+  type PropertyAmenitiesData,
+  type AmenityItem,
+  type RoomData,
+  type RentalTypeItem,
+  type EntirePlaceData,
+  isEntirePlaceRentalType,
+} from "@/components/common/property-form/propertyData";
 import { fetcher } from "../../../utils/fetcher";
 import RoomModal from "./RoomModal";
 
@@ -22,16 +30,14 @@ interface PropertyAmenitiesStepProps {
   rentalTypes: RentalTypeItem[];
 }
 
- 
-
 export default function PropertyAmenitiesStep({ data, onChange, rentalTypeId, rentalTypes }: PropertyAmenitiesStepProps) {
   const [roomModalVisible, setRoomModalVisible] = useState(false);
   const [editingRoomIndex, setEditingRoomIndex] = useState<number | null>(null);
 
-  const isPrivateRoom = useMemo(() => {
-    const selectedType = rentalTypes.find(r => r.id === rentalTypeId);
-    return selectedType?.slug === "thue-theo-phong";
-  }, [rentalTypeId, rentalTypes]);
+  const selectedType = useMemo(() => rentalTypes.find(r => r.id === rentalTypeId), [rentalTypeId, rentalTypes]);
+  const isPrivateRoom = useMemo(() => selectedType?.slug === "thue-theo-phong", [selectedType]);
+  const isEntirePlace = useMemo(() => isEntirePlaceRentalType(selectedType), [selectedType]);
+
   // Fetch amenities from API
   const { data: amenities, isLoading: loadingAmenities } = useQuery<AmenityItem[]>({
     queryKey: ["public-amenities"],
@@ -42,7 +48,9 @@ export default function PropertyAmenitiesStep({ data, onChange, rentalTypeId, re
   });
   const amenityList = amenities ?? [];
 
- 
+  const updateEntirePlace = (partial: Partial<EntirePlaceData>) => {
+    onChange({ entirePlace: { ...data.entirePlace, ...partial } });
+  };
 
   const openRoomModal = (index: number | null = null) => {
     setEditingRoomIndex(index);
@@ -111,7 +119,94 @@ export default function PropertyAmenitiesStep({ data, onChange, rentalTypeId, re
           <PropertyImagesFields data={data} onChange={onChange} />
         </div>
 
-        {/* Rooms (Conditionally Rendered) */}
+        {/* Entire Place Info */}
+        {isEntirePlace && (
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
+            <div className="flex items-center gap-2 mb-5">
+              <HomeOutlined className="text-lg text-[#2DD4A8]" />
+              <h3 className="text-base font-semibold text-gray-900 m-0">
+                Thông tin chỗ ở <span className="text-red-500">*</span>
+              </h3>
+            </div>
+            <p className="text-xs text-gray-400 mb-4 -mt-2">
+              Nhập thông tin tổng thể cho toàn bộ chỗ ở của bạn.
+            </p>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-medium text-gray-700">
+                  Số phòng <span className="text-red-500">*</span>
+                </label>
+                <InputNumber
+                  size="large"
+                  min={1}
+                  max={100}
+                  value={data.entirePlace.roomCount}
+                  onChange={(v) => updateEntirePlace({ roomCount: v ?? 1 })}
+                  className="!w-full"
+                  placeholder="1"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-medium text-gray-700">
+                  Số khách tối đa <span className="text-red-500">*</span>
+                </label>
+                <InputNumber
+                  size="large"
+                  min={1}
+                  max={50}
+                  value={data.entirePlace.maxGuests}
+                  onChange={(v) => updateEntirePlace({ maxGuests: v ?? 1 })}
+                  className="!w-full"
+                  placeholder="2"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-medium text-gray-700">
+                  Số phòng ngủ <span className="text-red-500">*</span>
+                </label>
+                <InputNumber
+                  size="large"
+                  min={0}
+                  max={50}
+                  value={data.entirePlace.numBedrooms}
+                  onChange={(v) => updateEntirePlace({ numBedrooms: v ?? 1 })}
+                  className="!w-full"
+                  placeholder="1"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-medium text-gray-700">
+                  Số giường <span className="text-red-500">*</span>
+                </label>
+                <InputNumber
+                  size="large"
+                  min={1}
+                  max={50}
+                  value={data.entirePlace.numBeds}
+                  onChange={(v) => updateEntirePlace({ numBeds: v ?? 1 })}
+                  className="!w-full"
+                  placeholder="1"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[13px] font-medium text-gray-700">
+                  Số phòng tắm <span className="text-red-500">*</span>
+                </label>
+                <InputNumber
+                  size="large"
+                  min={0}
+                  max={50}
+                  value={data.entirePlace.numBathrooms}
+                  onChange={(v) => updateEntirePlace({ numBathrooms: v ?? 1 })}
+                  className="!w-full"
+                  placeholder="1"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Rooms (Private Room Only) */}
         {isPrivateRoom && (
           <div className="bg-white border border-gray-200 rounded-xl p-6">
             <div className="flex items-center gap-2 mb-5">
@@ -161,6 +256,5 @@ export default function PropertyAmenitiesStep({ data, onChange, rentalTypeId, re
         amenities={amenityList}
       />
     </div>
-
   );
 }

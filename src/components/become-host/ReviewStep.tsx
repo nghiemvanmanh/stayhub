@@ -47,6 +47,7 @@ import {
   type AmenityItem,
   cancellationPolicyOptions,
   isPrivateRoomRentalType,
+  isEntirePlaceRentalType,
 } from "@/components/common/property-form/propertyData";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetcher } from "../../../utils/fetcher";
@@ -103,6 +104,11 @@ export default function ReviewStep({ formData, onSubmit, onGoToStep, submitting,
   const isPrivateRoom = useMemo(() => {
     const selectedType = rentalTypes.find(r => r.id === propertyInfo.rentalTypeId);
     return isPrivateRoomRentalType(selectedType);
+  }, [propertyInfo.rentalTypeId, rentalTypes]);
+
+  const isEntirePlace = useMemo(() => {
+    const selectedType = rentalTypes.find(r => r.id === propertyInfo.rentalTypeId);
+    return isEntirePlaceRentalType(selectedType);
   }, [propertyInfo.rentalTypeId, rentalTypes]);
 
   const categoryLabel = useMemo(() => {
@@ -279,6 +285,33 @@ export default function ReviewStep({ formData, onSubmit, onGoToStep, submitting,
                      </div>
                    </div>
                  ))}
+               </div>
+             </div>
+          )}
+          {isEntirePlace && (
+             <div className="mt-4 pt-4 border-t border-gray-100">
+               <h4 className="text-sm font-semibold text-gray-900 mb-3">Thông tin chỗ ở</h4>
+               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                 <div className="bg-gray-50 rounded-lg p-3 text-center">
+                   <p className="text-[11px] text-gray-400 m-0 uppercase">Số phòng</p>
+                   <p className="text-lg font-bold text-gray-900 m-0 mt-1">🚪 {propertyAmenities.entirePlace.roomCount}</p>
+                 </div>
+                 <div className="bg-gray-50 rounded-lg p-3 text-center">
+                   <p className="text-[11px] text-gray-400 m-0 uppercase">Khách tối đa</p>
+                   <p className="text-lg font-bold text-gray-900 m-0 mt-1">👥 {propertyAmenities.entirePlace.maxGuests}</p>
+                 </div>
+                 <div className="bg-gray-50 rounded-lg p-3 text-center">
+                   <p className="text-[11px] text-gray-400 m-0 uppercase">Phòng ngủ</p>
+                   <p className="text-lg font-bold text-gray-900 m-0 mt-1">🛏️ {propertyAmenities.entirePlace.numBedrooms}</p>
+                 </div>
+                 <div className="bg-gray-50 rounded-lg p-3 text-center">
+                   <p className="text-[11px] text-gray-400 m-0 uppercase">Giường</p>
+                   <p className="text-lg font-bold text-gray-900 m-0 mt-1">🛌 {propertyAmenities.entirePlace.numBeds}</p>
+                 </div>
+                 <div className="bg-gray-50 rounded-lg p-3 text-center">
+                   <p className="text-[11px] text-gray-400 m-0 uppercase">Phòng tắm</p>
+                   <p className="text-lg font-bold text-gray-900 m-0 mt-1">🚿 {propertyAmenities.entirePlace.numBathrooms}</p>
+                 </div>
                </div>
              </div>
           )}
