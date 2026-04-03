@@ -44,7 +44,7 @@ export default function HostPropertiesPage() {
   const [filter, setFilter] = useState("all");
   const [searchText, setSearchText] = useState("");
   const [pageNo, setPageNo] = useState(1);
-  const [pageSize, setPageSize] = useState(5);
+  const [pageSize, setPageSize] = useState(10);
   const [messageApi, contextHolder] = message.useMessage();
   const searchParams = useSearchParams();
 
