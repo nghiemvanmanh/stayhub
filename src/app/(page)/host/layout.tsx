@@ -147,7 +147,7 @@ export default function HostLayout({ children }: { children: ReactNode }) {
           placement="left"
           onClose={() => setDrawerVisible(false)}
           open={drawerVisible}
-          width={280}
+          size="default"
           styles={{ body: { padding: 0 } }}
         >
           {sidebarContent}

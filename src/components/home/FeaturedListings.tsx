@@ -1,19 +1,31 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { mockProperties, mockPropertyImages } from "../../data/property";
-import { Card, Rate, Skeleton, Button } from "antd";
+import { Card, Skeleton } from "antd";
 import { HeartOutlined, RightOutlined } from "@ant-design/icons";
 import Image from "next/image";
 import Link from "next/link";
+import { fetcher } from "../../../utils/fetcher";
+import { PropertyListItem } from "@/interfaces/property";
 
 interface FeaturedListingsProps {
   categoryId: string;
 }
 
-const fetchHomestaysByCategory = async (categoryId: string) => {
-  await new Promise(resolve => setTimeout(resolve, 800));
-  return mockProperties.filter(p => String(p.categoryId) === categoryId);
+const fetchHomestaysByCategory = async (categoryId: string): Promise<PropertyListItem[]> => {
+  try {
+    const res = await fetcher.get(`/properties`, {
+      params: {
+        pageNo: 1,
+        pageSize: 8,
+      },
+    });
+    const data = res.data?.data ?? res.data;
+    return data?.items || [];
+  } catch (error) {
+    console.error("Failed to fetch properties:", error);
+    return [];
+  }
 };
 
 export default function FeaturedListings({ categoryId }: FeaturedListingsProps) {
@@ -54,13 +66,12 @@ export default function FeaturedListings({ categoryId }: FeaturedListingsProps) 
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {homestays?.map((stay) => {
-              const thumbnail = mockPropertyImages.find(img => img.propertyId === stay.id && img.isThumbnail) || mockPropertyImages.find(img => img.propertyId === stay.id);
-              const imageUrl = thumbnail?.url || "https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=800&q=80";
+              const imageUrl = stay.thumbnailUrl || "https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=800&q=80";
               
               return (
               <Link
                 key={stay.id}
-                href={`/homestay/${stay.id}`}
+                href={`/homestay/${stay.slug}`}
                 className="no-underline block"
               >
                 <Card
@@ -94,10 +105,10 @@ export default function FeaturedListings({ categoryId }: FeaturedListingsProps) 
                         {stay.name}
                       </h3>
                     </div>
-                    <p className="text-xs text-gray-400 truncate">{stay.addressDetail}, {stay.ward}, {stay.district}</p>
+                    <p className="text-xs text-gray-400 truncate">{stay.district}, {stay.province}</p>
                     <p className="text-xs text-gray-400">Tối đa {stay.maxGuests} khách · {stay.numBedrooms} phòng ngủ</p>
                     <p className="text-sm mt-1">
-                      <span className="font-bold text-gray-900">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: stay.currency || 'VND' }).format(stay.pricePerNight)}</span>
+                      <span className="font-bold text-gray-900">{new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(stay.pricePerNight)}</span>
                       <span className="text-gray-400 font-normal"> / đêm</span>
                     </p>
                   </div>

@@ -9,8 +9,8 @@ interface PropertyImagesFieldsProps {
   maxImages?: number;
 }
 
-function ImageThumb({ file, onRemove, index }: { file: File; onRemove: () => void; index: number }) {
-  const url = useMemo(() => URL.createObjectURL(file), [file]);
+function ImageThumb({ file, onRemove, index }: { file: File | string; onRemove: () => void; index: number }) {
+  const url = useMemo(() => (typeof file === "string" ? file : URL.createObjectURL(file)), [file]);
   return (
     <div className={`relative rounded-xl overflow-hidden border-2 border-[#2DD4A8] bg-blue-50 flex items-center justify-center ${index === 0 ? "col-span-2 row-span-2 min-h-[140px] md:min-h-[200px]" : "min-h-[80px] md:min-h-[100px]"}`}>
       <img src={url} alt={`Ảnh ${index + 1}`} className="w-full h-full object-cover block" />
@@ -50,7 +50,7 @@ export function PropertyImagesFields({
       {data.images.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-2">
           {data.images.map((file, i) => (
-            <ImageThumb key={i} file={file} index={i} onRemove={() => removeImage(i)} />
+            <ImageThumb key={i} file={file as File} index={i} onRemove={() => removeImage(i)} />
           ))}
         </div>
       )}

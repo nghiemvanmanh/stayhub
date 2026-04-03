@@ -14,6 +14,8 @@ import {
   validatePrice,
   validateSelect,
   validateRequired,
+  validateSurcharge,
+  validateCleaningFee,
 } from '@/constants/validation';
 
 export interface PropertyValidationParams {
@@ -39,15 +41,17 @@ export function usePropertyValidation({
   const descVal = touched.description ? validateDescription(propertyInfo.description) : null;
   const rentalTypeVal = touched.rentalTypeId ? validateSelect(propertyInfo.rentalTypeId, "hình thức cho thuê") : null;
   const categoryVal = touched.categoryId ? validateSelect(propertyInfo.categoryId, "loại hình lưu trú") : null;
-  const provinceVal = touched.province ? validateRequired(propertyInfo.province, "tỉnh/thành phố") : null;
-  const districtVal = touched.district ? validateRequired(propertyInfo.district, "quận/huyện") : null;
-  const wardVal = touched.ward ? validateRequired(propertyInfo.ward, "phường/xã") : null;
-  const addressVal = touched.addressDetail ? validateRequired(propertyInfo.addressDetail, "địa chỉ chi tiết") : null;
+  const provinceVal = touched.province ? validateRequired(propertyInfo.province, "tỉnh/thành phố", 100) : null;
+  const districtVal = touched.district ? validateRequired(propertyInfo.district, "quận/huyện", 100) : null;
+  const wardVal = touched.ward ? validateRequired(propertyInfo.ward, "phường/xã", 100) : null;
+  const addressVal = touched.addressDetail ? validateRequired(propertyInfo.addressDetail, "địa chỉ chi tiết", 255) : null;
   const latVal = touched.latitude ? validateLatitude(propertyInfo.latitude) : null;
   const lngVal = touched.longitude ? validateLongitude(propertyInfo.longitude) : null;
 
   // Pricing & Policies
   const priceVal = touched.pricePerNight && !isPrivateRoom ? validatePrice(pricing.pricePerNight) : null;
+  const weekendSurchargeVal = touched.weekendSurchargePercentage ? validateSurcharge(pricing.weekendSurchargePercentage) : null;
+  const cleaningFeeVal = touched.cleaningFee ? validateCleaningFee(pricing.cleaningFee) : null;
   const policyVal = touched.cancellationPolicyId ? validateSelect(pricing.cancellationPolicyId, "chính sách hủy phòng") : null;
 
   // Overall validation
@@ -57,18 +61,26 @@ export function usePropertyValidation({
       validateDescription(propertyInfo.description).isValid &&
       !!propertyInfo.categoryId && 
       !!propertyInfo.rentalTypeId &&
-      !!propertyInfo.province && 
-      !!propertyInfo.district && 
-      !!propertyInfo.ward &&
-      validateRequired(propertyInfo.addressDetail, "").isValid &&
+      validateRequired(propertyInfo.province, "tỉnh/thành phố", 100).isValid &&
+      validateRequired(propertyInfo.district, "quận/huyện", 100).isValid &&
+      validateRequired(propertyInfo.ward, "phường/xã", 100).isValid &&
+      validateRequired(propertyInfo.addressDetail, "địa chỉ chi tiết", 255).isValid &&
       validateLatitude(propertyInfo.latitude).isValid && 
       validateLongitude(propertyInfo.longitude).isValid;
                    
     const amenitiesOk = amenities.amenityIds.length > 0 && amenities.images.length >= 5;
     
-    const pricingOk = isPrivateRoom 
-      ? pricing.cancellationPolicyId !== null 
-      : (validatePrice(pricing.pricePerNight).isValid && pricing.cancellationPolicyId !== null);
+    let pricingOk = true;
+    if (isPrivateRoom) {
+      pricingOk = pricing.cancellationPolicyId !== null &&
+                  validateSurcharge(pricing.weekendSurchargePercentage).isValid &&
+                  validateCleaningFee(pricing.cleaningFee).isValid;
+    } else {
+      pricingOk = validatePrice(pricing.pricePerNight).isValid && 
+                  pricing.cancellationPolicyId !== null &&
+                  validateSurcharge(pricing.weekendSurchargePercentage).isValid &&
+                  validateCleaningFee(pricing.cleaningFee).isValid;
+    }
 
     return infoOk && amenitiesOk && pricingOk;
   }, [propertyInfo, amenities, pricing, isPrivateRoom]);
@@ -85,6 +97,8 @@ export function usePropertyValidation({
     latitude: latVal,
     longitude: lngVal,
     pricePerNight: priceVal,
+    weekendSurchargePercentage: weekendSurchargeVal,
+    cleaningFee: cleaningFeeVal,
     cancellationPolicyId: policyVal,
   };
 

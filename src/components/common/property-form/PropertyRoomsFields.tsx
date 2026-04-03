@@ -22,7 +22,7 @@ export function PropertyRoomsFields({
         >
           <div className="w-[80px] h-[60px] md:w-[100px] md:h-[75px] rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
             {room.images?.[0] ? (
-              <img src={URL.createObjectURL(room.images[0])} alt={room.name} className="w-full h-full object-cover" />
+              <img src={typeof room.images[0] === "string" ? room.images[0] : URL.createObjectURL(room.images[0])} alt={room.name} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-gray-400">
                 <PictureOutlined className="text-xl" />

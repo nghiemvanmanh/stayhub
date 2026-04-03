@@ -5,9 +5,8 @@
 // === Regex Patterns ===
 export const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
 export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-export const PHONE_VN_REGEX = /^(0[3|5|7|8|9])[0-9]{8}$/;
+export const PHONE_VN_REGEX = /^(0|84|\+84)(3[2-9]|5[2689]|7[06-9]|8[1-9]|9[0-9])([0-9]{8})$/;
 export const CCCD_REGEX = /^[0-9]{12}$/;
-export const BUSINESS_LICENSE_REGEX = /^[A-Za-z0-9\-\/]{5,30}$/;
 
 // === Password Rules (Ant Design Form compatible) ===
 export const PASSWORD_RULES = [
@@ -39,7 +38,7 @@ export function validatePhone(value: string): ValidationResult {
     if (!value.trim()) return { isValid: false, message: "Vui lòng nhập số điện thoại" };
     // Remove spaces/dashes for validation
     const cleaned = value.replace(/[\s\-]/g, "");
-    if (!PHONE_VN_REGEX.test(cleaned)) return { isValid: false, message: "SĐT phải có 10 số, bắt đầu bằng 03/05/07/08/09" };
+    if (!PHONE_VN_REGEX.test(cleaned)) return { isValid: false, message: "SĐT không hợp lệ" };
     return VALID;
 }
 
@@ -50,22 +49,21 @@ export function validateCCCD(value: string): ValidationResult {
 }
 
 export function validateBusinessLicense(value: string): ValidationResult {
-    if (!value.trim()) return { isValid: false, message: "Vui lòng nhập số giấy phép kinh doanh" };
-    if (!BUSINESS_LICENSE_REGEX.test(value.trim())) return { isValid: false, message: "Số giấy phép phải từ 5-30 ký tự (chữ, số, dấu - /)" };
+    const trimmed = value.trim();
+    if (trimmed && trimmed.length > 50) return { isValid: false, message: "Số giấy phép tối đa 50 ký tự" };
     return VALID;
 }
 
 export function validatePropertyName(value: string): ValidationResult {
     if (!value.trim()) return { isValid: false, message: "Vui lòng nhập tên cơ sở lưu trú" };
-    if (value.trim().length < 5) return { isValid: false, message: "Tên cơ sở tối thiểu 5 ký tự" };
-    if (value.trim().length > 100) return { isValid: false, message: "Tên cơ sở tối đa 100 ký tự" };
+    if (value.trim().length < 10) return { isValid: false, message: "Tên cơ sở tối thiểu 10 ký tự" };
+    if (value.trim().length > 255) return { isValid: false, message: "Tên cơ sở tối đa 255 ký tự" };
     return VALID;
 }
 
 export function validateDescription(value: string): ValidationResult {
     if (!value.trim()) return { isValid: false, message: "Vui lòng nhập mô tả" };
-    if (value.trim().length < 20) return { isValid: false, message: "Mô tả tối thiểu 20 ký tự" };
-    if (value.trim().length > 2000) return { isValid: false, message: "Mô tả tối đa 2000 ký tự" };
+    if (value.trim().length > 5000) return { isValid: false, message: "Mô tả tối đa 5000 ký tự" };
     return VALID;
 }
 
@@ -92,12 +90,29 @@ export function validatePrice(value: number | string | null): ValidationResult {
     return VALID;
 }
 
-export function validateRequired(value: string, fieldName: string): ValidationResult {
+export function validateRequired(value: string, fieldName: string, maxLength?: number): ValidationResult {
     if (!value.trim()) return { isValid: false, message: `Vui lòng nhập ${fieldName}` };
+    if (maxLength && value.trim().length > maxLength) return { isValid: false, message: `${fieldName} tối đa ${maxLength} ký tự` };
     return VALID;
 }
 
 export function validateSelect(value: unknown, fieldName: string): ValidationResult {
     if (value === null || value === undefined) return { isValid: false, message: `Vui lòng chọn ${fieldName}` };
+    return VALID;
+}
+
+export function validateSurcharge(value: number | string | null): ValidationResult {
+    if (value === null || value === undefined || value === "") return VALID;
+    const num = Number(value);
+    if (isNaN(num)) return { isValid: false, message: "Phụ phí phải là số" };
+    if (num < 0 || num > 100) return { isValid: false, message: "Phụ phí cuối tuần phải từ 0 đến 100" };
+    return VALID;
+}
+
+export function validateCleaningFee(value: number | string | null): ValidationResult {
+    if (value === null || value === undefined || value === "") return VALID;
+    const num = Number(value);
+    if (isNaN(num)) return { isValid: false, message: "Phí dọn dẹp phải là số" };
+    if (num < 0) return { isValid: false, message: "Phí dọn dẹp không được nhỏ hơn 0" };
     return VALID;
 }

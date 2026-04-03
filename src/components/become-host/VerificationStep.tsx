@@ -33,7 +33,7 @@ function ImagePreview({
   onRemove: () => void;
   label: string;
 }) {
-  const url = useMemo(() => URL.createObjectURL(file), [file]);
+  const url = useMemo(() => typeof file === "string" ? file : URL.createObjectURL(file), [file]);
   return (
     <div className="relative rounded-xl overflow-hidden border-2 border-[#2DD4A8] bg-blue-50 min-h-[180px] flex items-center justify-center">
       <img src={url} alt={label} className="w-full h-full min-h-[180px] max-h-[240px] object-cover block" />

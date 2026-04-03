@@ -34,7 +34,7 @@ const emptyRoom: RoomData = {
 };
 
 function ImageThumb({ file, onRemove, index }: { file: File; onRemove: () => void; index: number }) {
-  const url = useMemo(() => URL.createObjectURL(file), [file]);
+  const url = useMemo(() => typeof file === "string" ? file : URL.createObjectURL(file), [file]);
   return (
     <div className={`relative rounded-xl overflow-hidden border-2 border-[#2DD4A8] bg-blue-50 flex items-center justify-center min-h-[120px]`}>
       <img src={url} alt={`Ảnh ${index + 1}`} className="w-full h-full object-cover block" />
@@ -155,7 +155,7 @@ export default function RoomModal({ visible, onCancel, onSave, initialData, amen
           {data.images.length > 0 && (
             <div className="grid grid-cols-4 gap-2 mb-2">
               {data.images.map((file, i) => (
-                <ImageThumb key={i} file={file} index={i} onRemove={() => {
+                <ImageThumb key={i} file={file as File} index={i} onRemove={() => {
                   const newImages = [...data.images];
                   newImages.splice(i, 1);
                   updateData({ images: newImages });

@@ -206,14 +206,14 @@ export default function PartnerRegistrationPage() {
 
       // 2. Upload property images (all in parallel)
       const imageUrls = await Promise.all(
-        propertyAmenities.images.map((file) => uploadFileToS3(file))
+        propertyAmenities.images.map((file) => uploadFileToS3(file as File))
       );
 
       // 3. Upload room images in parallel
       const roomsWithImageUrls = await Promise.all(
         propertyAmenities.rooms.map(async (room) => {
           const roomImageUrls = await Promise.all(
-             room.images.map((file) => uploadFileToS3(file))
+             room.images.map((file) => uploadFileToS3(file as File))
           );
           return {
              ...room,

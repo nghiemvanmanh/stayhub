@@ -98,7 +98,7 @@ export default function ReviewStep({ formData, onSubmit, onGoToStep, submitting,
   const frontUrl = useMemo(() => verification.frontCCCD ? URL.createObjectURL(verification.frontCCCD) : null, [verification.frontCCCD]);
   const backUrl = useMemo(() => verification.backCCCD ? URL.createObjectURL(verification.backCCCD) : null, [verification.backCCCD]);
   const licenseUrl = useMemo(() => verification.businessLicense ? URL.createObjectURL(verification.businessLicense) : null, [verification.businessLicense]);
-  const imageUrls = useMemo(() => propertyAmenities.images.map((f) => URL.createObjectURL(f)), [propertyAmenities.images]);
+  const imageUrls = useMemo(() => propertyAmenities.images.map((f) => typeof f === "string" ? f : URL.createObjectURL(f)), [propertyAmenities.images]);
 
   const isPrivateRoom = useMemo(() => {
     const selectedType = rentalTypes.find(r => r.id === propertyInfo.rentalTypeId);
@@ -266,7 +266,7 @@ export default function ReviewStep({ formData, onSubmit, onGoToStep, submitting,
                  {propertyAmenities.rooms.map((room, idx) => (
                    <div key={idx} className="flex gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
                      <div className="w-[80px] h-[60px] rounded bg-gray-200 flex-shrink-0 overflow-hidden">
-                       {room.images?.[0] ? <img src={URL.createObjectURL(room.images[0])} alt={room.name} className="w-full h-full object-cover"/> : null}
+                       {room.images?.[0] ? <img src={typeof room.images[0] === "string" ? room.images[0] : URL.createObjectURL(room.images[0])} alt={room.name} className="w-full h-full object-cover"/> : null}
                      </div>
                      <div className="flex-1 min-w-0">
                        <h5 className="text-[13px] font-semibold text-gray-900 m-0 truncate">{room.name}</h5>

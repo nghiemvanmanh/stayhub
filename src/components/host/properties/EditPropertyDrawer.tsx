@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import {
   Drawer,
   Button,
@@ -34,10 +34,11 @@ import {
 } from "@/components/common/property-form/propertyData";
 import RoomModal from "@/components/become-host/RoomModal";
 import { fetcher } from "../../../../utils/fetcher";
-interface CreatePropertyDrawerProps {
+interface EditPropertyDrawerProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  slug: string | null;
 }
  
 function getFileInfo(file: File) {
@@ -72,7 +73,7 @@ function Section({ icon, title, children }: { icon: React.ReactNode; title: stri
   );
 }
  
-export default function CreatePropertyDrawer({ open, onClose, onSuccess }: CreatePropertyDrawerProps) {
+export default function EditPropertyDrawer({ open, onClose, onSuccess, slug }: EditPropertyDrawerProps) {
   const [messageApi, contextHolder] = message.useMessage();
   const [submitting, setSubmitting] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -147,6 +148,65 @@ export default function CreatePropertyDrawer({ open, onClose, onSuccess }: Creat
     setTouched({});
   };
 
+  const { data: detailData, isLoading: fetchingDetail } = useQuery({
+    queryKey: ["property-details", slug],
+    queryFn: async () => {
+      if (!slug) return null;
+      const res = await fetcher.get(`/properties/${slug}`);
+      return res.data?.data ?? res.data;
+    },
+    enabled: !!slug && open,
+  });
+
+  const categoryName = useMemo(() => {
+    if (!detailData?.categoryName) return null;
+    return detailData.categoryName;
+  }, [detailData]);
+
+  useEffect(() => {
+    if (open && detailData) {
+      setPropertyInfo({
+        name: detailData.name || "",
+        description: detailData.description || "",
+        categoryId: null, // Note: The API does not return categoryId. If strictly needed, we map from categories later.
+        rentalTypeId: null,
+        province: detailData.province || "",
+        district: detailData.district || "",
+        ward: detailData.ward || "",
+        addressDetail: detailData.addressDetail || "",
+        latitude: detailData.latitude || null,
+        longitude: detailData.longitude || null,
+      });
+
+      // Try mapping rentalTypeId
+      if (rentalTypesData && detailData.rentalTypeSlug) {
+        const match = rentalTypesData.find((r: any) => r.slug === detailData.rentalTypeSlug);
+        if (match) setPropertyInfo(prev => ({ ...prev, rentalTypeId: match.id }));
+      }
+
+      setAmenities({
+        amenityIds: detailData.amenities ? detailData.amenities.map((a: any) => a.id) : [],
+        images: detailData.imageUrls || [],
+        rooms: detailData.rooms ? detailData.rooms.map((r: any) => ({
+          ...r,
+          images: r.thumbnailUrl ? [r.thumbnailUrl] : (r.imageUrls || []),
+          amenityIds: r.amenities ? r.amenities.map((a: any) => a.id) : []
+        })) : [],
+      });
+      
+      setPricing({
+        pricePerNight: detailData.rooms?.[0]?.pricePerNight || detailData.startingPrice || 0,
+        weekendSurchargePercentage: detailData.weekendSurchargePercentage || 0,
+        cleaningFee: detailData.cleaningFee || 0,
+        isPayAtCheckinAllowed: detailData.isPayAtCheckinAllowed || false,
+        depositPercentage: detailData.depositPercentage || 50,
+        cancellationPolicyId: detailData.cancellationPolicyId || null,
+      });
+    } else if (!open) {
+      resetForm();
+    }
+  }, [open, detailData, rentalTypesData]);
+
   const { errors, canSubmit, isPrivateRoom } = usePropertyValidation({
     propertyInfo,
     amenities,
@@ -159,40 +219,13 @@ export default function CreatePropertyDrawer({ open, onClose, onSuccess }: Creat
     if (submitting || !canSubmit) return;
     setSubmitting(true);
     try {
-      const uploadOrGetUrl = async (f: string | File) => typeof f === "string" ? f : await uploadFileToS3(f);
-      const imageUrls = await Promise.all(amenities.images.map(f => uploadOrGetUrl(f)));
-      const roomsWithUrls = await Promise.all(amenities.rooms.map(async (room) => {
-        const roomImageUrls = await Promise.all(room.images.map(f => uploadOrGetUrl(f)));
-        return { ...room, imageUrls: roomImageUrls };
-      }));
-
-      const body = {
-        rentalTypeId: propertyInfo.rentalTypeId,
-        categoryId: propertyInfo.categoryId,
-        amenityIds: amenities.amenityIds,
-        province: propertyInfo.province,
-        district: propertyInfo.district,
-        ward: propertyInfo.ward,
-        addressDetail: propertyInfo.addressDetail,
-        latitude: propertyInfo.latitude,
-        longitude: propertyInfo.longitude,
-        name: propertyInfo.name,
-        description: propertyInfo.description,
-        weekendSurchargePercentage: pricing.weekendSurchargePercentage,
-        cleaningFee: pricing.cleaningFee,
-        imageUrls,
-        ...(isPrivateRoom
-          ? { rooms: roomsWithUrls.map(r => ({ name: r.name, description: r.description, pricePerNight: r.pricePerNight, maxGuests: r.maxGuests, numBeds: r.numBeds, numBathrooms: r.numBathrooms, amenityIds: r.amenityIds, imageUrls: r.imageUrls })) }
-          : { pricePerNight: pricing.pricePerNight }),
-      };
-
-      await fetcher.post("/properties", body);
-      messageApi.success("Tạo cơ sở lưu trú thành công!");
+      // // TODO: Update property API
+      // await fetcher.put(`/properties/${slug}`, body);
+      
+      messageApi.success("Cập nhật bài đăng thành công!");
       resetForm();
       onSuccess();
     } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } };
-      messageApi.error(err?.response?.data?.message || "Tạo bài đăng thất bại. Vui lòng thử lại.");
     } finally {
       setSubmitting(false);
     }
@@ -204,8 +237,8 @@ export default function CreatePropertyDrawer({ open, onClose, onSuccess }: Creat
       <Drawer
         title={
           <div>
-            <h2 className="text-xl font-bold text-gray-900 m-0">Tạo bài đăng mới</h2>
-            <p className="text-xs text-gray-400 m-0 mt-1">Điền đầy đủ thông tin để đăng cơ sở lưu trú</p>
+            <h2 className="text-xl font-bold text-gray-900 m-0">Chỉnh sửa bài đăng</h2>
+            <p className="text-xs text-gray-400 m-0 mt-1">Chỉnh sửa thông tin cơ sở lưu trú của bạn</p>
           </div>
         }
         placement="right"
@@ -222,7 +255,7 @@ export default function CreatePropertyDrawer({ open, onClose, onSuccess }: Creat
               <Button onClick={onClose} className="!rounded-lg flex-1 md:flex-none">Hủy bỏ</Button>
               <Button type="primary" icon={<SendOutlined />} onClick={handleSubmit} disabled={!canSubmit || submitting} loading={submitting}
                 className="!bg-[#2DD4A8] !border-[#2DD4A8] !rounded-lg !font-semibold !px-6 hover:!bg-[#22b892] flex-1 md:flex-none">
-                {submitting ? "Đang tạo..." : "Đăng bài"}
+                {submitting ? "Đang cập nhật..." : "Cập nhật"}
               </Button>
             </div>
           </div>
@@ -230,8 +263,14 @@ export default function CreatePropertyDrawer({ open, onClose, onSuccess }: Creat
         styles={{ body: { background: "#f8f9fb", padding: "16px md:24px" } }}
       >
         <div className="flex flex-col gap-6">
-          {/* SECTION 1: Property Info */}
-          <Section icon={<HomeOutlined />} title="Thông tin cơ sở lưu trú">
+          {fetchingDetail ? (
+            <div className="flex items-center justify-center py-20 text-gray-500">
+              Đang tải dữ liệu bài đăng...
+            </div>
+          ) : (
+            <>
+              {/* SECTION 1: Property Info */}
+              <Section icon={<HomeOutlined />} title="Thông tin cơ sở lưu trú">
             <PropertyInfoFields
               data={propertyInfo}
               onChange={updateInfo}
@@ -240,6 +279,7 @@ export default function CreatePropertyDrawer({ open, onClose, onSuccess }: Creat
               markTouched={markTouched}
               rentalTypes={rentalTypes}
               loadingRentalTypes={loadingRentalTypes}
+              categoryName={categoryName}
             />
           </Section>
 
@@ -294,6 +334,8 @@ export default function CreatePropertyDrawer({ open, onClose, onSuccess }: Creat
               isPrivateRoom={isPrivateRoom}
             />
           </Section>
+            </>
+          )}
         </div>
       </Drawer>
 

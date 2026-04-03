@@ -56,13 +56,18 @@ export function PropertyPricingFields({
               min={0}
               max={100}
               value={data.weekendSurchargePercentage}
+              status={touched.weekendSurchargePercentage && errors.weekendSurchargePercentage && !errors.weekendSurchargePercentage.isValid ? "error" : undefined}
               onChange={(v) => onChange({ weekendSurchargePercentage: v ?? "" })}
+              onBlur={() => markTouched("weekendSurchargePercentage")}
               formatter={(value) => `${value}%`}
               parser={(value) => Number(value?.replace("%", "") || 0)}
               className="!w-full"
               placeholder="20"
             />
-            <span className="text-xs text-gray-400">Áp dụng thêm cho Thứ 6, 7, CN</span>
+            <FieldError error={touched.weekendSurchargePercentage ? errors.weekendSurchargePercentage : null} />
+            {(!touched.weekendSurchargePercentage || !errors.weekendSurchargePercentage || errors.weekendSurchargePercentage.isValid) && (
+              <span className="text-xs text-gray-400">Áp dụng thêm cho Thứ 6, 7, CN</span>
+            )}
           </div>
         </div>
         <div className="flex flex-col gap-1.5">
@@ -72,13 +77,18 @@ export function PropertyPricingFields({
             min={0}
             step={50000}
             value={data.cleaningFee}
+            status={touched.cleaningFee && errors.cleaningFee && !errors.cleaningFee.isValid ? "error" : undefined}
             onChange={(v) => onChange({ cleaningFee: v ?? "" })}
+            onBlur={() => markTouched("cleaningFee")}
             formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
             parser={(value) => Number(value?.replace(/,/g, "") || 0)}
             className="!w-full sm:!w-1/2"
             placeholder="200,000"
           />
-          <span className="text-xs text-gray-400">Phí dịch vụ dọn dẹp sau khi trả phòng (0 = miễn phí)</span>
+          <FieldError error={touched.cleaningFee ? errors.cleaningFee : null} />
+          {(!touched.cleaningFee || !errors.cleaningFee || errors.cleaningFee.isValid) && (
+            <span className="text-xs text-gray-400">Phí dịch vụ dọn dẹp sau khi trả phòng (0 = miễn phí)</span>
+          )}
         </div>
       </div>
 

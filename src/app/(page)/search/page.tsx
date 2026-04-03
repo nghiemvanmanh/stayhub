@@ -5,52 +5,16 @@ import { useSearchParams } from "next/navigation";
 import { Select, Pagination, Skeleton, Drawer } from "antd";
 import {
   FilterOutlined,
-  CloseOutlined,
 } from "@ant-design/icons";
 import { Building, TreePine, Waves, Mountain, LayoutGrid } from "lucide-react";
 import dayjs, { Dayjs } from "dayjs";
+import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SearchFilters from "@/components/search/SearchFilters";
 import SearchResultCard from "@/components/search/SearchResultCard";
-import {
-  mockProperties,
-  mockPropertyAmenities,
-} from "@/data/property";
-import { mockRooms, mockReserves } from "@/data";
-import { BookingStatus } from "@/interfaces/enums";
-
-// Blocking statuses for availability check
-const BLOCKING_STATUSES: BookingStatus[] = [
-  BookingStatus.CONFIRMED,
-  BookingStatus.CHECKED_IN,
-  BookingStatus.PENDING,
-  BookingStatus.AWAITING_PAYMENT,
-  BookingStatus.PARTIALLY_PAID,
-];
-
-function getAvailableRoomCount(
-  propertyId: string | number,
-  checkIn: Dayjs,
-  checkOut: Dayjs
-): number {
-  const rooms = mockRooms.filter((r) => r.propertyId === propertyId && r.isActive);
-  return rooms.filter((room) => {
-    const hasConflict = mockReserves.some((res) => {
-      if (res.roomId !== room.id) return false;
-      if (!BLOCKING_STATUSES.includes(res.status)) return false;
-      const rStart = dayjs(res.startDate);
-      const rEnd = dayjs(res.endDate);
-      return !(
-        checkOut.isSame(rStart, "day") ||
-        checkOut.isBefore(rStart, "day") ||
-        checkIn.isSame(rEnd, "day") ||
-        checkIn.isAfter(rEnd, "day")
-      );
-    });
-    return !hasConflict;
-  }).length;
-}
+import { PropertyListItem } from "@/interfaces/property";
+import { fetcher } from "../../../../utils/fetcher";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -62,15 +26,6 @@ const searchCategories = [
   { key: "thanh-pho", label: "Thành phố", icon: <Building className="w-4 h-4" /> },
   { key: "nong-thon", label: "Nông thôn", icon: <Mountain className="w-4 h-4" /> },
 ];
-
-// Map category tab keys to actual category IDs
-const categoryKeyToIds: Record<string, number[]> = {
-  all: [],
-  "ven-bien": [5], // Khu Nghỉ Dưỡng
-  "nha-go": [4],   // Nhà Gỗ
-  "thanh-pho": [2, 3], // Căn Hộ + Nhà Phố
-  "nong-thon": [1],    // Biệt Thự
-};
 
 function SearchPageContent() {
   const searchParams = useSearchParams();
@@ -107,28 +62,36 @@ function SearchPageContent() {
     setCurrentPage(1);
   };
 
-  // Filter logic
-  const filteredProperties = useMemo(() => {
-    let results = mockProperties.filter((p) => p.status === "PUBLISHED");
+  // Fetch properties from API
+  const { data: apiResponse, isLoading } = useQuery({
+    queryKey: ["search-properties", currentPage],
+    queryFn: async () => {
+      const res = await fetcher.get(`/properties`, {
+        params: {
+          pageNo: currentPage,
+          pageSize: 50, // Fetch more for client-side filtering
+        },
+      });
+      const data = res.data?.data ?? res.data;
+      return data;
+    },
+  });
 
-    // Location filter (search in name, province, district, ward)
+  const allProperties: PropertyListItem[] = apiResponse?.items || [];
+
+  // Client-side filtering 
+  const filteredProperties = useMemo(() => {
+    let results = [...allProperties];
+
+    // Location filter (search in name, province, district)
     if (location.trim()) {
       const q = location.trim().toLowerCase();
       results = results.filter(
         (p) =>
           p.name.toLowerCase().includes(q) ||
           (p.province && p.province.toLowerCase().includes(q)) ||
-          (p.district && p.district.toLowerCase().includes(q)) ||
-          (p.ward && p.ward.toLowerCase().includes(q))
+          (p.district && p.district.toLowerCase().includes(q))
       );
-    }
-
-    // Category filter
-    if (activeCategory !== "all") {
-      const ids = categoryKeyToIds[activeCategory] || [];
-      if (ids.length > 0) {
-        results = results.filter((p) => ids.includes(Number(p.categoryId)));
-      }
     }
 
     // Price range filter
@@ -137,49 +100,12 @@ function SearchPageContent() {
         p.pricePerNight >= priceRange[0] && p.pricePerNight <= priceRange[1]
     );
 
-    // Rental type filter
-    if (rentalType) {
-      if (rentalType === "PRIVATE_ROOM") {
-        results = results.filter((p) => p.rentalType === "PRIVATE_ROOM");
-      } else if (rentalType === "SHARED_ROOM") {
-        results = results.filter((p) => p.rentalType === "SHARED_ROOM");
-      } else {
-        results = results.filter((p) => p.rentalType === "ENTIRE_PLACE");
-      }
-    }
-
-    // Amenity filter
-    if (selectedAmenities.length > 0) {
-      results = results.filter((p) => {
-        const propertyAmenityIds = mockPropertyAmenities
-          .filter((pa) => pa.propertyId === p.id)
-          .map((pa) => Number(pa.amenityId));
-        return selectedAmenities.every((aid) =>
-          propertyAmenityIds.includes(aid)
-        );
-      });
-    }
-
     // Guests filter from URL
     if (urlGuests) {
       const guestCount = parseInt(urlGuests);
       if (!isNaN(guestCount)) {
-        // Check total maxGuests across all rooms for the property
-        results = results.filter((p) => {
-          const propertyRooms = mockRooms.filter((r) => r.propertyId === p.id && r.isActive);
-          const totalRoomGuests = propertyRooms.reduce((s, r) => s + r.maxGuests, 0);
-          return (totalRoomGuests > 0 ? totalRoomGuests : p.maxGuests) >= guestCount;
-        });
+        results = results.filter((p) => p.maxGuests >= guestCount);
       }
-    }
-
-    // ── Date-based availability filter ──
-    // Only show properties that have at least 1 available room for the selected dates
-    if (dates) {
-      results = results.filter((p) => {
-        const availCount = getAvailableRoomCount(p.id, dates[0], dates[1]);
-        return availCount > 0;
-      });
     }
 
     // Sort
@@ -190,10 +116,9 @@ function SearchPageContent() {
     } else if (sortBy === "rating") {
       results.sort((a, b) => (b.ratingAvg || 0) - (a.ratingAvg || 0));
     }
-    // "recommended" = default order
 
     return results;
-  }, [location, activeCategory, priceRange, rentalType, selectedAmenities, sortBy, urlGuests, dates]);
+  }, [allProperties, location, priceRange, rentalType, selectedAmenities, sortBy, urlGuests, dates]);
 
   // Pagination
   const totalResults = filteredProperties.length;
@@ -362,51 +287,28 @@ function SearchPageContent() {
               </div>
             </div>
 
-            {/* Prompt to select dates */}
-            {!dates && (
-              <div className="mb-6 px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl flex items-start sm:items-center gap-3">
-                <div className="text-blue-500 text-lg mt-0.5 sm:mt-0">💡</div>
-                <div className="flex-1">
-                  <p className="text-sm text-blue-800 font-medium m-0">
-                    Bạn chưa chọn ngày nhận/trả phòng
-                  </p>
-                  <p className="text-xs text-blue-600 m-0 mt-0.5">
-                    Vui lòng chọn ngày để xem chính xác các homestay còn phòng trống.
-                  </p>
-                </div>
-                <button
-                  onClick={() => {
-                    const el = document.querySelector(".ant-picker");
-                    if (el instanceof HTMLElement) el.click();
-                  }}
-                  className="hidden sm:block whitespace-nowrap px-3 py-1.5 bg-white border border-blue-200 text-blue-600 rounded-lg text-xs font-semibold hover:bg-blue-50 transition-colors"
-                >
-                  Chọn ngày ngay
-                </button>
+            {/* Loading state */}
+            {isLoading ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex gap-5 py-5 border-b border-gray-100">
+                    <Skeleton.Image active style={{ width: 260, height: 180 }} className="!rounded-xl" />
+                    <div className="flex-1">
+                      <Skeleton active paragraph={{ rows: 3 }} />
+                    </div>
+                  </div>
+                ))}
               </div>
-            )}
-
-            {/* Results list */}
-            {paginatedResults.length > 0 ? (
+            ) : paginatedResults.length > 0 ? (
               <div>
-                {paginatedResults.map((property) => {
-                  const availableRoomCount = dates
-                    ? getAvailableRoomCount(property.id, dates[0], dates[1])
-                    : undefined;
-                  const totalRoomCount = mockRooms.filter(
-                    (r) => r.propertyId === property.id && r.isActive
-                  ).length;
-                  return (
-                    <SearchResultCard
-                      key={String(property.id)}
-                      property={property}
-                      checkIn={dates ? dates[0].format("YYYY-MM-DD") : undefined}
-                      checkOut={dates ? dates[1].format("YYYY-MM-DD") : undefined}
-                      availableRoomCount={availableRoomCount}
-                      totalRoomCount={totalRoomCount}
-                    />
-                  );
-                })}
+                {paginatedResults.map((property) => (
+                  <SearchResultCard
+                    key={String(property.id)}
+                    property={property}
+                    checkIn={dates ? dates[0].format("YYYY-MM-DD") : undefined}
+                    checkOut={dates ? dates[1].format("YYYY-MM-DD") : undefined}
+                  />
+                ))}
               </div>
             ) : (
               <div className="py-16 sm:py-20 text-center">

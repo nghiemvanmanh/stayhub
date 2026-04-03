@@ -57,7 +57,7 @@ export default function RegisterModal({
                 centered
                 width={440}
                 className="auth-modal"
-                destroyOnClose
+                destroyOnHidden
             >
                 {/* Header */}
                 <div className="text-center mb-6 pt-2">

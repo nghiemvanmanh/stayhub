@@ -23,13 +23,13 @@ export interface RoomData {
   numBeds: number;
   numBathrooms: number;
   amenityIds: number[];
-  images: File[];
+  images: (File | string)[];
 }
 
 export interface PropertyInfoData {
   name: string;
   description: string;
-  categoryId: number | null;
+  categoryId: number | null | any;
   rentalTypeId: number | null;
   province: string;
   district: string;
@@ -41,7 +41,7 @@ export interface PropertyInfoData {
 
 export interface PropertyAmenitiesData {
   amenityIds: number[];
-  images: File[];
+  images: (File | string)[];
   rooms: RoomData[];
 }
 
@@ -134,7 +134,9 @@ export interface RentalTypeItem {
   categoryResponses?: CategoryItem[];
 }
 
-export function isPrivateRoomRentalType(rentalType?: RentalTypeItem | null): boolean {
+export function isPrivateRoomRentalType(
+  rentalType?: RentalTypeItem | null,
+): boolean {
   if (!rentalType) return false;
 
   const slug = rentalType.slug?.toLowerCase() ?? "";
@@ -161,35 +163,104 @@ export const cancellationPolicyOptions = [
 // Province → District → Ward (static location data)
 export const provinceData: Record<string, Record<string, string[]>> = {
   "TP. Hồ Chí Minh": {
-    "Quận 1": ["Phường Bến Nghé", "Phường Bến Thành", "Phường Cầu Kho", "Phường Đa Kao", "Phường Nguyễn Cư Trinh"],
+    "Quận 1": [
+      "Phường Bến Nghé",
+      "Phường Bến Thành",
+      "Phường Cầu Kho",
+      "Phường Đa Kao",
+      "Phường Nguyễn Cư Trinh",
+    ],
     "Quận 3": ["Phường 1", "Phường 2", "Phường 3", "Phường 4", "Phường 5"],
-    "Quận 7": ["Phường Tân Phong", "Phường Tân Quy", "Phường Phú Mỹ", "Phường Tân Thuận Đông"],
-    "Quận Bình Thạnh": ["Phường 1", "Phường 2", "Phường 3", "Phường 22", "Phường 25"],
-    "TP. Thủ Đức": ["Phường An Phú", "Phường Thảo Điền", "Phường Bình Chiểu", "Phường Hiệp Bình Chánh"],
+    "Quận 7": [
+      "Phường Tân Phong",
+      "Phường Tân Quy",
+      "Phường Phú Mỹ",
+      "Phường Tân Thuận Đông",
+    ],
+    "Quận Bình Thạnh": [
+      "Phường 1",
+      "Phường 2",
+      "Phường 3",
+      "Phường 22",
+      "Phường 25",
+    ],
+    "TP. Thủ Đức": [
+      "Phường An Phú",
+      "Phường Thảo Điền",
+      "Phường Bình Chiểu",
+      "Phường Hiệp Bình Chánh",
+    ],
   },
   "Hà Nội": {
-    "Quận Ba Đình": ["Phường Cống Vị", "Phường Điện Biên", "Phường Kim Mã", "Phường Ngọc Hà"],
-    "Quận Hoàn Kiếm": ["Phường Hàng Buồm", "Phường Hàng Bạc", "Phường Tràng Tiền", "Phường Lý Thái Tổ"],
-    "Quận Tây Hồ": ["Phường Bưởi", "Phường Nhật Tân", "Phường Quảng An", "Phường Xuân La"],
-    "Quận Cầu Giấy": ["Phường Dịch Vọng", "Phường Mai Dịch", "Phường Nghĩa Đô", "Phường Quan Hoa"],
+    "Quận Ba Đình": [
+      "Phường Cống Vị",
+      "Phường Điện Biên",
+      "Phường Kim Mã",
+      "Phường Ngọc Hà",
+    ],
+    "Quận Hoàn Kiếm": [
+      "Phường Hàng Buồm",
+      "Phường Hàng Bạc",
+      "Phường Tràng Tiền",
+      "Phường Lý Thái Tổ",
+    ],
+    "Quận Tây Hồ": [
+      "Phường Bưởi",
+      "Phường Nhật Tân",
+      "Phường Quảng An",
+      "Phường Xuân La",
+    ],
+    "Quận Cầu Giấy": [
+      "Phường Dịch Vọng",
+      "Phường Mai Dịch",
+      "Phường Nghĩa Đô",
+      "Phường Quan Hoa",
+    ],
   },
   "Đà Nẵng": {
-    "Quận Hải Châu": ["Phường Thanh Bình", "Phường Thuận Phước", "Phường Hải Châu I", "Phường Hải Châu II"],
-    "Quận Sơn Trà": ["Phường An Hải Bắc", "Phường An Hải Đông", "Phường Mân Thái", "Phường Phước Mỹ"],
+    "Quận Hải Châu": [
+      "Phường Thanh Bình",
+      "Phường Thuận Phước",
+      "Phường Hải Châu I",
+      "Phường Hải Châu II",
+    ],
+    "Quận Sơn Trà": [
+      "Phường An Hải Bắc",
+      "Phường An Hải Đông",
+      "Phường Mân Thái",
+      "Phường Phước Mỹ",
+    ],
     "Quận Ngũ Hành Sơn": ["Phường Hoà Hải", "Phường Hoà Quý", "Phường Mỹ An"],
   },
   "Lâm Đồng": {
-    "TP. Đà Lạt": ["Phường 1", "Phường 2", "Phường 3", "Phường 4", "Phường 5", "Phường 6"],
+    "TP. Đà Lạt": [
+      "Phường 1",
+      "Phường 2",
+      "Phường 3",
+      "Phường 4",
+      "Phường 5",
+      "Phường 6",
+    ],
     "TP. Bảo Lộc": ["Phường 1", "Phường 2", "Phường B'Lao"],
   },
   "Khánh Hòa": {
-    "TP. Nha Trang": ["Phường Lộc Thọ", "Phường Tân Lập", "Phường Vĩnh Hải", "Phường Vĩnh Nguyên"],
+    "TP. Nha Trang": [
+      "Phường Lộc Thọ",
+      "Phường Tân Lập",
+      "Phường Vĩnh Hải",
+      "Phường Vĩnh Nguyên",
+    ],
     "TP. Cam Ranh": ["Phường Ba Ngòi", "Phường Cam Lợi"],
   },
   "Kiên Giang": {
     "TP. Phú Quốc": ["Phường An Thới", "Phường Dương Đông", "Phường Cửa Cạn"],
   },
   "Quảng Nam": {
-    "TP. Hội An": ["Phường Minh An", "Phường Sơn Phong", "Phường Cẩm Phô", "Phường Tân An"],
+    "TP. Hội An": [
+      "Phường Minh An",
+      "Phường Sơn Phong",
+      "Phường Cẩm Phô",
+      "Phường Tân An",
+    ],
   },
 };

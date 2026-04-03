@@ -3,7 +3,7 @@
 import { DatePicker, Input, Slider, Radio, Checkbox, Button } from "antd";
 import { EnvironmentOutlined } from "@ant-design/icons";
 import { Dayjs } from "dayjs";
-import { mockAmenities } from "@/data/property";
+
 
 const { RangePicker } = DatePicker;
 

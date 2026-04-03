@@ -55,10 +55,10 @@ export default function PropertyInfoStep({ data, onChange }: PropertyInfoStepPro
   const rentalTypeVal = touched.rentalTypeId ? validateSelect(data.rentalTypeId, "hình thức cho thuê") : null;
   const categoryVal = touched.categoryId ? validateSelect(data.categoryId, "loại hình lưu trú") : null;
 
-  const provinceVal = touched.province ? validateRequired(data.province, "tỉnh/thành phố") : null;
-  const districtVal = touched.district ? validateRequired(data.district, "quận/huyện") : null;
-  const wardVal = touched.ward ? validateRequired(data.ward, "phường/xã") : null;
-  const addressVal = touched.addressDetail ? validateRequired(data.addressDetail, "địa chỉ chi tiết") : null;
+  const provinceVal = touched.province ? validateRequired(data.province, "tỉnh/thành phố", 100) : null;
+  const districtVal = touched.district ? validateRequired(data.district, "quận/huyện", 100) : null;
+  const wardVal = touched.ward ? validateRequired(data.ward, "phường/xã", 100) : null;
+  const addressVal = touched.addressDetail ? validateRequired(data.addressDetail, "địa chỉ chi tiết", 255) : null;
 
   const latVal = touched.latitude ? validateLatitude(data.latitude) : null;
   const lngVal = touched.longitude ? validateLongitude(data.longitude) : null;

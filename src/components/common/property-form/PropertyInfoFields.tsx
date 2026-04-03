@@ -14,6 +14,7 @@ interface PropertyInfoFieldsProps {
   markTouched: (field: string) => void;
   rentalTypes: RentalTypeItem[];
   loadingRentalTypes: boolean;
+  categoryName?: string;
 }
 
 export function PropertyInfoFields({
@@ -24,13 +25,13 @@ export function PropertyInfoFields({
   markTouched,
   rentalTypes,
   loadingRentalTypes,
+  categoryName,
 }: PropertyInfoFieldsProps) {
   const categoryOptions = useMemo(() => {
     if (!data.rentalTypeId || !rentalTypes) return [];
     const selectedRentalType = rentalTypes.find((r) => r.id === data.rentalTypeId);
     return (selectedRentalType?.categoryResponses ?? []).map((c) => ({ value: c.id, label: c.name }));
   }, [data.rentalTypeId, rentalTypes]);
-
   const rentalTypeOptions = useMemo(
     () => (rentalTypes ?? []).map((r) => ({ value: r.id, label: r.name })),
     [rentalTypes]
@@ -108,7 +109,7 @@ export function PropertyInfoFields({
                 size="large"
                 placeholder="Chọn loại hình"
                 options={categoryOptions}
-                value={data.categoryId ?? undefined}
+                value={categoryName}
                 status={touched.categoryId && errors.categoryId && !errors.categoryId.isValid ? "error" : undefined}
                 onChange={(v) => onChange({ categoryId: v })}
                 onBlur={() => markTouched("categoryId")}
