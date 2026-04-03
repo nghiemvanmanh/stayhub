@@ -272,8 +272,9 @@ export default function PartnerRegistrationPage() {
           businessLicenseUrl,
         },
         firstProperty: {
-          categoryId: propertyInfo.categoryId,
           rentalTypeId: propertyInfo.rentalTypeId,
+          categoryId: propertyInfo.categoryId,
+          amenityIds: propertyAmenities.amenityIds,
           province: propertyInfo.province,
           district: propertyInfo.district,
           ward: propertyInfo.ward,
@@ -284,12 +285,8 @@ export default function PartnerRegistrationPage() {
           description: propertyInfo.description,
           weekendSurchargePercentage: propertyPricing.weekendSurchargePercentage,
           cleaningFee: propertyPricing.cleaningFee,
-          isPayAtCheckinAllowed: propertyPricing.isPayAtCheckinAllowed,
-          depositPercentage: propertyPricing.depositPercentage,
-          cancellationPolicyId: propertyPricing.cancellationPolicyId,
-          amenityIds: propertyAmenities.amenityIds,
+          roomCount: isEntirePlace ? propertyAmenities.entirePlace.roomCount : finalRooms.length,
           imageUrls,
-          pricePerNight: Number(propertyPricing.pricePerNight) || 0,
           rooms: finalRooms,
         }
       };

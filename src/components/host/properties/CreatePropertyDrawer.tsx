@@ -213,13 +213,10 @@ export default function CreatePropertyDrawer({ open, onClose, onSuccess }: Creat
         description: propertyInfo.description,
         weekendSurchargePercentage: pricing.weekendSurchargePercentage,
         cleaningFee: pricing.cleaningFee,
+        roomCount: isEntirePlace ? amenities.entirePlace.roomCount : (finalRooms ? finalRooms.length : 0),
         imageUrls,
-        pricePerNight: Number(pricing.pricePerNight) || 0,
+        rooms: finalRooms || [],
       };
-
-      if (finalRooms) {
-        body.rooms = finalRooms;
-      }
 
       await fetcher.post("/properties", body);
       messageApi.success("Tạo cơ sở lưu trú thành công!");
@@ -316,7 +313,7 @@ export default function CreatePropertyDrawer({ open, onClose, onSuccess }: Creat
               <div className="grid grid-cols-2 gap-4">
                 {([
                   { label: "Số phòng", field: "roomCount" as const, min: 1 },
-                  { label: "Số khách tối đa", field: "maxGuests" as const, min: 1 },
+                  { label: "Khách tối đa", field: "maxGuests" as const, min: 1 },
                   { label: "Số phòng ngủ", field: "numBedrooms" as const, min: 0 },
                   { label: "Số giường", field: "numBeds" as const, min: 1 },
                   { label: "Số phòng tắm", field: "numBathrooms" as const, min: 0 },
