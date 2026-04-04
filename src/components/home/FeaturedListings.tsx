@@ -76,7 +76,7 @@ export default function FeaturedListings({ categoryId }: FeaturedListingsProps) 
               >
                 <Card
                   hoverable
-                  className="!rounded-2xl overflow-hidden !border-0 !shadow-none group"
+                  className="!rounded-2xl overflow-hidden !border-0 !shadow-none group !p-[5px]"
                   styles={{ body: { padding: "12px 0 0 0" } }}
                   cover={
                     <div className="relative w-full h-[220px] overflow-hidden rounded-2xl">
