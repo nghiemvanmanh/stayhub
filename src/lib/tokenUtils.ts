@@ -5,9 +5,9 @@
 
 interface JwtPayload {
   roles?: string[];
-  role?: string;
   authorities?: string[];
   exp?: number;
+  subscription?: string;
   [key: string]: unknown;
 }
 
@@ -23,7 +23,7 @@ export function decodeToken(token: string): JwtPayload | null {
       atob(base64)
         .split("")
         .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-        .join("")
+        .join(""),
     );
 
     return JSON.parse(jsonStr) as JwtPayload;
@@ -43,11 +43,18 @@ export function getRolesFromToken(token: string): string[] {
   const payload = decodeToken(token);
   if (!payload) return [];
 
-  if (Array.isArray(payload.roles)) return payload.roles;
-  if (typeof payload.role === "string") return [payload.role];
-  if (Array.isArray(payload.authorities)) return payload.authorities;
+  return payload.roles || [];
+}
 
-  return [];
+/**
+ * Extract subscription from a JWT access token.
+ */
+export function getSubscriptionFromToken(token: string): string {
+  const payload = decodeToken(token);
+  if (!payload) return "FREE";
+
+  const subs = payload.subscription || "FREE";
+  return typeof subs === "string" ? subs.toUpperCase() : "FREE";
 }
 
 /**

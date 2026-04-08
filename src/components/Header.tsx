@@ -11,19 +11,25 @@ import {
   LogoutOutlined,
   UserAddOutlined,
   BookOutlined,
+  CrownOutlined,
+  RocketOutlined,
+  StarOutlined,
 } from "@ant-design/icons";
 import { useState } from "react";
 import type { MenuProps } from "antd";
 import { useAuth } from "@/contexts/AuthContext";
 import LoginModal from "@/components/auth/LoginModal";
 import RegisterModal from "@/components/auth/RegisterModal";
+import SubscriptionPlansModal from "@/components/SubscriptionPlansModal";
 import { fetcher } from "../../utils/fetcher";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Header() {
   const { user, isLoggedIn, isHost, logout } = useAuth();
   const [loginOpen, setLoginOpen] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
+  const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
   const [messageApi, contextHolder] = message.useMessage();
   const router = useRouter();
   const handleLogout = async () => {
@@ -44,6 +50,50 @@ export default function Header() {
       router.push("/become-host");
     }
   };
+
+  const { data: mySubscription } = useQuery({
+    queryKey: ["my-subscription"],
+    queryFn: async () => {
+      const res = await fetcher.get("/properties/host/my-subscription");
+      return res.data?.data;
+    },
+    enabled: isLoggedIn && isHost,
+  });
+
+  const subscriptionTier = mySubscription?.tier || "FREE";
+
+  const renderSubscriptionBadge = () => {
+    if (!isLoggedIn || !isHost) return null;
+    
+    let config = { 
+      bg: 'bg-white border-gray-200 text-gray-500 hover:bg-gray-50', 
+      icon: <StarOutlined className="text-gray-400 text-[14px]" />, 
+      label: 'FREE' 
+    };
+    if (subscriptionTier === 'PREMIUM') {
+      config = { 
+        bg: 'bg-amber-50/50 border-amber-200 text-amber-700 hover:bg-amber-50', 
+        icon: <CrownOutlined className="text-amber-500 text-[14px]" />, 
+        label: 'PREMIUM' 
+      };
+    } else if (subscriptionTier === 'BUSINESS') {
+      config = { 
+        bg: 'bg-blue-50/50 border-blue-200 text-blue-700 hover:bg-blue-50', 
+        icon: <RocketOutlined className="text-blue-500 text-[14px]" />, 
+        label: 'BUSINESS' 
+      };
+    }
+    
+    return (
+      <div 
+        onClick={() => setSubscriptionModalOpen(true)}
+        className={`flex items-center gap-1.5 px-3 py-1 rounded-full border ${config.bg} text-[11px] font-bold cursor-pointer transition-colors duration-200`}
+      >
+        <span className="flex items-center justify-center leading-none">{config.icon}</span>
+        <span className="tracking-wide hidden sm:inline-block leading-none mt-[1px]">{config.label}</span>
+      </div>
+    );
+  };
   const loggedInItems: MenuProps["items"] = [
     {
       key: "user-info",
@@ -54,6 +104,14 @@ export default function Header() {
         </div>
       ),
       disabled: true,
+    },
+    { type: "divider", className: "md:hidden" },
+    {
+      key: "host-action-mobile",
+      label: isHost ? "Cơ sở lưu trú của tôi" : "Trở thành đối tác",
+      icon: <RocketOutlined />,
+      className: "md:hidden",
+      onClick: handleBecomeHost,
     },
     { type: "divider" },
     {
@@ -89,6 +147,13 @@ export default function Header() {
       icon: <UserAddOutlined />,
       onClick: () => setRegisterOpen(true),
     },
+    { type: "divider", className: "md:hidden" },
+    {
+      key: "host-action-mobile",
+      label: "Trở thành đối tác",
+      className: "md:hidden",
+      onClick: handleBecomeHost,
+    }
   ];
 
   return (
@@ -107,7 +172,7 @@ export default function Header() {
               </span>
             </Link>
 
-            {/* Center Nav */}
+            {/* Center Nav
             <nav className="hidden md:flex items-center gap-8">
               <Link
                 href="/"
@@ -127,22 +192,22 @@ export default function Header() {
               >
                 Trải nghiệm trực tuyến
               </Link>
-            </nav>
+            </nav> */}
 
             {/* Right */}
             <div className="flex items-center gap-3">
               <Button
                 type="text"
-                className="hidden md:inline-flex text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-full"
+                className="!hidden md:!inline-flex text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-full"
                 onClick={handleBecomeHost}
               >
                 {isLoggedIn && isHost ? "Cơ sở lưu trú của tôi" : "Trở thành đối tác homestay"}
               </Button>
+              {renderSubscriptionBadge()}
               <Button
                 type="text"
                 shape="circle"
                 icon={<GlobalOutlined className="text-gray-600" />}
-                className="hidden md:inline-flex"
               />
               <Badge dot offset={[-2, 2]} color="#2DD4A8">
                 <Button
@@ -191,6 +256,10 @@ export default function Header() {
           setRegisterOpen(false);
           setLoginOpen(true);
         }}
+      />
+      <SubscriptionPlansModal 
+        open={subscriptionModalOpen}
+        onClose={() => setSubscriptionModalOpen(false)}
       />
     </>
   );

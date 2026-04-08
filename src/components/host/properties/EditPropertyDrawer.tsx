@@ -5,6 +5,7 @@ import {
   Drawer,
   Button,
   message,
+  InputNumber,
 } from "antd";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -127,6 +128,10 @@ export default function EditPropertyDrawer({ open, onClose, onSuccess, slug }: E
   const updateAmenities = useCallback((d: Partial<PropertyAmenitiesData>) => setAmenities(prev => ({ ...prev, ...d })), []);
   const updatePricing = useCallback((d: Partial<PropertyPricingData>) => setPricing(prev => ({ ...prev, ...d })), []);
 
+  const updateEntirePlace = (partial: Partial<EntirePlaceData>) => {
+    setAmenities(prev => ({ ...prev, entirePlace: { ...prev.entirePlace, ...partial } }));
+  };
+
   const openRoomModal = (index: number | null = null) => { setEditingRoomIndex(index); setRoomModalVisible(true); };
   const handleSaveRoom = (room: RoomData) => {
     const rooms = [...amenities.rooms];
@@ -168,11 +173,25 @@ export default function EditPropertyDrawer({ open, onClose, onSuccess, slug }: E
 
   useEffect(() => {
     if (open && detailData) {
+      const catId = detailData.categoryId || detailData.category?.id;
+      const rSlug = detailData.rentalTypeSlug || detailData.rentalType?.slug;
+      const rId = detailData.rentalTypeId || detailData.rentalType?.id;
+      
+      let rTypeMatch = null;
+      if (rentalTypesData && rentalTypesData.length > 0) {
+        if (rSlug) {
+          const match = rentalTypesData.find((r: any) => r.slug === rSlug);
+          if (match) rTypeMatch = match.id;
+        } else if (rId) {
+          rTypeMatch = rId;
+        }
+      }
+
       setPropertyInfo({
         name: detailData.name || "",
         description: detailData.description || "",
-        categoryId: null, // Note: The API does not return categoryId. If strictly needed, we map from categories later.
-        rentalTypeId: null,
+        categoryId: catId || null,
+        rentalTypeId: rTypeMatch,
         province: detailData.province || "",
         district: detailData.district || "",
         ward: detailData.ward || "",
@@ -180,12 +199,6 @@ export default function EditPropertyDrawer({ open, onClose, onSuccess, slug }: E
         latitude: detailData.latitude || null,
         longitude: detailData.longitude || null,
       });
-
-      // Try mapping rentalTypeId
-      if (rentalTypesData && detailData.rentalTypeSlug) {
-        const match = rentalTypesData.find((r: any) => r.slug === detailData.rentalTypeSlug);
-        if (match) setPropertyInfo(prev => ({ ...prev, rentalTypeId: match.id }));
-      }
 
       setAmenities({
         amenityIds: detailData.amenities ? detailData.amenities.map((a: any) => a.id) : [],
@@ -229,13 +242,63 @@ export default function EditPropertyDrawer({ open, onClose, onSuccess, slug }: E
     if (submitting || !canSubmit) return;
     setSubmitting(true);
     try {
+      const uploadOrGetUrl = async (f: string | File) => typeof f === "string" ? f : await uploadFileToS3(f);
+      const imageUrls = await Promise.all(amenities.images.map(f => uploadOrGetUrl(f)));
+      const roomsWithUrls = await Promise.all(amenities.rooms.map(async (room) => {
+        const roomImageUrls = await Promise.all(room.images.map(f => uploadOrGetUrl(f)));
+        return { ...room, imageUrls: roomImageUrls };
+      }));
+
+      let finalRooms;
+      if (isEntirePlace) {
+        finalRooms = [{
+          name: propertyInfo.name,
+          description: propertyInfo.description,
+          pricePerNight: Number(pricing.pricePerNight) || 0,
+          maxGuests: amenities.entirePlace.maxGuests,
+          numBeds: amenities.entirePlace.numBeds,
+          numBathrooms: amenities.entirePlace.numBathrooms,
+          numBedrooms: amenities.entirePlace.numBedrooms,
+          amenityIds: amenities.amenityIds,
+          imageUrls: imageUrls,
+        }];
+      } else if (isPrivateRoom) {
+        finalRooms = roomsWithUrls.map(r => ({
+          name: r.name, description: r.description, pricePerNight: r.pricePerNight,
+          maxGuests: r.maxGuests, numBeds: r.numBeds, numBathrooms: r.numBathrooms,
+          amenityIds: r.amenityIds, imageUrls: r.imageUrls,
+        }));
+      }
+
+      const body: Record<string, unknown> = {
+        rentalTypeId: propertyInfo.rentalTypeId,
+        categoryId: propertyInfo.categoryId,
+        amenityIds: amenities.amenityIds,
+        province: propertyInfo.province,
+        district: propertyInfo.district,
+        ward: propertyInfo.ward,
+        addressDetail: propertyInfo.addressDetail,
+        latitude: propertyInfo.latitude,
+        longitude: propertyInfo.longitude,
+        name: propertyInfo.name,
+        description: propertyInfo.description,
+        weekendSurchargePercentage: pricing.weekendSurchargePercentage,
+        cleaningFee: pricing.cleaningFee,
+        roomCount: isEntirePlace ? amenities.entirePlace.roomCount : (finalRooms ? finalRooms.length : 0),
+        imageUrls,
+        rooms: finalRooms || [],
+      };
+
+      console.log('Update Payload:', body);
       // // TODO: Update property API
       // await fetcher.put(`/properties/${slug}`, body);
       
-      messageApi.success("Cập nhật bài đăng thành công!");
+      messageApi.success("Cập nhật bài đăng thành công! (Đã giả lập gọi hàm cập nhật)");
       resetForm();
       onSuccess();
     } catch (error: unknown) {
+      const err = error as { response?: { data?: { message?: string } } };
+      messageApi.error(err?.response?.data?.message || "Cập nhật bài đăng thất bại.");
     } finally {
       setSubmitting(false);
     }
@@ -322,7 +385,39 @@ export default function EditPropertyDrawer({ open, onClose, onSuccess, slug }: E
             />
           </Section>
 
-          {/* SECTION 5: Rooms (Conditional) */}
+          {/* SECTION 5a: Entire Place Info (Conditional) */}
+          {isEntirePlace && (
+            <Section icon={<HomeOutlined />} title="Thông tin chỗ ở">
+              <p className="text-xs text-gray-400 mb-4 -mt-2">
+                Nhập thông tin tổng thể cho toàn bộ chỗ ở của bạn.
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                {([
+                  { label: "Số phòng", field: "roomCount" as const, min: 1 },
+                  { label: "Khách tối đa", field: "maxGuests" as const, min: 1 },
+                  { label: "Số phòng ngủ", field: "numBedrooms" as const, min: 0 },
+                  { label: "Số giường", field: "numBeds" as const, min: 1 },
+                  { label: "Số phòng tắm", field: "numBathrooms" as const, min: 0 },
+                ] as const).map(({ label, field, min }) => (
+                  <div key={field} className="flex flex-col gap-1.5">
+                    <label className="text-[13px] font-medium text-gray-700">
+                      {label} <span className="text-red-500">*</span>
+                    </label>
+                    <InputNumber
+                      size="large"
+                      min={min}
+                      max={50}
+                      value={amenities.entirePlace[field]}
+                      onChange={(v) => updateEntirePlace({ [field]: v ?? min })}
+                      className="!w-full"
+                    />
+                  </div>
+                ))}
+              </div>
+            </Section>
+          )}
+
+          {/* SECTION 5b: Rooms (Private Room Only) */}
           {isPrivateRoom && (
             <Section icon={<AppstoreOutlined />} title="Thông tin phòng">
               <PropertyRoomsFields

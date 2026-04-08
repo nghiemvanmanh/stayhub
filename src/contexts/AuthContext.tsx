@@ -12,7 +12,7 @@ import {
 import { User, AuthTokens } from "@/interfaces/auth";
 import Cookies from "js-cookie";
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_INFO } from "@/constants/cookie";
-import { getRolesFromToken } from "@/lib/tokenUtils";
+import { getRolesFromToken, getSubscriptionFromToken } from "@/lib/tokenUtils";
 
 interface AuthContextType {
     user: User | null;
@@ -20,6 +20,7 @@ interface AuthContextType {
     isLoading: boolean;
     roles: string[];
     isHost: boolean;
+    subscription: string;
     login: (user: User, tokens: AuthTokens) => void;
     logout: () => void;
     updateTokens: (tokens: AuthTokens) => void;
@@ -30,6 +31,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [roles, setRoles] = useState<string[]>([]);
+    const [subscription, setSubscription] = useState<string>("FREE");
     const [isLoading, setIsLoading] = useState(true);
 
     const isHost = useMemo(() => roles.includes("ROLE_HOST"), [roles]);
@@ -42,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (storedUser && accessToken) {
                 setUser(JSON.parse(storedUser));
                 setRoles(getRolesFromToken(accessToken));
+                setSubscription(getSubscriptionFromToken(accessToken));
             }
         } catch {
             // Cookie không hợp lệ, clear hết
@@ -59,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         Cookies.set(USER_INFO, JSON.stringify(user));
         setUser(user);
         setRoles(getRolesFromToken(accessToken));
+        setSubscription(getSubscriptionFromToken(accessToken));
     }, []);
 
     const logout = useCallback(() => {
@@ -67,12 +71,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         Cookies.remove(USER_INFO);
         setUser(null);
         setRoles([]);
+        setSubscription("FREE");
     }, []);
 
     const updateTokens = useCallback(({ accessToken, refreshToken }: AuthTokens) => {
         Cookies.set(ACCESS_TOKEN_KEY, accessToken);
         Cookies.set(REFRESH_TOKEN_KEY, refreshToken);
         setRoles(getRolesFromToken(accessToken));
+        setSubscription(getSubscriptionFromToken(accessToken));
     }, []);
 
     return (
@@ -83,6 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 isLoading,
                 roles,
                 isHost,
+                subscription,
                 login,
                 logout,
                 updateTokens,

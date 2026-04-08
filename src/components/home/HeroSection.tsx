@@ -27,11 +27,11 @@ export default function HeroSection() {
   };
 
   return (
-    <section className="relative bg-gradient-to-br from-gray-50 to-white overflow-hidden flex items-center py-20">
-      <div className="max-w-[1440px] mx-auto px-6 lg:px-32 w-full h-[700px] flex items-center">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center w-full h-full">
+    <section className="relative bg-gradient-to-br from-gray-50 to-white overflow-hidden flex items-center py-12 lg:py-20 min-h-[700px]">
+      <div className="max-w-[1440px] mx-auto px-6 lg:px-32 w-full flex items-center h-full">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center w-full h-full">
           {/* Left Content */}
-          <div className="flex flex-col gap-6 max-w-[540px]">
+          <div className="flex flex-col gap-6 lg:max-w-[540px]">
             <div className="inline-flex items-center gap-2 bg-[#E6FFF8] text-[#2DD4A8] border border-[#2DD4A8]/40 px-4 py-1.5 rounded-full text-xs font-medium w-fit">
               <span>Sẵn sàng cho kỳ nghỉ hè?</span>
             </div>
@@ -114,8 +114,8 @@ export default function HeroSection() {
             </div>
           </div>
 
-          {/* Right Image — single image with equal top/bottom spacing */}
-          <div className="hidden lg:block relative self-stretch">
+          {/* Right Image — Responsive for all screens */}
+          <div className="relative w-full h-[300px] sm:h-[450px] lg:h-[600px] rounded-3xl overflow-visible mt-6 lg:mt-0">
             <div className="absolute inset-0 rounded-3xl overflow-hidden shadow-2xl">
               <Image
                 src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=900&h=1200&fit=crop"
@@ -125,8 +125,8 @@ export default function HeroSection() {
                 priority
               />
             </div>
-            {/* Floating card — bottom left of image */}
-            <div className="absolute bottom-[-20px] left-[-25px] bg-white rounded-xl shadow-lg px-4 py-3 flex items-center gap-3 z-10">
+            {/* Floating card — positioned relative to the image container */}
+            <div className="absolute bottom-4 left-4 lg:bottom-[-20px] lg:left-[-25px] bg-white rounded-xl shadow-lg px-4 py-3 flex items-center gap-3 z-10 hidden sm:flex">
               <div className="w-8 h-8 rounded-full bg-[#E6FFF8] flex items-center justify-center flex-shrink-0">
                 <span className="text-[#2DD4A8] text-sm font-bold">✓</span>
               </div>
