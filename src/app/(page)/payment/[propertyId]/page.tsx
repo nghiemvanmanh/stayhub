@@ -11,6 +11,7 @@ import {
     Collapse,
     Divider,
     ConfigProvider,
+    message,
 } from "antd";
 import {
     ArrowLeftOutlined,
@@ -25,28 +26,26 @@ import { Shield, Banknote, Smartphone, ChevronDown } from "lucide-react";
 import locale from "antd/locale/vi_VN";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import {
-    mockProperties,
-    mockPropertyImages,
-    mockProfiles,
-} from "@/data";
-import { PropertyPaymentType, CancellationPolicy } from "@/interfaces/enums";
+import { PropertyPaymentType } from "@/interfaces/enums";
+import { fetcher } from "../../../../../utils/fetcher";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { PropertyDetail } from "@/interfaces/property";
 
 const { TextArea } = Input;
 
 /* ───── helpers ───── */
 const fmt = (n: number) => n.toLocaleString("vi-VN");
 
-const cancellationPolicyText: Record<CancellationPolicy, { title: string; desc: string }> = {
-    [CancellationPolicy.FLEXIBLE]: {
+const cancellationPolicyText: Record<string, { title: string; desc: string }> = {
+    FLEXIBLE: {
         title: "Hoàn tiền 100% khi hủy trước 24 giờ.",
         desc: "Để nhận được tiền hoàn lại đầy đủ, khách phải hủy ít nhất 24 giờ trước giờ nhận phòng của danh sách. Sau thời gian đó, phí dịch vụ không được hoàn lại.",
     },
-    [CancellationPolicy.MODERATE]: {
+    MODERATE: {
         title: "Hoàn tiền 100% khi hủy trước 48 giờ.",
         desc: "Để nhận được tiền hoàn lại đầy đủ, khách phải hủy ít nhất 48 giờ trước giờ nhận phòng của danh sách. Sau thời gian đó, phí dịch vụ không được hoàn lại và 50% tiền phòng sẽ được tính.",
     },
-    [CancellationPolicy.STRICT]: {
+    STRICT: {
         title: "Hoàn tiền 50% khi hủy trước 7 ngày.",
         desc: "Để nhận được 50% tiền hoàn lại, khách phải hủy ít nhất 7 ngày trước giờ nhận phòng. Sau thời gian đó, không hoàn lại bất kỳ khoản nào.",
     },
@@ -74,33 +73,38 @@ export default function PaymentPage() {
     const params = useParams();
     const searchParams = useSearchParams();
 
-    const propertyId = params?.propertyId as string;
+    const slug = params?.propertyId as string;
     const checkin = searchParams.get("checkin") || "";
     const checkout = searchParams.get("checkout") || "";
+    const roomIdsParam = searchParams.get("roomIds") || "";
     const guestsParam = searchParams.get("guests") || "2";
 
     /* ── resolve property ── */
-    const property = useMemo(
-        () => mockProperties.find((p) => String(p.id) === propertyId),
-        [propertyId]
-    );
+    const { data: property, isLoading } = useQuery({
+        queryKey: ["property-checkout", slug],
+        queryFn: async () => {
+            const res = await fetcher.get(`/properties/${slug}`);
+            return (res.data?.data || res.data) as PropertyDetail;
+        },
+        enabled: !!slug,
+    });
+
+    const isEntirePlace = property?.rentalTypeSlug === "toan-bo-cho-o";
+    const rooms = property?.rooms || [];
+
+    const selectedRooms = useMemo(() => {
+        if (!rooms.length) return [];
+        if (isEntirePlace) return [rooms[0]];
+        const ids = roomIdsParam.split(",").map(Number);
+        return rooms.filter(r => ids.includes(r.id));
+    }, [rooms, isEntirePlace, roomIdsParam]);
 
     const thumbnail = useMemo(() => {
         if (!property) return "";
-        const img = mockPropertyImages.find(
-            (i) => i.propertyId === property.id && i.isThumbnail
-        );
-        return (
-            img?.url ||
-            mockPropertyImages.find((i) => i.propertyId === property.id)?.url ||
-            "https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=800&q=80"
-        );
+        return property.imageUrls?.[0] || "https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=800&q=80";
     }, [property]);
 
-    const hostProfile = useMemo(
-        () => mockProfiles.find((p) => p.userId === property?.hostId),
-        [property]
-    );
+    const hostProfile = property?.host;
 
     /* ── derived booking values ── */
     const nights = useMemo(() => {
@@ -111,16 +115,36 @@ export default function PaymentPage() {
     }, [checkin, checkout]);
 
     const guests = parseInt(guestsParam, 10) || 2;
-    const pricePerNight = property?.pricePerNight ?? 0;
+    
+    const pricePerNight = useMemo(() => {
+        if (isEntirePlace && property?.rooms?.[0]) return property.rooms[0].pricePerNight;
+        if (selectedRooms.length > 0) return selectedRooms.reduce((sum, r) => sum + r.pricePerNight, 0);
+        return property?.rooms?.[0]?.pricePerNight || 0;
+    }, [selectedRooms, isEntirePlace, property]);
+
     const cleaningFee = property?.cleaningFee ?? 0;
-    const serviceFee = Math.round(pricePerNight * 0.1);
+    const serviceFee = Math.round(pricePerNight * 0.1 * nights);
     const subtotal = pricePerNight * nights;
     const total = subtotal + cleaningFee + serviceFee;
 
+    const allowedPaymentTypes = useMemo(() => {
+        if (!property) return [PropertyPaymentType.ONLINE_FULL];
+        const types = [PropertyPaymentType.ONLINE_FULL];
+        if (property.depositPercentage > 0) types.push(PropertyPaymentType.ONLINE_DEPOSIT);
+        if (property.isPayAtCheckinAllowed) types.push(PropertyPaymentType.PAY_AT_CHECKIN);
+        return types;
+    }, [property]);
+
     /* ── form state ── */
-    const [selectedPaymentType, setSelectedPaymentType] = useState<PropertyPaymentType>(
-        property?.allowedPaymentTypes?.[0] ?? PropertyPaymentType.ONLINE_FULL
-    );
+    const [selectedPaymentType, setSelectedPaymentType] = useState<PropertyPaymentType>(PropertyPaymentType.ONLINE_FULL);
+    
+    // Default to ONLINE_FULL when allowedPaymentTypes changes
+    React.useEffect(() => {
+        if (allowedPaymentTypes.length > 0 && !allowedPaymentTypes.includes(selectedPaymentType)) {
+            setSelectedPaymentType(allowedPaymentTypes[0]);
+        }
+    }, [allowedPaymentTypes, selectedPaymentType]);
+
     const [lastName, setLastName] = useState("");
     const [firstName, setFirstName] = useState("");
     const [email, setEmail] = useState("");
@@ -131,6 +155,75 @@ export default function PaymentPage() {
     const [cardNumber, setCardNumber] = useState("");
     const [cardExpiry, setCardExpiry] = useState("");
     const [cardCvv, setCardCvv] = useState("");
+
+    const bookingMutation = useMutation({
+        mutationFn: async () => {
+            let paymentOption = "PAY_IN_FULL";
+            if (selectedPaymentType === PropertyPaymentType.PAY_AT_CHECKIN) {
+                paymentOption = "PAY_AT_CHECKIN";
+            }
+            
+            const payload = {
+                propertyId: property?.id || 0,
+                checkInDate: checkin,
+                checkOutDate: checkout,
+                roomIds: selectedRooms.map(r => r.id),
+                totalGuests: guests,
+                paymentOption,
+                note: note
+            };
+            
+            const res = await fetcher.post("/bookings", payload);
+            return res.data;
+        },
+        onSuccess: async (data) => {
+            const bookingCode = data?.data;
+            if (!bookingCode) {
+                message.error("Lỗi: Không nhận được mã booking.");
+                return;
+            }
+            if (selectedPaymentType === PropertyPaymentType.PAY_AT_CHECKIN) {
+                window.location.href = `/payment-result?responseCode=00&vnp_OrderInfo=${bookingCode}&type=cash`;
+                return;
+            }
+            try {
+                const returnUrl = `${window.location.origin}/payment-result`;
+                const vnpayRes = await fetcher.get("/payments/vnpay/booking/create-url", {
+                    params: { bookingCode, returnUrl }
+                });
+                if (vnpayRes.data?.data) {
+                    window.location.href = vnpayRes.data.data;
+                } else {
+                    message.error("Không lấy được đường dẫn thanh toán");
+                }
+            } catch (err) {
+                message.error("Lỗi khi tạo giao dịch thanh toán.");
+            }
+        },
+        onError: (err: any) => {
+            message.error(err?.response?.data?.message || "Có lỗi xảy ra khi tạo đặt phòng, vui lòng thử lại.");
+        }
+    });
+
+    const handleBookingSubmit = () => {
+        if (!lastName || !firstName || !email) {
+            message.warning("Vui lòng điền đủ thông tin khách hàng!");
+            return;
+        }
+        bookingMutation.mutate();
+    };
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-white">
+                <Header />
+                <div className="max-w-[1200px] mx-auto px-4 py-20 text-center">
+                    <h2 className="text-xl font-semibold text-gray-700">Đang tải thông tin phòng...</h2>
+                </div>
+                <Footer />
+            </div>
+        );
+    }
 
     if (!property) {
         return (
@@ -153,7 +246,7 @@ export default function PaymentPage() {
         return d.toLocaleDateString("vi-VN", { day: "2-digit", month: "long", year: "numeric" });
     };
 
-    const depositPercent = property.depositPercent ?? 50;
+    const depositPercent = property.depositPercentage ?? 0;
     const depositAmount = Math.round(total * (depositPercent / 100));
     const remainingAmount = total - depositAmount;
 
@@ -161,10 +254,7 @@ export default function PaymentPage() {
         selectedPaymentType === PropertyPaymentType.ONLINE_FULL ||
         selectedPaymentType === PropertyPaymentType.ONLINE_DEPOSIT;
 
-    const categoryName = property.categoryId === 1 ? "TOÀN BỘ NHÀ BIỆT THỰ" :
-        property.categoryId === 2 ? "TOÀN BỘ CĂN HỘ" :
-            property.categoryId === 3 ? "TOÀN BỘ NHÀ PHỐ" :
-                property.categoryId === 4 ? "TOÀN BỘ NHÀ GỖ" : "TOÀN BỘ KHU NGHỈ DƯỠNG";
+    const categoryName = property.categoryName || "CHỖ Ở";
 
     return (
         <ConfigProvider locale={locale}>
@@ -175,7 +265,7 @@ export default function PaymentPage() {
                     {/* ── Back + Title ── */}
                     <div className="flex items-center gap-3 mb-5 sm:mb-8">
                         <Link
-                            href={`/homestay/${propertyId}`}
+                            href={`/homestay/${property.slug}`}
                             className="text-gray-800 hover:text-[#2DD4A8] transition-colors"
                         >
                             <ArrowLeftOutlined className="text-base sm:text-lg" />
@@ -297,7 +387,7 @@ export default function PaymentPage() {
                                             </p>
                                         </div>
                                         <Link
-                                            href={`/homestay/${propertyId}`}
+                                            href={`/homestay/${property.slug}`}
                                             className="text-xs sm:text-sm font-semibold text-gray-900 underline hover:text-[#2DD4A8]"
                                         >
                                             Chỉnh sửa
@@ -309,7 +399,7 @@ export default function PaymentPage() {
                                             <p className="text-xs sm:text-sm text-gray-600 m-0">{guests} khách</p>
                                         </div>
                                         <Link
-                                            href={`/homestay/${propertyId}`}
+                                            href={`/homestay/${property.slug}`}
                                             className="text-xs sm:text-sm font-semibold text-gray-900 underline hover:text-[#2DD4A8]"
                                         >
                                             Chỉnh sửa
@@ -330,7 +420,7 @@ export default function PaymentPage() {
                                     className="w-full"
                                 >
                                     <div className="space-y-2 sm:space-y-3">
-                                        {property.allowedPaymentTypes.map((type) => {
+                                        {allowedPaymentTypes.map((type) => {
                                             const info = paymentTypeLabel[type];
                                             const isSelected = selectedPaymentType === type;
                                             return (
@@ -512,10 +602,10 @@ export default function PaymentPage() {
                                             children: (
                                                 <div className="pl-11">
                                                     <p className="text-sm font-medium text-gray-700 mb-1">
-                                                        {cancellationPolicyText[property.cancellationPolicy].title}
+                                                        {selectedRooms[0]?.cancellationPolicyResponse?.name || cancellationPolicyText["FLEXIBLE"].title}
                                                     </p>
                                                     <p className="text-xs text-gray-500 leading-relaxed">
-                                                        {cancellationPolicyText[property.cancellationPolicy].desc}
+                                                        {selectedRooms[0]?.cancellationPolicyResponse?.description || cancellationPolicyText["FLEXIBLE"].desc}
                                                     </p>
                                                 </div>
                                             ),
@@ -538,7 +628,7 @@ export default function PaymentPage() {
                                                         Tuân thủ các quy định chung của chủ nhà.
                                                     </p>
                                                     <ul className="text-xs text-gray-500 mt-2 space-y-1 pl-4 list-disc">
-                                                        <li>Nhận phòng sau {property.checkinAfter}, trả phòng trước {property.checkoutBefore}</li>
+                                                        <li>Nhận phòng sau {property.checkInAfter}, trả phòng trước {property.checkOutBefore}</li>
                                                         {!property.isSmokingAllowed && <li>Không hút thuốc trong nhà</li>}
                                                         {!property.isPetsAllowed && <li>Không mang thú cưng</li>}
                                                         {!property.isPartyAllowed && <li>Không tổ chức tiệc</li>}
@@ -579,7 +669,9 @@ export default function PaymentPage() {
                                     type="primary"
                                     size="large"
                                     block
-                                    disabled={!agreed}
+                                    disabled={!agreed || bookingMutation.isPending}
+                                    loading={bookingMutation.isPending}
+                                    onClick={handleBookingSubmit}
                                     className={`
                                         !rounded-xl !h-11 sm:!h-12 sm:!w-auto sm:!inline-flex !px-8 !text-sm sm:!text-base !font-semibold mt-4 sm:mt-6
                                         ${agreed

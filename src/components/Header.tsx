@@ -151,7 +151,7 @@ export default function Header() {
     {
       key: "host-action-mobile",
       label: "Trở thành đối tác",
-      className: "md:hidden",
+      className: "md:!hidden",
       onClick: handleBecomeHost,
     }
   ];

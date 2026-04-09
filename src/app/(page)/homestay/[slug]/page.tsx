@@ -815,7 +815,7 @@ export default function HomestayDetailPage() {
                                             </div>
                                             {canBook && dates ? (
                                                 <Link
-                                                    href={`/payment/${property.id}?checkin=${dates[0].format("YYYY-MM-DD")}&checkout=${dates[1].format("YYYY-MM-DD")}&guests=${guests}&roomIds=${entirePlaceRoom?.id}`}
+                                                    href={`/payment/${property.slug}?checkin=${dates[0].format("YYYY-MM-DD")}&checkout=${dates[1].format("YYYY-MM-DD")}&guests=${guests}&roomIds=${entirePlaceRoom?.id}`}
                                                 >
                                                     <Button
                                                         type="primary"
@@ -1023,7 +1023,7 @@ export default function HomestayDetailPage() {
                                 {/* CTA */}
                                 {(canBook || (isEntirePlace && nights > 0)) && dates ? (
                                     <Link
-                                        href={`/payment/${property.id}?checkin=${dates[0].format("YYYY-MM-DD")}&checkout=${dates[1].format("YYYY-MM-DD")}&guests=${guests}&roomIds=${isEntirePlace ? entirePlaceRoom?.id : Array.from(selectedRoomIds).join(",")}`}
+                                        href={`/payment/${property.slug}?checkin=${dates[0].format("YYYY-MM-DD")}&checkout=${dates[1].format("YYYY-MM-DD")}&guests=${guests}&roomIds=${isEntirePlace ? entirePlaceRoom?.id : Array.from(selectedRoomIds).join(",")}`}
                                     >
                                         <Button
                                             type="primary"
@@ -1187,7 +1187,7 @@ export default function HomestayDetailPage() {
 
                                 {/* Action */}
                                 <Link
-                                    href={`/payment/${property.id}?checkin=${dates[0].format("YYYY-MM-DD")}&checkout=${dates[1].format("YYYY-MM-DD")}&guests=${guests}&roomIds=${room.id}`}
+                                    href={`/payment/${property.slug}?checkin=${dates[0].format("YYYY-MM-DD")}&checkout=${dates[1].format("YYYY-MM-DD")}&guests=${guests}&roomIds=${room.id}`}
                                     onClick={() => setMobileBookingRoomId(null)}
                                 >
                                     <Button
