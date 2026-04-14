@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -213,11 +213,58 @@ export default function HomestayDetailPage() {
         : (selectedRooms.length > 0
             ? selectedRooms.reduce((s, r) => s + r.maxGuests, 0)
             : totalMaxGuests);
-    const subtotal = pricePerNight * nights;
+
+    // ── Calculate Price API ─────────────────────────────────────────────
+    const calculatePricePayload = useMemo(() => {
+        if (!dates || !hasSelection) return null;
+        const roomIds = isEntirePlace ? null : Array.from(selectedRoomIds).map(Number);
+        return {
+            slug,
+            checkInDate: dates[0].format("YYYY-MM-DD"),
+            checkOutDate: dates[1].format("YYYY-MM-DD"),
+            roomIds,
+        };
+    }, [dates, hasSelection, isEntirePlace, selectedRoomIds, slug]);
+
+    const { data: calculatedPriceData, isLoading: isCalculatingPrice } = useQuery({
+        queryKey: ["calculate-price", calculatePricePayload],
+        queryFn: async () => {
+            if (!calculatePricePayload) return null;
+            const params = new URLSearchParams();
+            params.append("checkInDate", calculatePricePayload.checkInDate);
+            params.append("checkOutDate", calculatePricePayload.checkOutDate);
+            if (calculatePricePayload.roomIds) {
+                calculatePricePayload.roomIds.forEach((id: number) => params.append("roomIds", id.toString()));
+            }
+
+            const res = await fetcher.get(
+                `/properties/${calculatePricePayload.slug}/calculate-price?${params.toString()}`
+            );
+            return res.data?.data ?? res.data;
+        },
+        enabled: !!calculatePricePayload,
+        staleTime: 30000,
+    });
+
+    // Derive totals from API response
+    const apiTotal = useMemo(() => {
+        if (!calculatedPriceData || !Array.isArray(calculatedPriceData)) return null;
+        const totalFromApi = calculatedPriceData.reduce(
+            (sum: number, item: any) => sum + (item.calculatedTotalPrice || 0),
+            0
+        );
+        return totalFromApi;
+    }, [calculatedPriceData]);
+
+    // Fallback FE-side calculation (used while API is loading or unavailable)
     const cleaningFee = property?.cleaningFee ?? 0;
-    const serviceFeeRate = 0.1;
-    const serviceFee = Math.round(pricePerNight * serviceFeeRate) * nights;
-    const total = subtotal + cleaningFee + serviceFee;
+    const subtotalFallback = pricePerNight * nights;
+    const totalFallback = subtotalFallback + cleaningFee;
+
+    // Use API total when available, otherwise fallback
+    const subtotal = apiTotal !== null ? apiTotal : subtotalFallback;
+    const total = apiTotal !== null ? (apiTotal + cleaningFee) : totalFallback;
+
     const canBook = isEntirePlace ? (hasSelection && nights > 0) : (hasSelection && nights > 0);
 
     const handleToggleRoom = (roomId: string | number) => {
@@ -1057,23 +1104,44 @@ export default function HomestayDetailPage() {
 
                                 {/* Price breakdown */}
                                 {hasSelection && nights > 0 ? (
-                                    <div className="space-y-2.5">
-                                        <div className="flex justify-between text-sm text-gray-600">
-                                            <span className="underline cursor-pointer">
-                                                {pricePerNight.toLocaleString("vi-VN")}đ × {nights} đêm
-                                            </span>
-                                            <span>{subtotal.toLocaleString("vi-VN")}đ</span>
+                                    isCalculatingPrice ? (
+                                        <div className="space-y-2.5 animate-pulse">
+                                            <div className="h-4 bg-gray-100 rounded w-full"></div>
+                                            <div className="h-4 bg-gray-100 rounded w-3/4"></div>
+                                            <div className="h-4 bg-gray-100 rounded w-2/3"></div>
+                                            <Divider className="!my-3" />
+                                            <div className="h-5 bg-gray-100 rounded w-1/2 ml-auto"></div>
                                         </div>
+                                    ) : (
+                                    <div className="space-y-2.5">
+                                        {/* Per-room breakdown from API */}
+                                        {calculatedPriceData && Array.isArray(calculatedPriceData) ? (
+                                            calculatedPriceData.map((roomPrice: any, idx: number) => {
+                                                const roomInfo = rooms.find(r => r.id === roomPrice.roomId);
+                                                const roomName = roomInfo?.name || `Phòng ${idx + 1}`;
+                                                return (
+                                                    <div key={roomPrice.roomId || idx} className="flex justify-between text-sm text-gray-600">
+                                                        <span className="underline cursor-pointer">
+                                                            {!isEntirePlace && calculatedPriceData.length > 1 ? `${roomName}: ` : ""}
+                                                            {nights} đêm
+                                                        </span>
+                                                        <span>{roomPrice.calculatedTotalPrice.toLocaleString("vi-VN")}đ</span>
+                                                    </div>
+                                                );
+                                            })
+                                        ) : (
+                                            <div className="flex justify-between text-sm text-gray-600">
+                                                <span className="underline cursor-pointer">
+                                                    {pricePerNight.toLocaleString("vi-VN")}đ × {nights} đêm
+                                                </span>
+                                                <span>{subtotal.toLocaleString("vi-VN")}đ</span>
+                                            </div>
+                                        )}
                                         <div className="flex justify-between text-sm text-gray-600">
                                             <span className="underline cursor-pointer">Phí vệ sinh</span>
                                             <span>{cleaningFee.toLocaleString("vi-VN")}đ</span>
                                         </div>
-                                        <div className="flex justify-between text-sm text-gray-600">
-                                            <span className="underline cursor-pointer">
-                                                Phí dịch vụ StayHub
-                                            </span>
-                                            <span>{serviceFee.toLocaleString("vi-VN")}đ</span>
-                                        </div>
+
                                         <Divider className="!my-3" />
                                         <div className="flex justify-between font-bold text-gray-900 text-sm">
                                             <span>Tổng cộng</span>
@@ -1081,7 +1149,20 @@ export default function HomestayDetailPage() {
                                                 {total.toLocaleString("vi-VN")}đ
                                             </span>
                                         </div>
+                                        {property?.isPayAtCheckinAllowed && property.depositPercentage > 0 && (
+                                            <div className="mt-2 text-[11px] text-gray-500 bg-amber-50 p-2.5 rounded-lg border border-amber-100">
+                                                <div className="flex justify-between font-medium text-amber-700 mb-1">
+                                                    <span>Yêu cầu thanh toán cọc ({property.depositPercentage}%):</span>
+                                                    <span>{Math.round((total * property.depositPercentage) / 100).toLocaleString("vi-VN")}đ</span>
+                                                </div>
+                                                <div className="flex justify-between text-amber-600/80">
+                                                    <span>Số tiền còn lại trả khi nhận phòng:</span>
+                                                    <span>{(total - Math.round((total * property.depositPercentage) / 100)).toLocaleString("vi-VN")}đ</span>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
+                                    )
                                 ) : hasSelection ? (
                                     <p className="text-xs text-gray-400 text-center">
                                         👆 Chọn ngày nhận &amp; trả phòng để xem giá
@@ -1115,9 +1196,12 @@ export default function HomestayDetailPage() {
                         if (!room || !dates) return null;
 
                         const roomNights = dates[1].diff(dates[0], "day");
-                        const roomSubtotal = room.pricePerNight * roomNights;
-                        const roomServiceFee = Math.round(room.pricePerNight * serviceFeeRate) * roomNights;
-                        const roomTotal = roomSubtotal + cleaningFee + roomServiceFee;
+                        // Try to get API-calculated price for this specific room
+                        const mobileRoomPrice = calculatedPriceData && Array.isArray(calculatedPriceData)
+                            ? calculatedPriceData.find((p: any) => p.roomId === room.id)
+                            : null;
+                        const roomSubtotal = mobileRoomPrice?.calculatedTotalPrice ?? (room.pricePerNight * roomNights);
+                        const roomTotal = roomSubtotal + cleaningFee;
 
                         return (
                             <div>
@@ -1167,22 +1251,31 @@ export default function HomestayDetailPage() {
                                 {/* Price Breakdown */}
                                 <div className="space-y-2 mb-6 text-sm">
                                     <div className="flex justify-between text-gray-600">
-                                        <span>{room.pricePerNight.toLocaleString("vi-VN")}đ × {roomNights} đêm</span>
+                                        <span>Tiền phòng ({roomNights} đêm)</span>
                                         <span>{roomSubtotal.toLocaleString("vi-VN")}đ</span>
                                     </div>
                                     <div className="flex justify-between text-gray-600">
                                         <span>Phí vệ sinh</span>
                                         <span>{cleaningFee.toLocaleString("vi-VN")}đ</span>
                                     </div>
-                                    <div className="flex justify-between text-gray-600">
-                                        <span>Phí dịch vụ</span>
-                                        <span>{roomServiceFee.toLocaleString("vi-VN")}đ</span>
-                                    </div>
+
                                     <Divider className="!my-3" />
                                     <div className="flex justify-between font-bold text-gray-900 text-base">
                                         <span>Tổng thanh toán</span>
                                         <span className="text-[#2DD4A8] text-lg">{roomTotal.toLocaleString("vi-VN")}đ</span>
                                     </div>
+                                    {property?.isPayAtCheckinAllowed && property.depositPercentage > 0 && (
+                                        <div className="mt-2 text-xs text-gray-500 bg-amber-50 p-3 rounded-lg border border-amber-100">
+                                            <div className="flex justify-between font-medium text-amber-700 mb-1.5">
+                                                <span>Yêu cầu thanh toán cọc ({property.depositPercentage}%):</span>
+                                                <span>{Math.round((roomTotal * property.depositPercentage) / 100).toLocaleString("vi-VN")}đ</span>
+                                            </div>
+                                            <div className="flex justify-between text-amber-600/80">
+                                                <span>Số tiền còn lại trả khi nhận phòng:</span>
+                                                <span>{(roomTotal - Math.round((roomTotal * property.depositPercentage) / 100)).toLocaleString("vi-VN")}đ</span>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* Action */}

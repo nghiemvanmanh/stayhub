@@ -177,12 +177,6 @@ export interface AmenityItem {
   type: string;
 }
 
-// Cancellation policies (no API — keep static)
-export const cancellationPolicyOptions = [
-  { value: 1, label: "Linh hoạt — Miễn phí hủy trước 24h" },
-  { value: 2, label: "Vừa phải — Miễn phí hủy trước 5 ngày" },
-  { value: 3, label: "Nghiêm ngặt — Hoàn 50% nếu hủy trước 7 ngày" },
-];
 
 // Province → District → Ward (static location data)
 export const provinceData: Record<string, Record<string, string[]>> = {

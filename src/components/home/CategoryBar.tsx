@@ -1,10 +1,10 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { mockCategories } from "../../data/property";
 import { Skeleton, Tabs } from "antd";
 import { Building, House, TreePine, Tent, Palmtree } from "lucide-react";
-import { JSX } from "react";
+import { JSX, useEffect } from "react";
+import { fetcher } from "../../../utils/fetcher";
 
 interface CategoryBarProps {
   onCategoryChange: (categoryId: string) => void;
@@ -23,10 +23,16 @@ export default function CategoryBar({ onCategoryChange, activeCategory }: Catego
   const { data: categories, isLoading } = useQuery({
     queryKey: ["categories"],
     queryFn: async () => {
-      await new Promise(resolve => setTimeout(resolve, 800));
-      return mockCategories;
+      const res = await fetcher.get("/properties/categories");
+      return res.data?.data || [];
     },
   });
+
+  useEffect(() => {
+    if (categories?.length > 0 && !activeCategory) {
+      onCategoryChange(categories[0].slug);
+    }
+  }, [categories, activeCategory, onCategoryChange]);
 
   if (isLoading) {
     return (
@@ -40,11 +46,19 @@ export default function CategoryBar({ onCategoryChange, activeCategory }: Catego
     );
   }
 
-  const items = categories?.map((cat) => ({
-    key: String(cat.id),
+  // Fallback map since we don't have server-defined icon yet
+  const getIcon = (iconName: string, id: string) => {
+    // If the backend doesn't send specific distinct keys yet, just use a fallback map based on ID modulo
+    const fallbackIds = ["1", "2", "3", "4", "5"];
+    const fakeId = fallbackIds[(parseInt(id) % 5)] || "1";
+    return categoryIcons[fakeId] || categoryIcons["1"];
+  };
+
+  const items = categories?.map((cat: any) => ({
+    key: cat.slug,
     label: (
       <div className="flex flex-col items-center gap-2 px-4 py-2">
-        <span className="text-gray-700">{categoryIcons[String(cat.id)]}</span>
+        <span className="text-gray-700">{getIcon(cat.iconName, String(cat.id))}</span>
         <span className="text-xs font-medium whitespace-nowrap">{cat.name}</span>
       </div>
     ),

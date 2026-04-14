@@ -38,6 +38,7 @@ export default function Header() {
     } finally {
       logout();
       messageApi.success("Đã đăng xuất thành công!");
+      router.push("/");
     }
   };
   const handleBecomeHost = () => {

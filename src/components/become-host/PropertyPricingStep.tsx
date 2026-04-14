@@ -4,7 +4,6 @@ import { useState } from "react";
 import { PropertyPricingFields } from "@/components/common/property-form/PropertyPricingFields";
 import { BulbOutlined } from "@ant-design/icons";
 import {
-  cancellationPolicyOptions,
   isPrivateRoomRentalType,
   type PropertyPricingData,
   type RentalTypeItem,

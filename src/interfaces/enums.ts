@@ -135,7 +135,6 @@ export enum DisputeStatus {
 }
 
 export enum PropertyPaymentType {
-  ONLINE_FULL = "ONLINE_FULL",
-  ONLINE_DEPOSIT = "ONLINE_DEPOSIT",
+  PAY_IN_FULL = "PAY_IN_FULL",
   PAY_AT_CHECKIN = "PAY_AT_CHECKIN",
 }

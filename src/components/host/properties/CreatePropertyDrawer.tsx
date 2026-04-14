@@ -211,9 +211,12 @@ export default function CreatePropertyDrawer({ open, onClose, onSuccess }: Creat
         longitude: propertyInfo.longitude,
         name: propertyInfo.name,
         description: propertyInfo.description,
+        cancellationPolicyId: pricing.cancellationPolicyId,
+        isPayAtCheckinAllowed: pricing.isPayAtCheckinAllowed,
+        depositPercentage: pricing.depositPercentage,
         weekendSurchargePercentage: pricing.weekendSurchargePercentage,
         cleaningFee: pricing.cleaningFee,
-        roomCount: isEntirePlace ? amenities.entirePlace.roomCount : (finalRooms ? finalRooms.length : 0),
+        roomCount: isEntirePlace ? amenities.entirePlace.roomCount : null,
         imageUrls,
         rooms: finalRooms || [],
       };

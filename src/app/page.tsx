@@ -12,7 +12,7 @@ import Footer from "@/components/Footer";
 import { useState } from "react";
 
 export default function HomePage() {
-  const [activeCategory, setActiveCategory] = useState<string>("1");
+  const [activeCategory, setActiveCategory] = useState<string>("");
 
   return (
     <div className="min-h-screen bg-white">
@@ -22,7 +22,7 @@ export default function HomePage() {
         activeCategory={activeCategory} 
         onCategoryChange={setActiveCategory} 
       />
-      <FeaturedListings categoryId={activeCategory} />
+      <FeaturedListings categorySlug={activeCategory} />
       <HowItWorks />
       <BecomeHost />
       <Testimonials />

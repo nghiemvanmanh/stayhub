@@ -45,7 +45,6 @@ import {
   type CategoryItem,
   type RentalTypeItem,
   type AmenityItem,
-  cancellationPolicyOptions,
   isPrivateRoomRentalType,
   isEntirePlaceRentalType,
 } from "@/components/common/property-form/propertyData";
@@ -95,6 +94,15 @@ export default function ReviewStep({ formData, onSubmit, onGoToStep, submitting,
     },
   });
 
+  const { data: policiesResponse } = useQuery({
+    queryKey: ["cancellation-policies"],
+    queryFn: async () => {
+      const res = await fetcher.get("/properties/host/cancellation-policy");
+      return res.data?.data ?? res.data;
+    },
+  });
+  const policies = Array.isArray(policiesResponse) ? policiesResponse : [];
+
 
   const frontUrl = useMemo(() => verification.frontCCCD ? URL.createObjectURL(verification.frontCCCD) : null, [verification.frontCCCD]);
   const backUrl = useMemo(() => verification.backCCCD ? URL.createObjectURL(verification.backCCCD) : null, [verification.backCCCD]);
@@ -118,7 +126,7 @@ export default function ReviewStep({ formData, onSubmit, onGoToStep, submitting,
     return category?.name || "—";
   }, [rentalTypes, propertyInfo.rentalTypeId, propertyInfo.categoryId]);
   const rentalTypeLabel = (rentalTypes ?? []).find((r : RentalTypeItem) => r.id === propertyInfo.rentalTypeId)?.name || "—";
-  const cancellationLabel = cancellationPolicyOptions.find((c) => c.value === propertyPricing.cancellationPolicyId)?.label || "—";
+  const cancellationLabel = policies.find((c: any) => c.id === propertyPricing.cancellationPolicyId)?.name || "—";
   const selectedAmenities = (amenities ?? []).filter((a : AmenityItem) => propertyAmenities.amenityIds.includes(a.id));
   const formatVND = (n: number | string) => Number(n || 0).toLocaleString("vi-VN") + " ₫";
 

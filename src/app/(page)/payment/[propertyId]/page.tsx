@@ -52,19 +52,14 @@ const cancellationPolicyText: Record<string, { title: string; desc: string }> = 
 };
 
 const paymentTypeLabel: Record<PropertyPaymentType, { name: string; desc: string; icon: React.ReactNode }> = {
-    [PropertyPaymentType.ONLINE_FULL]: {
-        name: "Thanh toán online (VNPAY)",
+    [PropertyPaymentType.PAY_IN_FULL]: {
+        name: "Thanh toán online toàn bộ (VNPAY)",
         desc: "Thanh toán 100% qua cổng VNPAY. Nhanh chóng, an toàn.",
         icon: <CreditCardOutlined className="text-lg text-[#2DD4A8]" />,
     },
-    [PropertyPaymentType.ONLINE_DEPOSIT]: {
-        name: "Đặt cọc online",
-        desc: "Đặt cọc trước qua VNPAY, thanh toán phần còn lại khi nhận phòng.",
-        icon: <Smartphone size={18} className="text-[#2DD4A8]" />,
-    },
     [PropertyPaymentType.PAY_AT_CHECKIN]: {
-        name: "Thanh toán trực tiếp",
-        desc: "Thanh toán bằng tiền mặt hoặc chuyển khoản khi nhận phòng.",
+        name: "Thanh toán khi nhận phòng",
+        desc: "Thanh toán khoản cọc qua VNPAY. Phần còn lại thanh toán trực tiếp khi nhận phòng.",
         icon: <Banknote size={18} className="text-[#2DD4A8]" />,
     },
 };
@@ -122,21 +117,62 @@ export default function PaymentPage() {
         return property?.rooms?.[0]?.pricePerNight || 0;
     }, [selectedRooms, isEntirePlace, property]);
 
+    // ── Calculate Price API ─────────────────────────────────────────────
+    const calculatePricePayload = useMemo(() => {
+        if (!checkin || !checkout) return null;
+        const roomIds = isEntirePlace ? null : selectedRooms.map(r => r.id);
+        return {
+            slug,
+            checkInDate: checkin,
+            checkOutDate: checkout,
+            roomIds,
+        };
+    }, [checkin, checkout, isEntirePlace, selectedRooms, slug]);
+
+    const { data: calculatedPriceData } = useQuery({
+        queryKey: ["calculate-price-payment", calculatePricePayload],
+        queryFn: async () => {
+            if (!calculatePricePayload) return null;
+            const params = new URLSearchParams();
+            params.append("checkInDate", calculatePricePayload.checkInDate);
+            params.append("checkOutDate", calculatePricePayload.checkOutDate);
+            if (calculatePricePayload.roomIds) {
+                calculatePricePayload.roomIds.forEach((id: number) => params.append("roomIds", id.toString()));
+            }
+
+            const res = await fetcher.get(
+                `/properties/${calculatePricePayload.slug}/calculate-price?${params.toString()}`
+            );
+            return res.data?.data ?? res.data;
+        },
+        enabled: !!calculatePricePayload,
+        staleTime: 30000,
+    });
+
+    const apiTotal = useMemo(() => {
+        if (!calculatedPriceData || !Array.isArray(calculatedPriceData)) return null;
+        return calculatedPriceData.reduce(
+            (sum: number, item: any) => sum + (item.calculatedTotalPrice || 0),
+            0
+        );
+    }, [calculatedPriceData]);
+
     const cleaningFee = property?.cleaningFee ?? 0;
-    const serviceFee = Math.round(pricePerNight * 0.1 * nights);
-    const subtotal = pricePerNight * nights;
-    const total = subtotal + cleaningFee + serviceFee;
+    const subtotalFallback = pricePerNight * nights;
+    const totalFallback = subtotalFallback + cleaningFee;
+
+    const subtotal = apiTotal !== null ? apiTotal : subtotalFallback;
+    const total = apiTotal !== null ? (apiTotal + cleaningFee) : totalFallback;
 
     const allowedPaymentTypes = useMemo(() => {
-        if (!property) return [PropertyPaymentType.ONLINE_FULL];
-        const types = [PropertyPaymentType.ONLINE_FULL];
-        if (property.depositPercentage > 0) types.push(PropertyPaymentType.ONLINE_DEPOSIT);
+        if (!property) return [PropertyPaymentType.PAY_IN_FULL];
+        const types = [PropertyPaymentType.PAY_IN_FULL];
         if (property.isPayAtCheckinAllowed) types.push(PropertyPaymentType.PAY_AT_CHECKIN);
         return types;
     }, [property]);
 
     /* ── form state ── */
-    const [selectedPaymentType, setSelectedPaymentType] = useState<PropertyPaymentType>(PropertyPaymentType.ONLINE_FULL);
+    const [selectedPaymentType, setSelectedPaymentType] = useState<PropertyPaymentType>(PropertyPaymentType.PAY_IN_FULL);
     
     // Default to ONLINE_FULL when allowedPaymentTypes changes
     React.useEffect(() => {
@@ -151,17 +187,11 @@ export default function PaymentPage() {
     const [note, setNote] = useState("");
     const [agreed, setAgreed] = useState(false);
 
-    /* ── card form state (for online methods) ── */
-    const [cardNumber, setCardNumber] = useState("");
-    const [cardExpiry, setCardExpiry] = useState("");
-    const [cardCvv, setCardCvv] = useState("");
-
     const bookingMutation = useMutation({
         mutationFn: async () => {
-            let paymentOption = "PAY_IN_FULL";
-            if (selectedPaymentType === PropertyPaymentType.PAY_AT_CHECKIN) {
-                paymentOption = "PAY_AT_CHECKIN";
-            }
+            const paymentOption = selectedPaymentType === PropertyPaymentType.PAY_AT_CHECKIN 
+                ? PropertyPaymentType.PAY_AT_CHECKIN 
+                : PropertyPaymentType.PAY_IN_FULL;
             
             const payload = {
                 propertyId: property?.id || 0,
@@ -182,10 +212,7 @@ export default function PaymentPage() {
                 message.error("Lỗi: Không nhận được mã booking.");
                 return;
             }
-            if (selectedPaymentType === PropertyPaymentType.PAY_AT_CHECKIN) {
-                window.location.href = `/payment-result?responseCode=00&vnp_OrderInfo=${bookingCode}&type=cash`;
-                return;
-            }
+            // We removed the manual redirect for cash because PAY_AT_CHECKIN now requires an online deposit via VNPAY
             try {
                 const returnUrl = `${window.location.origin}/payment-result`;
                 const vnpayRes = await fetcher.get("/payments/vnpay/booking/create-url", {
@@ -201,6 +228,10 @@ export default function PaymentPage() {
             }
         },
         onError: (err: any) => {
+            if (err?.response?.status === 500) {
+                message.error("Chủ nhà không thể tự đặt phòng của chính mình, hoặc phòng không đủ sức chứa/đã bị khóa.");
+                return;
+            }
             message.error(err?.response?.data?.message || "Có lỗi xảy ra khi tạo đặt phòng, vui lòng thử lại.");
         }
     });
@@ -250,9 +281,7 @@ export default function PaymentPage() {
     const depositAmount = Math.round(total * (depositPercent / 100));
     const remainingAmount = total - depositAmount;
 
-    const isOnlineMethod =
-        selectedPaymentType === PropertyPaymentType.ONLINE_FULL ||
-        selectedPaymentType === PropertyPaymentType.ONLINE_DEPOSIT;
+    const isOnlineMethod = true; // Both methods require VNPAY now
 
     const categoryName = property.categoryName || "CHỖ Ở";
 
@@ -324,25 +353,21 @@ export default function PaymentPage() {
                                                 <span>{fmt(cleaningFee)} đ</span>
                                             </div>
                                         )}
-                                        <div className="flex justify-between text-xs sm:text-sm text-gray-600">
-                                            <span className="underline cursor-pointer">Phí dịch vụ</span>
-                                            <span>{fmt(serviceFee)} đ</span>
-                                        </div>
                                     </div>
                                     <Divider className="!my-2 sm:!my-3" />
                                     <div className="flex justify-between items-center">
                                         <span className="text-sm sm:text-base font-bold text-gray-900">Tổng cộng (VND)</span>
                                         <span className="text-base sm:text-lg font-bold text-[#2DD4A8]">{fmt(total)} đ</span>
                                     </div>
-
-                                    {selectedPaymentType === PropertyPaymentType.ONLINE_DEPOSIT && (
-                                        <div className="mt-2 sm:mt-3 p-2 sm:p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                                            <div className="flex justify-between text-[11px] sm:text-xs text-amber-700 mb-1">
-                                                <span>Đặt cọc ({depositPercent}%)</span>
+                                    
+                                    {selectedPaymentType === PropertyPaymentType.PAY_AT_CHECKIN && depositAmount > 0 && (
+                                        <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                                            <div className="flex justify-between text-xs text-amber-700 mb-1.5">
+                                                <span>Yêu cầu thanh toán cọc ({depositPercent}%)</span>
                                                 <span className="font-bold">{fmt(depositAmount)} đ</span>
                                             </div>
-                                            <div className="flex justify-between text-[11px] sm:text-xs text-amber-600">
-                                                <span>Trả khi nhận phòng</span>
+                                            <div className="flex justify-between text-xs text-amber-600">
+                                                <span>Còn lại thanh toán tại chỗ ở</span>
                                                 <span>{fmt(remainingAmount)} đ</span>
                                             </div>
                                         </div>
@@ -447,10 +472,10 @@ export default function PaymentPage() {
                                                             <p className="text-[11px] sm:text-xs text-gray-500 m-0">
                                                                 {info.desc}
                                                             </p>
-                                                            {type === PropertyPaymentType.ONLINE_DEPOSIT && isSelected && (
+                                                            {type === PropertyPaymentType.PAY_AT_CHECKIN && isSelected && (
                                                                 <div className="mt-2 p-2 bg-[#E6FAF5] rounded-lg">
                                                                     <p className="text-[11px] sm:text-xs text-[#2DD4A8] font-medium m-0">
-                                                                        Đặt cọc {depositPercent}%: {fmt(depositAmount)}đ — Trả khi nhận phòng: {fmt(remainingAmount)}đ
+                                                                        Đặt cọc online ({depositPercent}%): {fmt(depositAmount)}đ — Trả tại quầy: {fmt(remainingAmount)}đ
                                                                     </p>
                                                                 </div>
                                                             )}
@@ -461,62 +486,6 @@ export default function PaymentPage() {
                                         })}
                                     </div>
                                 </Radio.Group>
-
-                                {/* Card form for online payment */}
-                                {isOnlineMethod && (
-                                    <div className="mt-3 sm:mt-4 border border-gray-200 rounded-xl p-3 sm:p-4 bg-gray-50">
-                                        <div className="flex items-center gap-2 mb-2 sm:mb-3">
-                                            <CreditCardOutlined className="text-gray-500" />
-                                            <span className="text-xs sm:text-sm font-semibold text-gray-700">
-                                                Thẻ tín dụng hoặc thẻ ghi nợ
-                                            </span>
-                                        </div>
-                                        <div className="space-y-2 sm:space-y-3">
-                                            <div>
-                                                <label className="text-[11px] sm:text-xs text-gray-500 font-medium uppercase tracking-wide">
-                                                    Số thẻ
-                                                </label>
-                                                <Input
-                                                    placeholder="0000 0000 0000 0000"
-                                                    size="middle"
-                                                    className="!rounded-lg mt-1 sm:!h-10"
-                                                    value={cardNumber}
-                                                    onChange={(e) => setCardNumber(e.target.value)}
-                                                    maxLength={19}
-                                                />
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-2 sm:gap-3">
-                                                <div>
-                                                    <label className="text-[11px] sm:text-xs text-gray-500 font-medium uppercase tracking-wide">
-                                                        Ngày hết hạn
-                                                    </label>
-                                                    <Input
-                                                        placeholder="MM / YY"
-                                                        size="middle"
-                                                        className="!rounded-lg mt-1 sm:!h-10"
-                                                        value={cardExpiry}
-                                                        onChange={(e) => setCardExpiry(e.target.value)}
-                                                        maxLength={5}
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="text-[11px] sm:text-xs text-gray-500 font-medium uppercase tracking-wide">
-                                                        CVV
-                                                    </label>
-                                                    <Input
-                                                        placeholder="123"
-                                                        size="middle"
-                                                        className="!rounded-lg mt-1 sm:!h-10"
-                                                        value={cardCvv}
-                                                        onChange={(e) => setCardCvv(e.target.value)}
-                                                        maxLength={4}
-                                                        type="password"
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
                             </section>
 
                             {/* ── Thông tin khách hàng ── */}
@@ -643,28 +612,29 @@ export default function PaymentPage() {
 
                             {/* ── Agreement + Submit ── */}
                             <section className="mb-6 sm:mb-8">
+                               <div className="flex gap-2">
                                 <Checkbox
                                     checked={agreed}
                                     onChange={(e) => setAgreed(e.target.checked)}
                                     className="items-start"
                                 >
-                                    <span className="text-[11px] sm:text-xs text-gray-600 leading-relaxed">
-                                        Bằng việc chọn nút bên dưới, tôi đồng ý với{" "}
-                                        <a className="font-semibold text-gray-900 underline hover:text-[#2DD4A8]">
-                                            Nội quy nhà
-                                        </a>
-                                        ,{" "}
-                                        <a className="font-semibold text-gray-900 underline hover:text-[#2DD4A8]">
-                                            Quy chuẩn an toàn trong đại dịch
-                                        </a>{" "}
-                                        và{" "}
-                                        <a className="font-semibold text-gray-900 underline hover:text-[#2DD4A8]">
-                                            Điều khoản dịch vụ
-                                        </a>{" "}
-                                        của HomestayBooking.
-                                    </span>
                                 </Checkbox>
-
+                                <span className="text-[11px] sm:text-xs text-gray-600 leading-relaxed">
+                                    Bằng việc chọn nút bên dưới, tôi đồng ý với{" "}
+                                    <a className="font-semibold text-gray-900 underline hover:text-[#2DD4A8] cursor-pointer">
+                                        Nội quy nhà
+                                    </a>
+                                    ,{" "}
+                                    <a className="font-semibold text-gray-900 underline hover:text-[#2DD4A8] cursor-pointer">
+                                        Quy chuẩn an toàn trong đại dịch
+                                    </a>{" "}
+                                    và{" "}
+                                    <a className="font-semibold text-gray-900 underline hover:text-[#2DD4A8] cursor-pointer">
+                                        Điều khoản dịch vụ
+                                    </a>{" "}
+                                    của HomestayBooking.
+                                </span>
+                               </div>
                                 <Button
                                     type="primary"
                                     size="large"

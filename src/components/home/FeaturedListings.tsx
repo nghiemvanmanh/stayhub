@@ -9,29 +9,25 @@ import { fetcher } from "../../../utils/fetcher";
 import { PropertyListItem } from "@/interfaces/property";
 
 interface FeaturedListingsProps {
-  categoryId: string;
+  categorySlug: string;
 }
 
-const fetchHomestaysByCategory = async (categoryId: string): Promise<PropertyListItem[]> => {
+const fetchHomestaysByCategory = async (categorySlug: string): Promise<PropertyListItem[]> => {
+  if (!categorySlug) return [];
   try {
-    const res = await fetcher.get(`/properties`, {
-      params: {
-        pageNo: 1,
-        pageSize: 8,
-      },
-    });
-    const data = res.data?.data ?? res.data;
-    return data?.items || [];
+    const res = await fetcher.get(`/properties/category/${categorySlug}/top`);
+    return res.data?.data || [];
   } catch (error) {
     console.error("Failed to fetch properties:", error);
     return [];
   }
 };
 
-export default function FeaturedListings({ categoryId }: FeaturedListingsProps) {
+export default function FeaturedListings({ categorySlug }: FeaturedListingsProps) {
   const { data: homestays, isLoading } = useQuery({
-    queryKey: ["homestaysByCategory", categoryId],
-    queryFn: () => fetchHomestaysByCategory(categoryId),
+    queryKey: ["homestaysByCategory", categorySlug],
+    queryFn: () => fetchHomestaysByCategory(categorySlug),
+    enabled: !!categorySlug,
   });
 
   return (
@@ -46,7 +42,7 @@ export default function FeaturedListings({ categoryId }: FeaturedListingsProps) 
             </p>
           </div>
           <Link
-            href="/"
+            href="/search"
             className="text-sm font-medium text-gray-600 hover:text-[#2DD4A8] no-underline flex items-center gap-1 transition-colors"
           >
             Xem tất cả <RightOutlined className="text-xs" />

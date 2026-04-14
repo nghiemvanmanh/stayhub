@@ -172,27 +172,27 @@ export default function PartnerRegistrationPage() {
       const next = currentStep + 1;
       setCurrentStep(next);
       if (next > highestStep) setHighestStep(next);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      setTimeout(() => window.scrollTo(0, 0), 10);
     }
   };
 
   const handlePrev = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      setTimeout(() => window.scrollTo(0, 0), 10);
     }
   };
 
   const handleStepChange = (step: number) => {
     if (step <= highestStep) {
       setCurrentStep(step);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      setTimeout(() => window.scrollTo(0, 0), 10);
     }
   };
 
   const goToStep = (step: number) => {
     setCurrentStep(step);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setTimeout(() => window.scrollTo(0, 0), 10);
   };
 
   // === Submit ===
@@ -283,9 +283,12 @@ export default function PartnerRegistrationPage() {
           longitude: propertyInfo.longitude,
           name: propertyInfo.name,
           description: propertyInfo.description,
+          cancellationPolicyId: propertyPricing.cancellationPolicyId,
+          isPayAtCheckinAllowed: propertyPricing.isPayAtCheckinAllowed,
+          depositPercentage: propertyPricing.depositPercentage,
           weekendSurchargePercentage: propertyPricing.weekendSurchargePercentage,
           cleaningFee: propertyPricing.cleaningFee,
-          roomCount: isEntirePlace ? propertyAmenities.entirePlace.roomCount : finalRooms.length,
+          roomCount: isEntirePlace ? propertyAmenities.entirePlace.roomCount : null,
           imageUrls,
           rooms: finalRooms,
         }

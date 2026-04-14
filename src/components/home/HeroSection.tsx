@@ -1,7 +1,7 @@
 "use client";
 
-import { Button, DatePicker, Input, Select } from "antd";
-import { SearchOutlined, EnvironmentOutlined } from "@ant-design/icons";
+import { Button, DatePicker, Input, Popover, Switch, Divider } from "antd";
+import { SearchOutlined, EnvironmentOutlined, MinusOutlined, PlusOutlined, DownOutlined } from "@ant-design/icons";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -11,10 +11,13 @@ const { RangePicker } = DatePicker;
 
 export default function HeroSection() {
   const router = useRouter();
+  const [adults, setAdults] = useState<number>(2);
+  const [children, setChildren] = useState<number>(0);
+  const [rooms, setRooms] = useState<number>(1);
+  const [pets, setPets] = useState<boolean>(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [location, setLocation] = useState("");
   const [dates, setDates] = useState<[Dayjs, Dayjs] | null>(null);
-  const [guests, setGuests] = useState<string | undefined>(undefined);
-
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (location.trim()) params.set("location", location.trim());
@@ -22,9 +25,69 @@ export default function HeroSection() {
       params.set("checkIn", dates[0].format("YYYY-MM-DD"));
       params.set("checkOut", dates[1].format("YYYY-MM-DD"));
     }
-    if (guests) params.set("guests", guests);
+    const totalGuests = adults + children;
+    params.set("guests", totalGuests.toString());
+    params.set("rooms", rooms.toString());
+    if (pets) params.set("pets", "true");
+    
     router.push(`/search?${params.toString()}`);
   };
+
+  const guestSummary = `${adults + children} khách${rooms > 1 ? `, ${rooms} phòng` : ''}`;
+
+  const guestDropdownContent = (
+    <div className="w-[320px] p-1 space-y-4">
+      <div className="flex justify-between items-center">
+        <span className="font-semibold text-gray-900 text-[15px]">Người lớn</span>
+        <div className="flex items-center gap-3">
+          <Button shape="circle" icon={<MinusOutlined className="text-gray-400" />} onClick={() => setAdults(Math.max(1, adults - 1))} disabled={adults <= 1} />
+          <span className="w-4 text-center font-medium">{adults}</span>
+          <Button shape="circle" icon={<PlusOutlined className="text-gray-400" />} onClick={() => setAdults(adults + 1)} />
+        </div>
+      </div>
+      <div className="flex justify-between items-center">
+        <span className="font-semibold text-gray-900 text-[15px]">Trẻ em</span>
+        <div className="flex items-center gap-3">
+          <Button shape="circle" icon={<MinusOutlined className="text-gray-400" />} onClick={() => setChildren(Math.max(0, children - 1))} disabled={children <= 0} />
+          <span className="w-4 text-center font-medium">{children}</span>
+          <Button shape="circle" icon={<PlusOutlined className="text-gray-400" />} onClick={() => setChildren(children + 1)} />
+        </div>
+      </div>
+      <div className="flex justify-between items-center">
+        <span className="font-semibold text-gray-900 text-[15px]">Phòng</span>
+        <div className="flex items-center gap-3">
+          <Button shape="circle" icon={<MinusOutlined className="text-gray-400" />} onClick={() => setRooms(Math.max(1, rooms - 1))} disabled={rooms <= 1} />
+          <span className="w-4 text-center font-medium">{rooms}</span>
+          <Button shape="circle" icon={<PlusOutlined className="text-gray-400" />} onClick={() => setRooms(rooms + 1)} />
+        </div>
+      </div>
+      
+      <Divider className="!my-2" />
+
+      <div className="flex justify-between items-center">
+        <span className="font-semibold text-gray-900 text-[15px]">Mang thú cưng đi cùng</span>
+        <Switch checked={pets} onChange={(checked) => setPets(checked)} className={pets ? "bg-[#2DD4A8]" : "bg-gray-400"} />
+      </div>
+      <div className="mt-[-8px]">
+        <p className="text-[13px] text-gray-800 m-0 leading-relaxed">
+          Động vật trợ giúp không được xem là vật nuôi.<br/>
+          <a className="text-[#0066FF] hover:text-[#0052cc] underline cursor-pointer">
+            Đọc thêm về chủ đề đi du lịch cùng động vật trợ giúp
+          </a>
+        </p>
+      </div>
+
+      <div className="pt-2">
+        <Button 
+          block 
+          className="font-semibold border-gray-300 rounded-lg text-gray-800 h-[42px] hover:!border-gray-400 hover:!text-gray-900" 
+          onClick={() => setDropdownOpen(false)}
+        >
+          Xong
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
     <section className="relative bg-gradient-to-br from-gray-50 to-white overflow-hidden flex items-center py-12 lg:py-20 min-h-[700px]">
@@ -80,21 +143,21 @@ export default function HeroSection() {
                   />
                 </div>
                 
-                <div className="flex-1 min-w-0">
-                  <Select
-                    placeholder="Thêm khách"
-                    variant="borderless"
-                    className="w-full"
-                    suffixIcon={<span className="text-gray-400">▼</span>}
-                    value={guests}
-                    onChange={(val) => setGuests(val)}
-                    options={[
-                    { value: "1", label: "1 khách" },
-                    { value: "2", label: "2 khách" },
-                    { value: "3", label: "3 khách" },
-                    { value: "4", label: "4+ khách" },
-                    ]}
-                  />
+                <div className="flex-1 min-w-0 flex items-center justify-center">
+                  <Popover
+                    content={guestDropdownContent}
+                    trigger="click"
+                    placement="bottomRight"
+                    open={dropdownOpen}
+                    onOpenChange={setDropdownOpen}
+                    arrow={false}
+                    overlayInnerStyle={{ borderRadius: '16px', padding: '16px', boxShadow: '0 8px 28px rgba(0,0,0,0.1)' }}
+                  >
+                    <div className="w-full h-full min-h-[32px] px-3 flex items-center justify-between cursor-pointer hover:bg-gray-50 rounded-lg transition-colors">
+                      <span className="text-base text-gray-800">{guestSummary}</span>
+                      <DownOutlined className="text-gray-400 text-xs" />
+                    </div>
+                  </Popover>
                 </div>
               </div>
 
