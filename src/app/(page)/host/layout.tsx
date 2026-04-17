@@ -15,7 +15,7 @@ import { message, Menu, Drawer, Button } from "antd";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
-import { fetcher } from "../../../../utils/fetcher";
+import { fetcher } from "@/utils/fetcher";
 
 const menuItems = [
   { key: "dashboard", icon: <DashboardOutlined />, label: "Tổng quan", href: "/host/dashboard" },

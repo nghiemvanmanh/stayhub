@@ -3,7 +3,7 @@ import { Modal, Row, Col, Card, Button, Typography, Tag, Space, Spin, message } 
 import { CheckCircleOutlined, StarOutlined, RocketOutlined, CrownOutlined } from '@ant-design/icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { fetcher } from "../../utils/fetcher";
+import { fetcher } from "@/utils/fetcher";
 
 const { Title, Paragraph } = Typography;
 

@@ -20,7 +20,7 @@ import {
   type EntirePlaceData,
   isEntirePlaceRentalType,
 } from "@/components/common/property-form/propertyData";
-import { fetcher } from "../../../utils/fetcher";
+import { fetcher } from "@/utils/fetcher";
 import RoomModal from "./RoomModal";
 
 interface PropertyAmenitiesStepProps {

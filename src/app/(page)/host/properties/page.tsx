@@ -15,7 +15,7 @@ import CreatePropertyDrawer from "@/components/host/properties/CreatePropertyDra
 import EditPropertyDrawer from "@/components/host/properties/EditPropertyDrawer";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { fetcher } from "../../../../../utils/fetcher";
+import { fetcher } from "@/utils/fetcher";
 import { PROPERTY_STATUS, PROPERTY_STATUS_MAP } from "@/constants/property";
 
 function timeAgo(dateStr: string) {

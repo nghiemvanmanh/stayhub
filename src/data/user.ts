@@ -3,15 +3,15 @@ import {
   Gender,
   SocialProvider,
   UserStatus,
-} from "../interfaces/enums";
+} from "@/interfaces/enums";
 import {
   Profile,
   HostDetail,
   Role,
   UserRole,
   SocialAccount,
-} from "../interfaces/user";
-import { User } from "../interfaces/auth";
+} from "@/interfaces/user";
+import { User } from "@/interfaces/auth";
 
 export const mockUsers: User[] = [
   {

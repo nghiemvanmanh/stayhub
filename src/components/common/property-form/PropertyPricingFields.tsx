@@ -3,7 +3,7 @@ import { type PropertyPricingData } from "./propertyData";
 import { FieldError } from "./FieldError";
 import { type ValidationResult } from "@/constants/validation";
 import { useQuery } from "@tanstack/react-query";
-import { fetcher } from "../../../../utils/fetcher";
+import { fetcher } from "@/utils/fetcher";
 
 interface PropertyPricingFieldsProps {
   data: PropertyPricingData;

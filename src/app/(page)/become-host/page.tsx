@@ -32,7 +32,7 @@ import PropertyAmenitiesStep from "@/components/become-host/PropertyAmenitiesSte
 import PropertyPricingStep from "@/components/become-host/PropertyPricingStep";
 import ReviewStep from "@/components/become-host/ReviewStep";
 import SuccessStep from "@/components/become-host/SuccessStep";
-import { fetcher } from "../../../../utils/fetcher";
+import { fetcher } from "@/utils/fetcher";
 import { validateEmail, validatePhone, validateCCCD, validateBusinessLicense, validatePrice } from "@/constants/validation";
 
 const stepItems = [

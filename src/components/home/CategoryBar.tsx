@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Skeleton, Tabs } from "antd";
 import { Building, House, TreePine, Tent, Palmtree } from "lucide-react";
 import { JSX, useEffect } from "react";
-import { fetcher } from "../../../utils/fetcher";
+import { fetcher } from "@/utils/fetcher";
 
 interface CategoryBarProps {
   onCategoryChange: (categoryId: string) => void;

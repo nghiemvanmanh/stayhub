@@ -1,5 +1,5 @@
-import { BookingStatus } from "../interfaces/enums";
-import { Reserve } from "../interfaces/reserve";
+import { BookingStatus } from "@/interfaces/enums";
+import { Reserve } from "@/interfaces/reserve";
 
 export const mockReserves: Reserve[] = [
   // ── Property 1 ──

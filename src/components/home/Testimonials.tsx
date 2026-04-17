@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { mockReviews, mockProfiles } from "../../data";
+import { mockReviews, mockProfiles } from "@/data";
 import { Rate, Avatar, Skeleton } from "antd";
 import Marquee from "react-fast-marquee";
 

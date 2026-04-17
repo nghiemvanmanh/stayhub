@@ -1,4 +1,4 @@
-import { Review, ReviewImage } from "../interfaces/review";
+import { Review, ReviewImage } from "@/interfaces/review";
 
 export const mockReviews: Review[] = [
   {

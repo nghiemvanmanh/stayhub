@@ -27,7 +27,7 @@ import locale from "antd/locale/vi_VN";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { PropertyPaymentType } from "@/interfaces/enums";
-import { fetcher } from "../../../../../utils/fetcher";
+import { fetcher } from "@/utils/fetcher";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { PropertyDetail } from "@/interfaces/property";
 

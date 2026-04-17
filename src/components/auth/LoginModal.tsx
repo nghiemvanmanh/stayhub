@@ -9,7 +9,7 @@ import {
 } from "@ant-design/icons";
 import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { fetcher } from "../../../utils/fetcher";
+import { fetcher } from "@/utils/fetcher";
 import { PASSWORD_RULES } from "@/constants/validation";
 
 interface LoginModalProps {

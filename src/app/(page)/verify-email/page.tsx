@@ -2,7 +2,7 @@
 
 import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { fetcher } from "../../../../utils/fetcher";
+import { fetcher } from "@/utils/fetcher";
 import { useQuery } from "@tanstack/react-query";
 
 function VerifyEmailContent() {

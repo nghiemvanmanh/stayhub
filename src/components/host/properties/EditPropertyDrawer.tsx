@@ -36,7 +36,7 @@ import {
   isEntirePlaceRentalType,
 } from "@/components/common/property-form/propertyData";
 import RoomModal from "@/components/become-host/RoomModal";
-import { fetcher } from "../../../../utils/fetcher";
+import { fetcher } from "@/utils/fetcher";
 interface EditPropertyDrawerProps {
   open: boolean;
   onClose: () => void;

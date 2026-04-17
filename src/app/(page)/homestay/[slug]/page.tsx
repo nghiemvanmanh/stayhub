@@ -46,7 +46,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PropertyImageGallery from "@/components/homestay/PropertyImageGallery";
 import { PropertyDetail, PropertyDetailRoom } from "@/interfaces/property";
-import { fetcher } from "../../../../../utils/fetcher";
+import { fetcher } from "@/utils/fetcher";
 
 dayjs.extend(isBetween);
 dayjs.locale("vi");
@@ -357,7 +357,7 @@ export default function HomestayDetailPage() {
                                 </Tag>
                                 <div className="flex items-center gap-1 text-gray-500 text-sm">
                                     <EnvironmentOutlined />
-                                    <span className="underline cursor-pointer">{address}</span>
+                                    <Link href={`https://maps.google.com/maps?q=${property.latitude},${property.longitude},&hl=vi&z=15`} target="_blank"><span className="underline cursor-pointer">{address}</span></Link>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3">

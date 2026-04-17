@@ -9,7 +9,7 @@ import {
     EyeTwoTone,
 } from "@ant-design/icons";
 import { useState } from "react";
-import { fetcher } from "../../../utils/fetcher";
+import { fetcher } from "@/utils/fetcher";
 import { PASSWORD_RULES } from "@/constants/validation";
 
 interface RegisterModalProps {

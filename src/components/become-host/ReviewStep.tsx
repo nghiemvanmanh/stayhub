@@ -49,7 +49,7 @@ import {
   isEntirePlaceRentalType,
 } from "@/components/common/property-form/propertyData";
 import { useAuth } from "@/contexts/AuthContext";
-import { fetcher } from "../../../utils/fetcher";
+import { fetcher } from "@/utils/fetcher";
 
 interface ReviewStepProps {
   formData: RegistrationFormData;

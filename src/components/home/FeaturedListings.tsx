@@ -5,7 +5,7 @@ import { Card, Skeleton } from "antd";
 import { HeartOutlined, RightOutlined } from "@ant-design/icons";
 import Image from "next/image";
 import Link from "next/link";
-import { fetcher } from "../../../utils/fetcher";
+import { fetcher } from "@/utils/fetcher";
 import { PropertyListItem } from "@/interfaces/property";
 
 interface FeaturedListingsProps {

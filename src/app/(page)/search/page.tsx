@@ -14,7 +14,7 @@ import Footer from "@/components/Footer";
 import SearchFilters from "@/components/search/SearchFilters";
 import SearchResultCard from "@/components/search/SearchResultCard";
 import { PropertyListItem } from "@/interfaces/property";
-import { fetcher } from "../../../../utils/fetcher";
+import { fetcher } from "@/utils/fetcher";
 
 const ITEMS_PER_PAGE = 6;
 

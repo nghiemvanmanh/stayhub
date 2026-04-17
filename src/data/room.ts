@@ -1,4 +1,4 @@
-import { Room } from "../interfaces/room";
+import { Room } from "@/interfaces/room";
 
 export const mockRooms: Room[] = [
   // ── Property 1: Biệt Thự Đồi Thông Mộng Mơ (Đà Lạt) ──

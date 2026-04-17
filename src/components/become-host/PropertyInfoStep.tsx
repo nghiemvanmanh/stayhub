@@ -14,7 +14,7 @@ import {
   type PropertyInfoData,
   type RentalTypeItem,
 } from "@/components/common/property-form/propertyData";
-import { fetcher } from "../../../utils/fetcher";
+import { fetcher } from "@/utils/fetcher";
 import {
   validatePropertyName,
   validateDescription,

@@ -21,7 +21,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import LoginModal from "@/components/auth/LoginModal";
 import RegisterModal from "@/components/auth/RegisterModal";
 import SubscriptionPlansModal from "@/components/SubscriptionPlansModal";
-import { fetcher } from "../../utils/fetcher";
+import { fetcher } from "@/utils/fetcher";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 
@@ -121,9 +121,10 @@ export default function Header() {
       icon: <UserOutlined />,
     },
     {
-      key: "bookings",
+      key: "my-bookings",
       label: "Đặt phòng của tôi",
       icon: <BookOutlined />,
+      onClick: () => router.push("/my-bookings"),
     },
     { type: "divider" },
     {
