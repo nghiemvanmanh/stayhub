@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Tabs, Button, Spin, Tag, Breadcrumb, Dropdown } from "antd";
+import { Tabs, Button, Spin, Tag, Breadcrumb, Dropdown, Modal, message } from "antd";
 import { 
   Clock, 
   MapPin, 
@@ -11,7 +11,7 @@ import {
   XCircle,
   ChevronRight
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { fetcher } from "@/utils/fetcher";
 import Image from "next/image";
 import Link from "next/link";
@@ -24,6 +24,39 @@ dayjs.locale("vi");
 
 export default function MyBookings() {
   const [activeTab, setActiveTab] = useState("upcoming");
+  const queryClient = useQueryClient();
+
+  const CANCELLABLE_STATUSES = ["PENDING", "AWAITING_PAYMENT", "CONFIRMED", "PARTIALLY_PAID"];
+
+  const handleCancelBooking = (bookingCode: string) => {
+    Modal.confirm({
+      title: "Xác nhận hủy đặt phòng",
+      content: (
+        <div className="space-y-2">
+          <p>Bạn có chắc chắn muốn hủy booking <strong>{bookingCode}</strong>?</p>
+          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-700">
+            ⚠️ Lưu ý: Việc hủy phòng có thể chịu phí theo chính sách hủy của chỗ ở. Khoản hoàn tiền (nếu có) sẽ được xử lý trong 5-7 ngày làm việc.
+          </div>
+        </div>
+      ),
+      okText: "Hủy đặt phòng",
+      cancelText: "Giữ lại",
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        try {
+          await fetcher.put(`/bookings/cancel/${bookingCode}`);
+          message.success("Đã hủy đặt phòng thành công!");
+          queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
+        } catch (err: any) {
+          message.error(
+            err?.response?.data?.message ||
+            err?.response?.data?.data ||
+            "Hủy đặt phòng thất bại. Vui lòng thử lại."
+          );
+        }
+      },
+    });
+  };
 
   const { data : bookings, isLoading } = useQuery({
     queryKey: ["my-bookings", activeTab],
@@ -202,7 +235,7 @@ export default function MyBookings() {
 
                   {/* Actions */}
                   <div className="flex flex-wrap items-center justify-between gap-4 mt-6">
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-3">
                       <Button className="h-10 px-6 rounded-xl border-gray-200 text-gray-700 font-bold text-sm bg-white hover:bg-gray-50">
                         Xem chi tiết
                       </Button>
@@ -212,6 +245,16 @@ export default function MyBookings() {
                       >
                         Liên hệ chủ nhà
                       </Button>
+                      {CANCELLABLE_STATUSES.includes(booking.status) && (
+                        <Button
+                          danger
+                          icon={<XCircle className="w-4 h-4" />}
+                          onClick={() => handleCancelBooking(booking.bookingCode)}
+                          className="h-10 px-4 rounded-xl font-bold text-sm flex items-center gap-2"
+                        >
+                          Hủy đặt phòng
+                        </Button>
+                      )}
                     </div>
                     <div className="flex items-center gap-3">
                       <Button className="w-10 h-10 flex items-center justify-center rounded-xl border-gray-200 p-0 text-gray-400 hover:text-gray-600">

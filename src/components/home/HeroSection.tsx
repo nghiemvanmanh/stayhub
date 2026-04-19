@@ -132,6 +132,7 @@ export default function HeroSection() {
                     variant="borderless"
                     className="w-full"
                     suffixIcon={null}
+                    disabledDate={(current) => current && current < dayjs().startOf("day")}
                     value={dates}
                     onChange={(vals) => {
                       if (vals?.[0] && vals?.[1]) {

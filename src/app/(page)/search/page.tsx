@@ -16,7 +16,7 @@ import SearchResultCard from "@/components/search/SearchResultCard";
 import { PropertyListItem } from "@/interfaces/property";
 import { fetcher } from "@/utils/fetcher";
 
-const ITEMS_PER_PAGE = 6;
+const ITEMS_PER_PAGE = 10;
 
 // Category tabs for search page – matching mockup
 const searchCategories = [
@@ -64,12 +64,43 @@ function SearchPageContent() {
 
   // Fetch properties from API
   const { data: apiResponse, isLoading } = useQuery({
-    queryKey: ["search-properties", currentPage],
+    queryKey: [
+      "search-properties",
+      currentPage,
+      location,
+      urlGuests,
+      dates?.[0]?.format("YYYY-MM-DD"),
+      dates?.[1]?.format("YYYY-MM-DD"),
+      activeCategory,
+      sortBy
+    ],
     queryFn: async () => {
+      let apiSortBy = "createdAt";
+      let apiSortDir = "desc";
+      if (sortBy === "price-asc") {
+        apiSortBy = "pricePerNight";
+        apiSortDir = "asc";
+      } else if (sortBy === "price-desc") {
+        apiSortBy = "pricePerNight";
+        apiSortDir = "desc";
+      } else if (sortBy === "rating") {
+        apiSortBy = "ratingAvg";
+        apiSortDir = "desc";
+      }
+
       const res = await fetcher.get(`/properties`, {
         params: {
-          pageNo: currentPage,
-          pageSize: 50, // Fetch more for client-side filtering
+          page: currentPage,
+          size: ITEMS_PER_PAGE,
+          sortBy: apiSortBy,
+          sortDir: apiSortDir,
+          ...(location.trim() && { destination: location.trim() }),
+          ...(urlGuests && { guestCount: parseInt(urlGuests) }),
+          ...(dates && {
+            checkInDate: dates[0].format("YYYY-MM-DD"),
+            checkOutDate: dates[1].format("YYYY-MM-DD"),
+          }),
+          ...(activeCategory !== "all" && { categorySlug: activeCategory }),
         },
       });
       const data = res.data?.data ?? res.data;
@@ -79,20 +110,9 @@ function SearchPageContent() {
 
   const allProperties: PropertyListItem[] = apiResponse?.items || [];
 
-  // Client-side filtering 
+  // Client-side filtering (only for filters not handled by API yet)
   const filteredProperties = useMemo(() => {
     let results = [...allProperties];
-
-    // Location filter (search in name, province, district)
-    if (location.trim()) {
-      const q = location.trim().toLowerCase();
-      results = results.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          (p.province && p.province.toLowerCase().includes(q)) ||
-          (p.district && p.district.toLowerCase().includes(q))
-      );
-    }
 
     // Price range filter
     results = results.filter(
@@ -100,32 +120,12 @@ function SearchPageContent() {
         p.pricePerNight >= priceRange[0] && p.pricePerNight <= priceRange[1]
     );
 
-    // Guests filter from URL
-    if (urlGuests) {
-      const guestCount = parseInt(urlGuests);
-      if (!isNaN(guestCount)) {
-        results = results.filter((p) => p.maxGuests >= guestCount);
-      }
-    }
-
-    // Sort
-    if (sortBy === "price-asc") {
-      results.sort((a, b) => a.pricePerNight - b.pricePerNight);
-    } else if (sortBy === "price-desc") {
-      results.sort((a, b) => b.pricePerNight - a.pricePerNight);
-    } else if (sortBy === "rating") {
-      results.sort((a, b) => (b.ratingAvg || 0) - (a.ratingAvg || 0));
-    }
-
     return results;
-  }, [allProperties, location, priceRange, rentalType, selectedAmenities, sortBy, urlGuests, dates]);
+  }, [allProperties, priceRange, rentalType, selectedAmenities]);
 
   // Pagination
-  const totalResults = filteredProperties.length;
-  const paginatedResults = filteredProperties.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  const totalResults = apiResponse?.totalElements ?? apiResponse?.totalItems ?? apiResponse?.total ?? filteredProperties.length;
+  const paginatedResults = filteredProperties; // Data is already paginated by the API
 
   // Reset page when filters change
   const handleFilterChange = <T,>(setter: (val: T) => void) => {
@@ -229,7 +229,6 @@ function SearchPageContent() {
         placement="bottom"
         open={mobileFilterOpen}
         onClose={() => setMobileFilterOpen(false)}
-        height="85vh"
         className="lg:hidden"
         styles={{
           body: { paddingBottom: 80 },

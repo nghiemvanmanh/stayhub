@@ -82,7 +82,7 @@ const getHomestayDetail = async (slug: string): Promise<PropertyDetail | null> =
 const getSimilarHomestays = async (province: string, currentSlug: string) => {
     try {
         const res = await fetcher.get(`/properties`, {
-            params: { pageNo: 1, pageSize: 4 },
+            params: { page: 1, size: 5, destination: province },
         });
         const data = res.data?.data ?? res.data;
         const items = data?.items || [];
@@ -92,8 +92,8 @@ const getSimilarHomestays = async (province: string, currentSlug: string) => {
             .map((p: any) => ({
                 slug: p.slug,
                 title: p.name,
-                image: p.thumbnailUrl || "https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=800&q=80",
-                distance: p.district,
+                image: p.thumbnailUrl || "",
+                distance: p.district || "",
                 price: new Intl.NumberFormat("vi-VN", {
                     style: "currency",
                     currency: "VND",
@@ -153,13 +153,7 @@ export default function HomestayDetailPage() {
     // Images for gallery
     const images = useMemo(() => {
         if (property?.imageUrls && property.imageUrls.length > 0) return property.imageUrls;
-        return [
-            "https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=800&q=80",
-            "https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=800&q=80",
-            "https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=800&q=80",
-            "https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=800&q=80",
-            "https://images.unsplash.com/photo-1510798831971-661eb04b3739?w=800&q=80",
-        ];
+        return [];
     }, [property?.imageUrls]);
 
     // Computed stats
@@ -186,14 +180,18 @@ export default function HomestayDetailPage() {
     }, [rooms, dates]);
 
     // Auto-deselect rooms that become unavailable when dates change
-    useMemo(() => {
+    useEffect(() => {
         if (!dates) return;
         setSelectedRoomIds((prev) => {
             const next = new Set(prev);
+            let hasChanges = false;
             prev.forEach((rid) => {
-                if (!roomAvailability.get(rid)) next.delete(rid);
+                if (!roomAvailability.get(rid)) {
+                    next.delete(rid);
+                    hasChanges = true;
+                }
             });
-            return next;
+            return hasChanges ? next : prev;
         });
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [roomAvailability]);
@@ -1185,7 +1183,6 @@ export default function HomestayDetailPage() {
                     placement="bottom"
                     open={mobileBookingRoomId !== null}
                     onClose={() => setMobileBookingRoomId(null)}
-                    height="auto"
                     className="lg:hidden"
                     styles={{
                         body: { paddingBottom: 24, paddingTop: 16 },

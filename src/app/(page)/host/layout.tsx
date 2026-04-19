@@ -7,6 +7,7 @@ import {
   HomeOutlined,
   DashboardOutlined,
   CalendarOutlined,
+  WalletOutlined,
   SettingOutlined,
   LogoutOutlined,
   MenuOutlined,
@@ -21,6 +22,7 @@ const menuItems = [
   { key: "dashboard", icon: <DashboardOutlined />, label: "Tổng quan", href: "/host/dashboard" },
   { key: "properties", icon: <HomeOutlined />, label: "Cơ sở lưu trú", href: "/host/properties" },
   { key: "bookings", icon: <CalendarOutlined />, label: "Đặt phòng", href: "/host/bookings" },
+  { key: "payout", icon: <WalletOutlined />, label: "Thanh toán", href: "/host/payout" },
   { key: "settings", icon: <SettingOutlined />, label: "Cài đặt", href: "/host/settings" },
 ];
 

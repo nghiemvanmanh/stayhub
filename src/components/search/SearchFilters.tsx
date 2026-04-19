@@ -2,7 +2,7 @@
 
 import { DatePicker, Input, Slider, Radio, Checkbox, Button } from "antd";
 import { EnvironmentOutlined } from "@ant-design/icons";
-import { Dayjs } from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 
 
 const { RangePicker } = DatePicker;
@@ -63,6 +63,7 @@ export default function SearchFilters({
           className="w-full !rounded-lg"
           size="middle"
           format="DD/MM/YYYY"
+          disabledDate={(current) => current && current < dayjs().startOf("day")}
           value={dates}
           onChange={(vals) => {
             if (vals?.[0] && vals?.[1]) {

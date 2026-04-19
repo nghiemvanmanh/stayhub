@@ -119,6 +119,7 @@ export default function Header() {
       key: "profile",
       label: "Trang cá nhân",
       icon: <UserOutlined />,
+      onClick: () => router.push("/profile"),
     },
     {
       key: "my-bookings",
