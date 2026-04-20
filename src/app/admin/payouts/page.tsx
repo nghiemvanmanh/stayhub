@@ -166,9 +166,19 @@ export default function AdminPayoutsPage() {
       render: (_: unknown, record: AdminPayoutItem) => (
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <Avatar src={record.hostAvatarUrl} icon={<UserOutlined />} size={38} />
-          <div>
-            <div style={{ fontWeight: 600, fontSize: 14, color: "#1a1a2e" }}>{record.hostName || "--"}</div>
-            <div style={{ fontSize: 12, color: "#94a3b8" }}>{record.hostEmail || "--"}</div>
+          <div style={{ minWidth: 0 }}>
+            <Tooltip title={record.hostName || "--"}>
+              <div style={{ fontWeight: 600, fontSize: 14, color: "#1a1a2e",
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {record.hostName || "--"}
+              </div>
+            </Tooltip>
+            <Tooltip title={record.hostEmail || "--"}>
+              <div style={{ fontSize: 12, color: "#94a3b8",
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {record.hostEmail || "--"}
+              </div>
+            </Tooltip>
           </div>
         </div>
       ),

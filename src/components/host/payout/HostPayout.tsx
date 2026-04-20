@@ -28,6 +28,7 @@ import {
   SendOutlined,
   StarFilled,
   ExclamationCircleOutlined,
+  ReloadOutlined,
 } from "@ant-design/icons";
 import {
   Wallet,
@@ -129,7 +130,7 @@ export default function HostPayout() {
   const [payoutBankId, setPayoutBankId] = useState<number | null>(null);
 
   // ── Fetch wallet ───────────────────────────────────────────────────
-  const { data: wallet, isLoading: loadingWallet } = useQuery({
+  const { data: wallet, isLoading: loadingWallet, refetch: refetchWallet } = useQuery({
     queryKey: ["host-wallet"],
     queryFn: async () => {
       const res = await fetcher.get("/payments/host/wallet");
@@ -138,7 +139,7 @@ export default function HostPayout() {
   });
 
   // ── Fetch bank accounts ────────────────────────────────────────────
-  const { data: bankAccounts = [], isLoading: loadingBanks } = useQuery({
+  const { data: bankAccounts = [], isLoading: loadingBanks, refetch: refetchBanks } = useQuery({
     queryKey: ["host-banks"],
     queryFn: async () => {
       const res = await fetcher.get("/payments/host/banks");
@@ -159,7 +160,7 @@ export default function HostPayout() {
   // ── Fetch transactions ─────────────────────────────────────────────
   const balanceParam = BALANCE_TABS.find((t) => t.key === activeTab)?.param || null;
 
-  const { data: txnResponse, isLoading: loadingTxns } = useQuery({
+  const { data: txnResponse, isLoading: loadingTxns, refetch: refetchTxns } = useQuery({
     queryKey: ["host-transactions", currentPage, balanceParam],
     queryFn: async () => {
       const params: Record<string, any> = {
@@ -330,9 +331,11 @@ export default function HostPayout() {
       dataIndex: "description",
       key: "description",
       render: (description: string) => (
-        <span className="text-sm text-gray-600 truncate block max-w-[200px]">
-          {description || "—"}
-        </span>
+        <Tooltip title={description || "—"}>
+          <span className="text-sm text-gray-600 truncate block max-w-[200px]">
+            {description || "—"}
+          </span>
+        </Tooltip>
       ),
     },
     {
@@ -594,15 +597,28 @@ export default function HostPayout() {
               <h2 className="text-lg font-bold text-gray-900 m-0">Lịch sử giao dịch</h2>
               <p className="text-xs text-gray-400 mt-0.5 m-0">Chi tiết các khoản thanh toán đã chuyển cho bạn</p>
             </div>
-            <Input
-              placeholder="Tìm mã giao dịch, booking..."
-              prefix={<SearchOutlined className="text-gray-400" />}
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              className="!rounded-lg sm:!w-[240px]"
-              size="middle"
-              allowClear
-            />
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Input
+                placeholder="Tìm mã giao dịch, booking..."
+                prefix={<SearchOutlined className="text-gray-400" />}
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                className="!rounded-lg sm:!w-[240px]"
+                size="middle"
+                allowClear
+              />
+              <button 
+                onClick={() => {
+                  refetchWallet();
+                  refetchBanks();
+                  refetchTxns();
+                }}
+                className="w-9 h-9 rounded-lg border border-gray-200 bg-white flex items-center justify-center text-gray-500 hover:border-gray-300 hover:text-[#2DD4A8] transition-colors cursor-pointer flex-shrink-0"
+                title="Làm mới"
+              >
+                <ReloadOutlined className="text-sm" />
+              </button>
+            </div>
           </div>
           <div className="flex items-center gap-1 overflow-x-auto scrollbar-none">
             {BALANCE_TABS.map((tab) => (

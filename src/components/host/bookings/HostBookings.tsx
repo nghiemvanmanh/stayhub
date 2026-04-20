@@ -29,6 +29,7 @@ import {
   StopOutlined,
   CheckOutlined,
   QuestionCircleOutlined,
+  ReloadOutlined,
 } from "@ant-design/icons";
 import {
   TrendingUp,
@@ -105,7 +106,7 @@ export default function HostBookings() {
   const [disputeBookingCode, setDisputeBookingCode] = useState<string | null>(null);
 
   // ── Fetch bookings ─────────────────────────────────────────────────
-  const { data: apiResponse, isLoading } = useQuery({
+  const { data: apiResponse, isLoading, refetch } = useQuery({
     queryKey: ["host-bookings", currentPage],
     queryFn: async () => {
       const res = await fetcher.get<HostBookingsResponse>("/bookings/host", {
@@ -325,7 +326,7 @@ export default function HostBookings() {
     }
 
     // Cancel: for PENDING, CONFIRMED, AWAITING_PAYMENT
-    if (["PENDING", "CONFIRMED", "AWAITING_PAYMENT"].includes(status)) {
+    if (["PENDING", "CONFIRMED", "AWAITING_PAYMENT", "PARTIALLY_PAID"].includes(status)) {
       actionButtons.push(
         <Tooltip title="Hủy" key="cancel">
           <button
@@ -384,9 +385,11 @@ export default function HostBookings() {
           <Avatar size={32} className="bg-gray-200 flex-shrink-0">
             {record.guestName?.charAt(0)?.toUpperCase()}
           </Avatar>
-          <span className="text-sm font-medium text-gray-900 truncate max-w-[140px]">
-            {record.guestName}
-          </span>
+          <Tooltip title={record.guestName}>
+            <span className="text-sm font-medium text-gray-900 truncate max-w-[140px]">
+              {record.guestName}
+            </span>
+          </Tooltip>
         </div>
       ),
     },
@@ -395,7 +398,9 @@ export default function HostBookings() {
       dataIndex: "propertyName",
       key: "propertyName",
       render: (text: string) => (
-        <span className="text-sm text-gray-700 truncate block max-w-[200px]">{text}</span>
+        <Tooltip title={text}>
+          <span className="text-sm text-gray-700 truncate block max-w-[200px]">{text}</span>
+        </Tooltip>
       ),
     },
     {
@@ -565,6 +570,13 @@ export default function HostBookings() {
               size="middle"
               allowClear
             />
+            <button 
+              onClick={() => refetch()}
+              className="w-9 h-9 rounded-lg border border-gray-200 bg-white flex items-center justify-center text-gray-500 hover:border-gray-300 hover:text-[#2DD4A8] transition-colors cursor-pointer flex-shrink-0"
+              title="Làm mới"
+            >
+              <ReloadOutlined className="text-sm" />
+            </button>
             <button className="w-9 h-9 rounded-lg border border-gray-200 bg-white flex items-center justify-center text-gray-500 hover:border-gray-300 transition-colors cursor-pointer flex-shrink-0">
               <FilterOutlined className="text-sm" />
             </button>

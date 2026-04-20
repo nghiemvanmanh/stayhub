@@ -169,13 +169,19 @@ export default function AdminHostApplicationsPage() {
       render: (_: unknown, record: HostApplicationItem) => (
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <Avatar src={record.hostAvatarUrl} icon={<UserOutlined />} size={40} />
-          <div>
-            <div style={{ fontWeight: 600, fontSize: 14, color: "#1a1a2e" }}>
-              {record.fullName}
-            </div>
-            <div style={{ fontSize: 12, color: "#94a3b8" }}>
-              {record.email}
-            </div>
+          <div style={{ minWidth: 0 }}>
+            <Tooltip title={record.fullName}>
+              <div style={{ fontWeight: 600, fontSize: 14, color: "#1a1a2e",
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {record.fullName}
+              </div>
+            </Tooltip>
+            <Tooltip title={record.email}>
+              <div style={{ fontSize: 12, color: "#94a3b8",
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {record.email}
+              </div>
+            </Tooltip>
           </div>
         </div>
       ),

@@ -161,13 +161,19 @@ export default function AdminPropertiesPage() {
             )}
           </div>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontWeight: 600, fontSize: 14, color: "#1a1a2e", lineHeight: 1.3 }}>
-              {record.name}
-            </div>
-            <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 3 }}>
-              <EnvironmentOutlined style={{ marginRight: 4, fontSize: 11 }} />
-              {[record.district, record.province].filter(Boolean).join(", ") || "--"}
-            </div>
+            <Tooltip title={record.name}>
+              <div style={{ fontWeight: 600, fontSize: 14, color: "#1a1a2e", lineHeight: 1.3, 
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {record.name}
+              </div>
+            </Tooltip>
+            <Tooltip title={[record.district, record.province].filter(Boolean).join(", ") || "--"}>
+              <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 3, 
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                <EnvironmentOutlined style={{ marginRight: 4, fontSize: 11 }} />
+                {[record.district, record.province].filter(Boolean).join(", ") || "--"}
+              </div>
+            </Tooltip>
             {record.categoryName && (
               <div style={{ fontSize: 11, color: "#cbd5e1", marginTop: 2 }}>{record.categoryName}</div>
             )}
@@ -183,14 +189,18 @@ export default function AdminPropertiesPage() {
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Avatar src={record.hostAvatarUrl} icon={<UserOutlined />} size={34} />
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontWeight: 500, fontSize: 13, color: "#1a1a2e",
-              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {record.hostName || "--"}
-            </div>
-            <div style={{ fontSize: 11, color: "#94a3b8",
-              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {record.hostEmail || "--"}
-            </div>
+            <Tooltip title={record.hostName || "--"}>
+              <div style={{ fontWeight: 500, fontSize: 13, color: "#1a1a2e",
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {record.hostName || "--"}
+              </div>
+            </Tooltip>
+            <Tooltip title={record.hostEmail || "--"}>
+              <div style={{ fontSize: 11, color: "#94a3b8",
+                overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {record.hostEmail || "--"}
+              </div>
+            </Tooltip>
           </div>
         </div>
       ),
