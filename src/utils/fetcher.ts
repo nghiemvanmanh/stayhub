@@ -64,7 +64,7 @@ const refreshTokenHandler = async (): Promise<string> => {
     processQueue(error, null);
     Cookies.remove(ACCESS_TOKEN_KEY);
     Cookies.remove(REFRESH_TOKEN_KEY);
-    window.location.href = "/login";
+    window.location.href = "/";
     throw error;
   } finally {
     isRefreshing = false;
