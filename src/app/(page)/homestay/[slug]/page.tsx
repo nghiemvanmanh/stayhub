@@ -301,7 +301,7 @@ export default function HomestayDetailPage() {
         setMobileBookingRoomId(roomId);
     };
 
-    const disabledDate = (current: Dayjs) =>
+    const disabledDate = (current: any) =>
         current && current < dayjs().startOf("day");
 
     if (loadingDetail) {
@@ -646,7 +646,7 @@ export default function HomestayDetailPage() {
                                         value={dates}
                                         onChange={(vals) => {
                                             if (vals?.[0] && vals?.[1]) {
-                                                setDates([vals[0], vals[1]]);
+                                                setDates([vals[0] as any, vals[1] as any]);
                                             } else {
                                                 setDates(null);
                                             }
@@ -830,7 +830,7 @@ export default function HomestayDetailPage() {
                                             value={dates}
                                             onChange={(vals) => {
                                                 if (vals?.[0] && vals?.[1]) {
-                                                    setDates([vals[0], vals[1]]);
+                                                    setDates([vals[0] as any, vals[1] as any]);
                                                 } else {
                                                     setDates(null);
                                                 }
@@ -1015,7 +1015,7 @@ export default function HomestayDetailPage() {
                                         value={dates}
                                         onChange={(vals) => {
                                             if (vals?.[0] && vals?.[1]) {
-                                                setDates([vals[0], vals[1]]);
+                                                setDates([vals[0] as any, vals[1] as any]);
                                             } else {
                                                 setDates(null);
                                             }

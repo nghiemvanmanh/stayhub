@@ -136,7 +136,7 @@ export default function HeroSection() {
                     value={dates}
                     onChange={(vals) => {
                       if (vals?.[0] && vals?.[1]) {
-                        setDates([vals[0], vals[1]]);
+                        setDates([vals[0] as any, vals[1] as any]);
                       } else {
                         setDates(null);
                       }

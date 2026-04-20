@@ -67,7 +67,7 @@ export default function SearchFilters({
           value={dates}
           onChange={(vals) => {
             if (vals?.[0] && vals?.[1]) {
-              onDatesChange([vals[0], vals[1]]);
+              onDatesChange([vals[0] as any, vals[1] as any]);
             } else {
               onDatesChange(null);
             }
