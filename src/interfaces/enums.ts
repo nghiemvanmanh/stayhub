@@ -42,6 +42,7 @@ export enum PropertyStatus {
   PUBLISHED = "PUBLISHED",
   HIDDEN = "HIDDEN",
   BANNED = "BANNED",
+  REJECTED = "REJECTED",
 }
 
 export enum RentalType {

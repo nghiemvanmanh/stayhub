@@ -44,6 +44,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetcher } from "@/utils/fetcher";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
+import { formatCurrency } from "@/utils/format";
+import { BOOKING_STATUS_MAP, BOOKING_FILTER_TABS } from "@/constants/booking";
 import DisputeModal from "@/components/shared/DisputeModal";
 
 dayjs.locale("vi");
@@ -73,96 +75,12 @@ interface HostBookingsResponse {
   };
 }
 
-// ── Status Configs ───────────────────────────────────────────────────
-const STATUS_MAP: Record<
-  string,
-  { label: string; color: string; bgColor: string; textColor: string }
-> = {
-  PENDING: {
-    label: "Chờ xác nhận",
-    color: "orange",
-    bgColor: "bg-orange-50",
-    textColor: "text-orange-600",
-  },
-  AWAITING_PAYMENT: {
-    label: "Chờ thanh toán",
-    color: "gold",
-    bgColor: "bg-yellow-50",
-    textColor: "text-yellow-600",
-  },
-  PARTIALLY_PAID: {
-    label: "Thanh toán 1 phần",
-    color: "lime",
-    bgColor: "bg-lime-50",
-    textColor: "text-lime-700",
-  },
-  CONFIRMED: {
-    label: "Đã xác nhận",
-    color: "blue",
-    bgColor: "bg-blue-50",
-    textColor: "text-blue-600",
-  },
-  CHECKED_IN: {
-    label: "Đã nhận phòng",
-    color: "cyan",
-    bgColor: "bg-cyan-50",
-    textColor: "text-cyan-700",
-  },
-  CHECKED_OUT: {
-    label: "Đã trả phòng",
-    color: "geekblue",
-    bgColor: "bg-indigo-50",
-    textColor: "text-indigo-600",
-  },
-  COMPLETED: {
-    label: "Hoàn tất",
-    color: "green",
-    bgColor: "bg-green-50",
-    textColor: "text-green-600",
-  },
-  CANCELLED: {
-    label: "Đã hủy",
-    color: "red",
-    bgColor: "bg-red-50",
-    textColor: "text-red-500",
-  },
-  REJECTED: {
-    label: "Từ chối",
-    color: "red",
-    bgColor: "bg-red-50",
-    textColor: "text-red-500",
-  },
-  EXPIRED: {
-    label: "Hết hạn",
-    color: "default",
-    bgColor: "bg-gray-50",
-    textColor: "text-gray-500",
-  },
-  DISPUTED: {
-    label: "Khiếu nại",
-    color: "volcano",
-    bgColor: "bg-orange-50",
-    textColor: "text-orange-700",
-  },
-};
-
-const FILTER_TABS = [
-  { key: "all", label: "Tất cả" },
-  { key: "PENDING", label: "Chờ xác nhận" },
-  { key: "CONFIRMED", label: "Đã xác nhận" },
-  { key: "CHECKED_IN", label: "Đã nhận phòng" },
-  { key: "COMPLETED", label: "Hoàn tất" },
-  { key: "CANCELLED", label: "Đã hủy" },
-];
-
 const PAGE_SIZE = 10;
 
 // ── Helpers ──────────────────────────────────────────────────────────
-const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat("vi-VN").format(amount) + "đ";
 
 const getStatusTag = (status: string) => {
-  const config = STATUS_MAP[status] || {
+  const config = BOOKING_STATUS_MAP[status] || {
     label: status,
     color: "default",
     bgColor: "bg-gray-50",
@@ -360,12 +278,12 @@ export default function HostBookings() {
 
   // ── Render action buttons for each row ─────────────────────────────
   const renderActions = (booking: HostBookingItem) => {
-    const status = booking.status;
+    const status = (booking.status || "").toUpperCase();
 
     const actionButtons: React.ReactNode[] = [];
 
     // Check-in: only for CONFIRMED
-    if (status === "CONFIRMED") {
+    if (status === "CONFIRMED" || status === "PARTIALLY_PAID") {
       actionButtons.push(
         <Tooltip title="Check-in" key="checkin">
           <button
@@ -437,20 +355,101 @@ export default function HostBookings() {
     // Message: always
     actionButtons.push(
       <Tooltip title="Hỗ trợ" key="support">
-        <button
-          className="w-8 h-8 rounded-lg bg-gray-50 text-gray-500 hover:bg-gray-100 flex items-center justify-center border-none cursor-pointer transition-colors"
-        >
+        <button className="w-8 h-8 rounded-lg bg-gray-50 text-gray-500 hover:bg-gray-100 flex items-center justify-center border-none cursor-pointer transition-colors">
           <MessageOutlined className="text-sm" />
         </button>
       </Tooltip>
     );
 
     return (
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-1.5 justify-center">
         {actionButtons}
       </div>
     );
   };
+
+  // ── Ant Design Table Columns ─────────────────────────────────────────
+  const columns = [
+    {
+      title: "Mã Booking",
+      dataIndex: "bookingCode",
+      key: "bookingCode",
+      render: (text: string) => <span className="text-[#2DD4A8] font-bold text-sm">{text}</span>,
+    },
+    {
+      title: "Khách hàng",
+      key: "guest",
+      render: (_: any, record: HostBookingItem) => (
+        <div className="flex items-center gap-2.5">
+          <Avatar size={32} className="bg-gray-200 flex-shrink-0">
+            {record.guestName?.charAt(0)?.toUpperCase()}
+          </Avatar>
+          <span className="text-sm font-medium text-gray-900 truncate max-w-[140px]">
+            {record.guestName}
+          </span>
+        </div>
+      ),
+    },
+    {
+      title: "Chỗ ở / Homestay",
+      dataIndex: "propertyName",
+      key: "propertyName",
+      render: (text: string) => (
+        <span className="text-sm text-gray-700 truncate block max-w-[200px]">{text}</span>
+      ),
+    },
+    {
+      title: "Ngày lưu trú",
+      key: "dates",
+      render: (_: any, record: HostBookingItem) => (
+        <div>
+          <div className="text-sm text-gray-900 font-medium">
+            {dayjs(record.checkInDate).format("DD/MM/YYYY")}
+          </div>
+          <div className="text-xs text-gray-400">
+            đến {dayjs(record.checkOutDate).format("DD/MM/YYYY")}
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "Khách",
+      dataIndex: "totalGuests",
+      key: "totalGuests",
+      align: "center" as const,
+      render: (text: number) => <span className="text-sm font-medium text-gray-900">{text}</span>,
+    },
+    {
+      title: "Thanh toán",
+      key: "payment",
+      align: "right" as const,
+      render: (_: any, record: HostBookingItem) => (
+        <div>
+          <div className="text-sm font-bold text-gray-900">
+            {formatCurrency(record.finalAmount)}
+          </div>
+          {!record.isFullyPaid && (
+            <div className="text-[10px] text-orange-500 font-medium">
+              Đã trả: {formatCurrency(record.amountPaid)}
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      title: "Trạng thái",
+      dataIndex: "status",
+      key: "status",
+      align: "center" as const,
+      render: (status: string) => getStatusTag(status),
+    },
+    {
+      title: "Hành động",
+      key: "actions",
+      align: "center" as const,
+      render: (_: any, record: HostBookingItem) => renderActions(record),
+    },
+  ];
 
   return (
     <div>
@@ -537,7 +536,7 @@ export default function HostBookings() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 sm:px-6 pt-4 sm:pt-5 pb-3 border-b border-gray-100">
           {/* Status tabs */}
           <div className="flex items-center gap-1 overflow-x-auto scrollbar-none w-full sm:w-auto">
-            {FILTER_TABS.map((tab) => (
+            {BOOKING_FILTER_TABS.map((tab) => (
               <button
                 key={tab.key}
                 onClick={() => {
@@ -593,114 +592,15 @@ export default function HostBookings() {
           </div>
         ) : (
           <>
-            {/* Desktop Table */}
-            <div className="hidden lg:block overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-100">
-                    <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">
-                      Mã Booking
-                    </th>
-                    <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">
-                      Khách hàng
-                    </th>
-                    <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">
-                      Chỗ ở / Homestay
-                    </th>
-                    <th className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">
-                      Ngày lưu trú
-                    </th>
-                    <th className="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">
-                      Khách
-                    </th>
-                    <th className="text-right text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">
-                      Thanh toán
-                    </th>
-                    <th className="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">
-                      Trạng thái
-                    </th>
-                    <th className="text-center text-xs font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">
-                      Hành động
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredBookings.map((booking) => (
-                    <tr
-                      key={booking.bookingCode}
-                      className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors"
-                    >
-                      {/* Booking code */}
-                      <td className="px-6 py-4">
-                        <span className="text-[#2DD4A8] font-bold text-sm">
-                          {booking.bookingCode}
-                        </span>
-                      </td>
-
-                      {/* Guest name */}
-                      <td className="px-4 py-4">
-                        <div className="flex items-center gap-2.5">
-                          <Avatar
-                            size={32}
-                            className="bg-gray-200 flex-shrink-0"
-                          >
-                            {booking.guestName?.charAt(0)?.toUpperCase()}
-                          </Avatar>
-                          <span className="text-sm font-medium text-gray-900 truncate max-w-[140px]">
-                            {booking.guestName}
-                          </span>
-                        </div>
-                      </td>
-
-                      {/* Property name */}
-                      <td className="px-4 py-4">
-                        <span className="text-sm text-gray-700 truncate block max-w-[200px]">
-                          {booking.propertyName}
-                        </span>
-                      </td>
-
-                      {/* Dates */}
-                      <td className="px-4 py-4">
-                        <div className="text-sm text-gray-900 font-medium">
-                          {dayjs(booking.checkInDate).format("DD/MM/YYYY")}
-                        </div>
-                        <div className="text-xs text-gray-400">
-                          đến {dayjs(booking.checkOutDate).format("DD/MM/YYYY")}
-                        </div>
-                      </td>
-
-                      {/* Guests count */}
-                      <td className="px-4 py-4 text-center">
-                        <span className="text-sm font-medium text-gray-900">
-                          {booking.totalGuests}
-                        </span>
-                      </td>
-
-                      {/* Amount */}
-                      <td className="px-4 py-4 text-right">
-                        <div className="text-sm font-bold text-gray-900">
-                          {formatCurrency(booking.finalAmount)}
-                        </div>
-                        {!booking.isFullyPaid && (
-                          <div className="text-[10px] text-orange-500 font-medium">
-                            Đã trả: {formatCurrency(booking.amountPaid)}
-                          </div>
-                        )}
-                      </td>
-
-                      {/* Status */}
-                      <td className="px-4 py-4 text-center">
-                        {getStatusTag(booking.status)}
-                      </td>
-
-                      {/* Actions */}
-                      <td className="px-6 py-4">
-                        {renderActions(booking)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            {/* Desktop Table (Ant Design) */}
+            <div className="hidden lg:block">
+              <Table
+                columns={columns}
+                dataSource={filteredBookings}
+                rowKey="bookingCode"
+                pagination={false}
+                className="[&_.ant-table-thead>tr>th]:!bg-white [&_.ant-table-thead>tr>th]:!text-gray-500 [&_.ant-table-thead>tr>th]:!font-semibold [&_.ant-table-thead>tr>th]:!text-xs [&_.ant-table-thead>tr>th]:!uppercase [&_.ant-table-thead>tr>th]:!border-b [&_.ant-table-thead>tr>th]:!border-gray-100 [&_.ant-table-tbody>tr>td]:!border-b [&_.ant-table-tbody>tr>td]:!border-gray-50 [&_.ant-table-tbody>tr:hover>td]:!bg-gray-50/50"
+              />
             </div>
 
             {/* Mobile Cards */}

@@ -12,6 +12,7 @@ import {
   InputNumber,
   message,
   Tooltip,
+  Table,
 } from "antd";
 import {
   WalletOutlined,
@@ -43,6 +44,8 @@ import { fetcher } from "@/utils/fetcher";
 import axios from "axios";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
+import { formatCurrency } from "@/utils/format";
+import { TRANSACTION_STATUS_MAP, TRANSACTION_TYPE_MAP } from "@/constants/payment";
 
 dayjs.locale("vi");
 
@@ -102,24 +105,8 @@ const BALANCE_TABS = [
   { key: "debt", label: "Dư nợ", param: "debt" },
 ];
 
-const TYPE_MAP: Record<string, { label: string; color: string }> = {
-  BOOKING_PAYMENT: { label: "Thanh toán", color: "blue" },
-  BOOKING_INCOME: { label: "Thu nhập", color: "green" },
-  BOOKING_REFUND: { label: "Hoàn tiền", color: "orange" },
-  WITHDRAWAL: { label: "Rút tiền", color: "purple" },
-  SYSTEM_FEE: { label: "Phí hệ thống", color: "red" },
-  DEBT_PAYMENT: { label: "Trả nợ", color: "volcano" },
-};
 
-const STATUS_MAP: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-  PENDING: { label: "Đang xử lý", color: "orange", icon: <ClockCircleOutlined /> },
-  SUCCESS: { label: "Thành công", color: "green", icon: <CheckCircleOutlined /> },
-  FAILED: { label: "Thất bại", color: "red", icon: <CloseCircleOutlined /> },
-  CANCELLED: { label: "Đã hủy", color: "default", icon: <CloseCircleOutlined /> },
-};
 
-const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat("vi-VN").format(amount) + "đ";
 
 // ── Component ────────────────────────────────────────────────────────
 export default function HostPayout() {
@@ -307,6 +294,91 @@ export default function HostPayout() {
     const bank = vietqrBanks.find((b) => b.code === bankCode);
     return bank || { shortName: bankCode, logo: "", name: bankCode };
   };
+
+  // ── Ant Design Table Columns ─────────────────────────────────────────
+  const columns = [
+    {
+      title: "Mã giao dịch",
+      dataIndex: "id",
+      key: "id",
+      render: (id: number) => <span className="text-sm font-mono text-gray-600">TRX-{id}</span>,
+    },
+    {
+      title: "Ngày",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      render: (createdAt: string) => (
+        <div>
+          <span className="text-sm text-gray-700">{dayjs(createdAt).format("DD/MM/YYYY")}</span>
+          <div className="text-[10px] text-gray-400">{dayjs(createdAt).format("HH:mm")}</div>
+        </div>
+      ),
+    },
+    {
+      title: "Mã đặt phòng",
+      dataIndex: "bookingCode",
+      key: "bookingCode",
+      render: (bookingCode: string) =>
+        bookingCode ? (
+          <span className="text-sm font-semibold text-[#2DD4A8]">{bookingCode}</span>
+        ) : (
+          <span className="text-xs text-gray-400">—</span>
+        ),
+    },
+    {
+      title: "Mô tả",
+      dataIndex: "description",
+      key: "description",
+      render: (description: string) => (
+        <span className="text-sm text-gray-600 truncate block max-w-[200px]">
+          {description || "—"}
+        </span>
+      ),
+    },
+    {
+      title: "Số tiền",
+      key: "amount",
+      align: "right" as const,
+      render: (_: any, record: TransactionItem) => {
+        const amt = getAmountDisplay(record);
+        return (
+          <div className={`flex items-center justify-end gap-1 text-sm font-bold ${amt.color}`}>
+            {amt.icon}
+            {amt.prefix}
+            {formatCurrency(Math.abs(record.amount))}
+          </div>
+        );
+      },
+    },
+    {
+      title: "Loại",
+      dataIndex: "type",
+      key: "type",
+      align: "center" as const,
+      render: (type: string) => {
+        const typeInfo = TRANSACTION_TYPE_MAP[type] || { label: type, color: "default" };
+        return (
+          <Tag color={typeInfo.color} className="!rounded-full !px-2 !py-0 !text-[11px] !font-medium !border-0">
+            {typeInfo.label}
+          </Tag>
+        );
+      },
+    },
+    {
+      title: "Trạng thái",
+      dataIndex: "status",
+      key: "status",
+      align: "center" as const,
+      render: (status: string) => {
+        const statusInfo = TRANSACTION_STATUS_MAP[status] || { label: status, color: "default", icon: null };
+        return (
+          <Tag color={statusInfo.color} className="!rounded-full !px-2.5 !py-0.5 !text-[11px] !font-medium !border-0" icon={statusInfo.icon}>
+            {statusInfo.label}
+          </Tag>
+        );
+      },
+    },
+  ];
 
   return (
     <div>
@@ -560,60 +632,22 @@ export default function HostPayout() {
         ) : (
           <>
             {/* Desktop Table */}
-            <div className="hidden lg:block overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50/50">
-                    <th className="text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Mã giao dịch</th>
-                    <th className="text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Ngày</th>
-                    <th className="text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Mã đặt phòng</th>
-                    <th className="text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Mô tả</th>
-                    <th className="text-right text-[11px] font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Số tiền</th>
-                    <th className="text-center text-[11px] font-semibold text-gray-500 uppercase tracking-wider px-4 py-3">Loại</th>
-                    <th className="text-center text-[11px] font-semibold text-gray-500 uppercase tracking-wider px-6 py-3">Trạng thái</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredTransactions.map((txn) => {
-                    const amt = getAmountDisplay(txn);
-                    const typeInfo = TYPE_MAP[txn.type] || { label: txn.type, color: "default" };
-                    const statusInfo = STATUS_MAP[txn.status] || { label: txn.status, color: "default", icon: null };
-                    return (
-                      <tr key={txn.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                        <td className="px-6 py-4"><span className="text-sm font-mono text-gray-600">TRX-{txn.id}</span></td>
-                        <td className="px-4 py-4">
-                          <span className="text-sm text-gray-700">{dayjs(txn.createdAt).format("DD/MM/YYYY")}</span>
-                          <div className="text-[10px] text-gray-400">{dayjs(txn.createdAt).format("HH:mm")}</div>
-                        </td>
-                        <td className="px-4 py-4">
-                          {txn.bookingCode ? <span className="text-sm font-semibold text-[#2DD4A8]">{txn.bookingCode}</span> : <span className="text-xs text-gray-400">—</span>}
-                        </td>
-                        <td className="px-4 py-4"><span className="text-sm text-gray-600 truncate block max-w-[200px]">{txn.description || "—"}</span></td>
-                        <td className="px-4 py-4 text-right">
-                          <div className={`flex items-center justify-end gap-1 text-sm font-bold ${amt.color}`}>
-                            {amt.icon}
-                            {amt.prefix}{formatCurrency(Math.abs(txn.amount))}
-                          </div>
-                        </td>
-                        <td className="px-4 py-4 text-center">
-                          <Tag color={typeInfo.color} className="!rounded-full !px-2 !py-0 !text-[11px] !font-medium !border-0">{typeInfo.label}</Tag>
-                        </td>
-                        <td className="px-6 py-4 text-center">
-                          <Tag color={statusInfo.color} className="!rounded-full !px-2.5 !py-0.5 !text-[11px] !font-medium !border-0" icon={statusInfo.icon}>{statusInfo.label}</Tag>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div className="hidden lg:block">
+              <Table
+                columns={columns}
+                dataSource={filteredTransactions}
+                rowKey="id"
+                pagination={false}
+                className="[&_.ant-table-thead>tr>th]:!bg-gray-50/50 [&_.ant-table-thead>tr>th]:!text-gray-500 [&_.ant-table-thead>tr>th]:!font-semibold [&_.ant-table-thead>tr>th]:!text-[11px] [&_.ant-table-thead>tr>th]:!uppercase [&_.ant-table-thead>tr>th]:!border-b [&_.ant-table-thead>tr>th]:!border-gray-100 [&_.ant-table-tbody>tr>td]:!border-b [&_.ant-table-tbody>tr>td]:!border-gray-50 [&_.ant-table-tbody>tr:hover>td]:!bg-gray-50/50"
+              />
             </div>
 
             {/* Mobile Cards */}
             <div className="lg:hidden divide-y divide-gray-100">
               {filteredTransactions.map((txn) => {
                 const amt = getAmountDisplay(txn);
-                const typeInfo = TYPE_MAP[txn.type] || { label: txn.type, color: "default" };
-                const statusInfo = STATUS_MAP[txn.status] || { label: txn.status, color: "default", icon: null };
+                const typeInfo = TRANSACTION_TYPE_MAP[txn.type] || { label: txn.type, color: "default" };
+                const statusInfo = TRANSACTION_STATUS_MAP[txn.status] || { label: txn.status, color: "default", icon: null };
                 return (
                   <div key={txn.id} className="p-4 space-y-2.5">
                     <div className="flex items-center justify-between">

@@ -19,6 +19,7 @@ import dayjs from "dayjs";
 import "dayjs/locale/vi";
 import { BookingsResponse } from "@/interfaces";
 import { historyStatuses, upcomingStatuses } from "@/constants/booking";
+import { formatCurrency } from "@/utils/format";
 
 dayjs.locale("vi");
 
@@ -77,12 +78,6 @@ export default function MyBookings() {
     </div>
   );
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    }).format(amount);
-  };
 
   const getStatusTag = (status: string) => {
     switch (status) {

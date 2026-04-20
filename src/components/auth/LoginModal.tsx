@@ -11,6 +11,8 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetcher } from "@/utils/fetcher";
 import { PASSWORD_RULES } from "@/constants/validation";
+import { useRouter } from "next/navigation";
+import { getRolesFromToken } from "@/lib/tokenUtils";
 
 interface LoginModalProps {
     open: boolean;
@@ -27,6 +29,7 @@ export default function LoginModal({
     const [loading, setLoading] = useState(false);
     const { login } = useAuth();
     const [messageApi, contextHolder] = message.useMessage();
+    const router = useRouter();
 
     const handleLogin = async (values: { email: string; password: string }) => {
         setLoading(true);
@@ -37,6 +40,11 @@ export default function LoginModal({
             messageApi.success(`Chào mừng trở lại, ${data?.userInfResponse?.fullName}! 👋`);
             form.resetFields();
             onClose();
+            
+            const roles = getRolesFromToken(data.accessToken);
+            if (roles.includes("ROLE_ADMIN")) {
+                router.push("/admin/dashboard");
+            }
         } catch (err: unknown) {
             const msg = err instanceof Error ? err.message : "Đăng nhập thất bại";
             messageApi.error(msg);

@@ -6,7 +6,7 @@ import {
 } from "@/constants/cookie";
 import { getRolesFromToken } from "@/lib/tokenUtils";
 // Các route cần đăng nhập mới vào được
-const PROTECTED_ROUTES = ["/become-host", "/host"];
+const PROTECTED_ROUTES = ["/become-host", "/host", "/admin"];
 
 
 export function proxy(request: NextRequest) {
@@ -23,6 +23,14 @@ export function proxy(request: NextRequest) {
     const roles = getRolesFromToken(accessToken);
     if (roles.includes("ROLE_HOST")) {
       return NextResponse.redirect(new URL("/host/dashboard", request.url));
+    }
+  }
+
+  // Chặn non-admin truy cập trang admin
+  if (pathname.startsWith("/admin") && accessToken) {
+    const roles = getRolesFromToken(accessToken);
+    if (!roles.includes("ROLE_ADMIN")) {
+      return NextResponse.redirect(new URL("/", request.url));
     }
   }
 

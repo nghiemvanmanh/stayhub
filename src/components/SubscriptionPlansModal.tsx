@@ -4,6 +4,7 @@ import { CheckCircleOutlined, StarOutlined, RocketOutlined, CrownOutlined } from
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { fetcher } from "@/utils/fetcher";
+import { formatCurrency } from "@/utils/format";
 
 const { Title, Paragraph } = Typography;
 
@@ -51,9 +52,7 @@ const planUIConfigs: Record<string, any> = {
   }
 };
 
-const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
-};
+
 
 export default function SubscriptionPlansModal({ open, onClose }: Props) {
   const { isLoggedIn, isHost } = useAuth();

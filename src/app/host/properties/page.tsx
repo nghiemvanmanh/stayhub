@@ -17,25 +17,9 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { fetcher } from "@/utils/fetcher";
 import { PROPERTY_STATUS, PROPERTY_STATUS_MAP } from "@/constants/property";
+import { timeAgo, formatCurrency } from "@/utils/format";
 
-function timeAgo(dateStr: string) {
-  if (!dateStr) return "—";
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-  if (diffInSeconds < 60) return "Vừa xong";
-  const diffInMinutes = Math.floor(diffInSeconds / 60);
-  if (diffInMinutes < 60) return `${diffInMinutes} phút trước`;
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) return `${diffInHours} giờ trước`;
-  const diffInDays = Math.floor(diffInHours / 24);
-  if (diffInDays === 1) return `Hôm qua`;
-  if (diffInDays < 7) return `${diffInDays} ngày trước`;
-  if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} tuần trước`;
-  if (diffInDays < 365) return `${Math.floor(diffInDays / 30)} tháng trước`;
-  return `${Math.floor(diffInDays / 365)} năm trước`;
-}
 
 export default function HostPropertiesPage() {
   const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
@@ -135,7 +119,7 @@ export default function HostPropertiesPage() {
       key: "startingPrice",
       width: 120,
       render: (price: number) => (
-        <span className="font-medium whitespace-nowrap">{price?.toLocaleString()}đ</span>
+        <span className="font-medium whitespace-nowrap">{formatCurrency(price)}</span>
       ),
     },
     {
