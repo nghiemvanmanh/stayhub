@@ -26,7 +26,7 @@ import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 
 export default function Header() {
-  const { user, isLoggedIn, isHost, logout } = useAuth();
+  const { user, isLoggedIn, isHost, isAdmin, logout } = useAuth();
   const [loginOpen, setLoginOpen] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
   const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
@@ -51,6 +51,14 @@ export default function Header() {
       router.push("/become-host");
     }
   };
+
+  const handleAdminManager = () => {
+    if (isAdmin){
+      router.push("admin/dashboard")
+    }else{
+      router.push("404")
+    }
+  }
 
   const { data: mySubscription } = useQuery({
     queryKey: ["my-subscription"],
@@ -109,10 +117,10 @@ export default function Header() {
     { type: "divider", className: "md:hidden" },
     {
       key: "host-action-mobile",
-      label: isHost ? "Cơ sở lưu trú của tôi" : "Trở thành đối tác",
+      label: isAdmin ? "Quản trị hệ thống" : isHost ? "Cơ sở lưu trú của tôi" : "Trở thành đối tác",
       icon: <RocketOutlined />,
-      className: "md:hidden",
-      onClick: handleBecomeHost,
+      className: "md:!hidden",
+      onClick: isAdmin ? handleAdminManager : handleBecomeHost,
     },
     { type: "divider" },
     {
@@ -202,9 +210,9 @@ export default function Header() {
               <Button
                 type="text"
                 className="!hidden md:!inline-flex text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-full"
-                onClick={handleBecomeHost}
+                onClick={isAdmin ? handleAdminManager : handleBecomeHost}
               >
-                {isLoggedIn && isHost ? "Cơ sở lưu trú của tôi" : "Trở thành đối tác homestay"}
+                {isLoggedIn && isAdmin ? "Quản trị hệ thống Stayhub" : isHost ? "Cơ sở lưu trú của tôi" : "Trở thành đối tác homestay"}
               </Button>
               {renderSubscriptionBadge()}
               <Button

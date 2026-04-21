@@ -373,9 +373,9 @@ export default function HostPayout() {
       key: "status",
       align: "center" as const,
       render: (status: string) => {
-        const statusInfo = TRANSACTION_STATUS_MAP[status] || { label: status, color: "default", icon: null };
+        const statusInfo = TRANSACTION_STATUS_MAP[status] || { label: status, color: "default" };
         return (
-          <Tag color={statusInfo.color} className="!rounded-full !px-2.5 !py-0.5 !text-[11px] !font-medium !border-0" icon={statusInfo.icon}>
+          <Tag color={statusInfo.color} className="!rounded-full !px-2.5 !py-0.5 !text-[11px] !font-medium !border-0">
             {statusInfo.label}
           </Tag>
         );
@@ -663,7 +663,7 @@ export default function HostPayout() {
               {filteredTransactions.map((txn) => {
                 const amt = getAmountDisplay(txn);
                 const typeInfo = TRANSACTION_TYPE_MAP[txn.type] || { label: txn.type, color: "default" };
-                const statusInfo = TRANSACTION_STATUS_MAP[txn.status] || { label: txn.status, color: "default", icon: null };
+                const statusInfo = TRANSACTION_STATUS_MAP[txn.status] || { label: txn.status, color: "default" };
                 return (
                   <div key={txn.id} className="p-4 space-y-2.5">
                     <div className="flex items-center justify-between">
@@ -671,7 +671,7 @@ export default function HostPayout() {
                         <span className="text-xs font-mono text-gray-500">TRX-{txn.id}</span>
                         <Tag color={typeInfo.color} className="!rounded-full !px-2 !py-0 !text-[10px] !font-medium !border-0 !m-0">{typeInfo.label}</Tag>
                       </div>
-                      <Tag color={statusInfo.color} className="!rounded-full !px-2 !py-0 !text-[10px] !font-medium !border-0 !m-0" icon={statusInfo.icon}>{statusInfo.label}</Tag>
+                      <Tag color={statusInfo.color} className="!rounded-full !px-2 !py-0 !text-[10px] !font-medium !border-0 !m-0">{statusInfo.label}</Tag>
                     </div>
                     <div className="flex items-center justify-between">
                       <div>

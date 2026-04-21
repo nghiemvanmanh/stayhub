@@ -194,21 +194,7 @@ export default function HostBookings() {
     },
   });
 
-  const completeMutation = useMutation({
-    mutationFn: (bookingCode: string) =>
-      fetcher.put(`/bookings/${bookingCode}/complete`),
-    onSuccess: () => {
-      message.success("Đã xác nhận hoàn thành chuyến đi!");
-      queryClient.invalidateQueries({ queryKey: ["host-bookings"] });
-    },
-    onError: (err: any) => {
-      message.error(
-        err?.response?.data?.message ||
-          err?.response?.data?.data ||
-          "Xác nhận hoàn thành thất bại"
-      );
-    },
-  });
+
 
   // ── Action handlers with confirm ──────────────────────────────────
   const handleCheckIn = (bookingCode: string) => {
@@ -239,19 +225,7 @@ export default function HostBookings() {
     });
   };
 
-  const handleComplete = (bookingCode: string) => {
-    Modal.confirm({
-      title: "Xác nhận hoàn thành",
-      icon: <CheckCircleFilled className="text-green-500" />,
-      content: `Xác nhận hoàn thành chuyến đi cho booking ${bookingCode}? Thao tác này không thể hoàn tác.`,
-      okText: "Hoàn thành",
-      cancelText: "Hủy",
-      okButtonProps: {
-        className: "!bg-green-500 !border-green-500 hover:!bg-green-600",
-      },
-      onOk: () => completeMutation.mutateAsync(bookingCode),
-    });
-  };
+
 
   const handleCancel = (bookingCode: string) => {
     Modal.confirm({
@@ -311,19 +285,7 @@ export default function HostBookings() {
       );
     }
 
-    // Complete: only for CHECKED_OUT
-    if (status === "CHECKED_OUT") {
-      actionButtons.push(
-        <Tooltip title="Xác nhận hoàn thành" key="complete">
-          <button
-            onClick={() => handleComplete(booking.bookingCode)}
-            className="w-8 h-8 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 flex items-center justify-center border-none cursor-pointer transition-colors"
-          >
-            <CheckOutlined className="text-sm" />
-          </button>
-        </Tooltip>
-      );
-    }
+
 
     // Cancel: for PENDING, CONFIRMED, AWAITING_PAYMENT
     if (["PENDING", "CONFIRMED", "AWAITING_PAYMENT", "PARTIALLY_PAID"].includes(status)) {

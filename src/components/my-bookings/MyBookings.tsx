@@ -9,9 +9,11 @@ import {
   MoreHorizontal, 
   CheckCircle2, 
   XCircle,
-  ChevronRight
+  ChevronRight,
+  AlertTriangle
 } from "lucide-react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import DisputeModal from "@/components/shared/DisputeModal";
 import { fetcher } from "@/utils/fetcher";
 import Image from "next/image";
 import Link from "next/link";
@@ -25,6 +27,7 @@ dayjs.locale("vi");
 
 export default function MyBookings() {
   const [activeTab, setActiveTab] = useState("upcoming");
+  const [disputeBookingCode, setDisputeBookingCode] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const CANCELLABLE_STATUSES = ["PENDING", "AWAITING_PAYMENT", "CONFIRMED", "PARTIALLY_PAID"];
@@ -56,6 +59,36 @@ export default function MyBookings() {
           );
         }
       },
+    });
+  };
+
+  const completeMutation = useMutation({
+    mutationFn: (bookingCode: string) =>
+      fetcher.put(`/bookings/${bookingCode}/complete`),
+    onSuccess: () => {
+      message.success("Đã xác nhận hoàn thành chuyến đi!");
+      queryClient.invalidateQueries({ queryKey: ["my-bookings"] });
+    },
+    onError: (err: any) => {
+      message.error(
+        err?.response?.data?.message ||
+          err?.response?.data?.data ||
+          "Xác nhận hoàn thành thất bại"
+      );
+    },
+  });
+
+  const handleCompleteTrip = (bookingCode: string) => {
+    Modal.confirm({
+      title: "Xác nhận hoàn thành",
+      icon: <CheckCircle2 className="text-green-500 w-5 h-5 mr-3 mt-0.5 float-left" />,
+      content: `Chuyến đi của bạn tại ${bookingCode} sẽ chuyển sang trạng thái đã hoàn thành. Hệ thống sẽ giữ nguyên trạng thái nếu không có khiếu nại nào sau 24h. Xác nhận hoàn thành?`,
+      okText: "Hoàn thành",
+      cancelText: "Hủy",
+      okButtonProps: {
+        className: "!bg-green-500 !border-green-500 hover:!bg-green-600",
+      },
+      onOk: () => completeMutation.mutateAsync(bookingCode),
     });
   };
 
@@ -93,6 +126,12 @@ export default function MyBookings() {
         return <Tag color="cyan" className="!flex !items-center rounded-full px-3 py-1 text-sm border-0"><CheckCircle2 className="w-4 h-4 inline mr-1" /> Hoàn thành</Tag>;
       case "EXPIRED":
         return <Tag color="gray" className="!flex !items-center rounded-full px-3 py-1 text-sm border-0"><Clock className="w-4 h-4 inline mr-1" /> Hết hạn</Tag>;
+      case "CHECKED_IN":
+        return <Tag color="volcano" className="!flex !items-center rounded-full px-3 py-1 text-sm border-0"><Clock className="w-4 h-4 inline mr-1" /> Nhận phòng</Tag>;
+      case "CHECKED_OUT":
+        return <Tag color="magenta" className="!flex !items-center rounded-full px-3 py-1 text-sm border-0"><Clock className="w-4 h-4 inline mr-1" /> Trả phòng</Tag>;
+      case "DISPUTED":
+        return <Tag color="orange" className="!flex !items-center rounded-full px-3 py-1 text-sm border-0"><Clock className="w-4 h-4 inline mr-1" /> Khiếu nại</Tag>;
       default:
         return <Tag color="default" className="!flex !items-center rounded-full px-3 py-1 text-sm border-0">{status}</Tag>;
     }
@@ -250,18 +289,34 @@ export default function MyBookings() {
                           Hủy đặt phòng
                         </Button>
                       )}
+                      
+                      {booking.status === "CHECKED_OUT" && (
+                        <Button
+                          icon={<CheckCircle2 className="w-4 h-4" />}
+                          onClick={() => handleCompleteTrip(booking.bookingCode)}
+                          className="h-10 px-4 rounded-xl font-bold text-sm flex items-center gap-2 !bg-[#2DD4A8] !text-white !border-[#2DD4A8] hover:!bg-[#25bc95]"
+                        >
+                          Hoàn thành chuyến đi
+                        </Button>
+                      )}
                     </div>
                     <div className="flex items-center gap-3">
-                      <Button className="w-10 h-10 flex items-center justify-center rounded-xl border-gray-200 p-0 text-gray-400 hover:text-gray-600">
-                        <MoreHorizontal className="w-5 h-5" />
-                      </Button>
+                      {["CHECKED_IN", "CHECKED_OUT"].includes(booking.status) && (
+                        <Button
+                          icon={<AlertTriangle className="w-4 h-4" />}
+                          onClick={() => setDisputeBookingCode(booking.bookingCode)}
+                          className="h-10 px-4 rounded-xl font-bold text-sm flex items-center gap-2 !text-orange-500 !border-orange-200 hover:!bg-orange-50"
+                        >
+                          Khiếu nại
+                        </Button>
+                      )}
                       <Button className="h-10 px-8 rounded-xl border-[#2DD4A8] text-[#2DD4A8] font-bold text-sm hover:bg-[#2DD4A8]/5 transition-colors">
                         Quản lý
                       </Button>
                     </div>
+                    </div>
                   </div>
                 </div>
-              </div>
             ))}
           </div>
         )}
@@ -298,6 +353,15 @@ export default function MyBookings() {
           </div>
         </div>
       </div>
+      
+      <DisputeModal
+        open={!!disputeBookingCode}
+        onClose={() => setDisputeBookingCode(null)}
+        bookingCode={disputeBookingCode || ""}
+        onSuccess={() =>
+          queryClient.invalidateQueries({ queryKey: ["my-bookings"] })
+        }
+      />
     </div>
   );
 }

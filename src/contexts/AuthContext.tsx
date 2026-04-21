@@ -20,6 +20,7 @@ interface AuthContextType {
     isLoading: boolean;
     roles: string[];
     isHost: boolean;
+    isAdmin: boolean;
     subscription: string;
     login: (user: User, tokens: AuthTokens) => void;
     logout: () => void;
@@ -35,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
 
     const isHost = useMemo(() => roles.includes("ROLE_HOST"), [roles]);
-
+    const isAdmin = useMemo(() => roles.includes("ROLE_ADMIN"), [roles]);
     // Khởi tạo state từ cookie khi load
     useEffect(() => {
         try {
@@ -89,6 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 isLoading,
                 roles,
                 isHost,
+                isAdmin,
                 subscription,
                 login,
                 logout,

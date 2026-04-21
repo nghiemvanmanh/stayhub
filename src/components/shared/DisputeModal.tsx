@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Modal, Input, Button, message, Upload } from "antd";
+import type { UploadFile } from "antd";
 import {
   ExclamationCircleOutlined,
   PlusOutlined,
@@ -16,6 +17,28 @@ interface DisputeModalProps {
   onClose: () => void;
   bookingCode: string;
   onSuccess?: () => void;
+}
+
+function getFileInfo(file: File) {
+  const ext = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
+  return { extension: ext, contentType: file.type || "application/octet-stream" };
+}
+
+async function uploadFileToS3(file: File): Promise<string> {
+  const fileInfo = getFileInfo(file);
+  const { data } = await fetcher.post("/files/presigned-url", {
+    files: [fileInfo],
+  });
+  const presigned = Array.isArray(data) ? data[0] : data;
+  const presignedData = (presigned as any).data || presigned;
+
+  await fetch(presignedData.presignedUrl, {
+    method: "PUT",
+    body: file,
+    headers: { "Content-Type": file.type },
+  });
+
+  return presignedData.publicUrl;
 }
 
 const DISPUTE_REASONS = [
@@ -34,13 +57,15 @@ export default function DisputeModal({
   bookingCode,
   onSuccess,
 }: DisputeModalProps) {
-  const [reason, setReason] = useState("");
+  const [reasonType, setReasonType] = useState("");
+  const [customReason, setCustomReason] = useState("");
   const [description, setDescription] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
-    if (!reason.trim()) {
+    const finalReason = reasonType === "Khác" ? customReason : reasonType;
+    if (!finalReason.trim()) {
       message.warning("Vui lòng chọn hoặc nhập lý do khiếu nại");
       return;
     }
@@ -51,10 +76,18 @@ export default function DisputeModal({
 
     setLoading(true);
     try {
+      let finalUrls = "";
+      if (fileList.length > 0) {
+        const uploadedUrls = await Promise.all(
+          fileList.map((f) => uploadFileToS3(f.originFileObj as File))
+        );
+        finalUrls = uploadedUrls.filter(Boolean).join(",");
+      }
+
       await fetcher.post(`/bookings/${bookingCode}/disputes`, {
-        reason: reason.trim(),
+        reason: finalReason.trim(),
         description: description.trim(),
-        evidenceImageUrls: imageUrl.trim() || undefined,
+        evidenceImageUrls: finalUrls || undefined,
       });
       message.success("Gửi khiếu nại thành công!");
       handleReset();
@@ -72,9 +105,10 @@ export default function DisputeModal({
   };
 
   const handleReset = () => {
-    setReason("");
+    setReasonType("");
+    setCustomReason("");
     setDescription("");
-    setImageUrl("");
+    setFileList([]);
   };
 
   const handleClose = () => {
@@ -117,9 +151,9 @@ export default function DisputeModal({
             {DISPUTE_REASONS.map((r) => (
               <button
                 key={r}
-                onClick={() => setReason(r)}
+                onClick={() => setReasonType(r)}
                 className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all cursor-pointer ${
-                  reason === r
+                  reasonType === r
                     ? "bg-red-50 text-red-600 border-red-200"
                     : "bg-gray-50 text-gray-600 border-gray-200 hover:border-gray-300"
                 }`}
@@ -128,11 +162,11 @@ export default function DisputeModal({
               </button>
             ))}
           </div>
-          {reason === "Khác" && (
+          {reasonType === "Khác" && (
             <Input
               placeholder="Nhập lý do khác..."
-              value={reason === "Khác" ? "" : reason}
-              onChange={(e) => setReason(e.target.value || "Khác")}
+              value={customReason}
+              onChange={(e) => setCustomReason(e.target.value)}
               className="!rounded-lg mt-2"
             />
           )}
@@ -157,35 +191,32 @@ export default function DisputeModal({
         {/* Evidence Image URL */}
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Link ảnh minh chứng
+            Ảnh minh chứng (nếu có)
           </label>
-          <Input
-            placeholder="https://example.com/evidence.jpg"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            className="!rounded-lg"
-          />
+          <Upload
+            listType="picture-card"
+            fileList={fileList}
+            beforeUpload={(file) => {
+              setFileList((prev) => [...prev, { ...file, originFileObj: file, status: "done" }]);
+              return false; // prevent default upload action so we upload on submit
+            }}
+            onRemove={(file) => {
+              setFileList((prev) => prev.filter((item) => item.uid !== file.uid));
+            }}
+            multiple
+            accept="image/*"
+            maxCount={5}
+          >
+            {fileList.length >= 5 ? null : (
+              <div>
+                <PlusOutlined />
+                <div style={{ marginTop: 8 }}>Tải ảnh lên</div>
+              </div>
+            )}
+          </Upload>
           <p className="text-[11px] text-gray-400 mt-1 m-0">
-            Dán đường link ảnh minh chứng (nếu có) để hỗ trợ quá trình xử lý khiếu nại.
+            Tải lên tối đa 5 ảnh minh chứng để hỗ trợ quá trình xử lý khiếu nại.
           </p>
-          {imageUrl && (
-            <div className="mt-2 relative w-32 h-20 rounded-lg overflow-hidden border border-gray-200">
-              <img
-                src={imageUrl}
-                alt="Evidence preview"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = "none";
-                }}
-              />
-              <button
-                onClick={() => setImageUrl("")}
-                className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-[10px] cursor-pointer border-none"
-              >
-                <DeleteOutlined />
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Notice */}

@@ -168,3 +168,20 @@ export interface AdminPayoutItem {
   walletId?: number;
   requestedAmount?: number;
 }
+
+// =============================================
+// Admin Disputes
+// =============================================
+export interface AdminDisputeItem {
+  id: number;
+  bookingCode: string;
+  creatorId: number;
+  creatorEmail: string;
+  creatorRole: string;
+  creatorName: string;
+  reason: string;
+  evidenceImageUrls: string;
+  status: string;
+  createdAt: string;
+}
+
