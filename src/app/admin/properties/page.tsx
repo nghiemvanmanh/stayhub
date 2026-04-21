@@ -61,7 +61,7 @@ export default function AdminPropertiesPage() {
 
   // Review modal state
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
-  const [reviewAction, setReviewAction] = useState<string>("PUBLISHED");
+  const [reviewAction, setReviewAction] = useState<string>("ACTIVE");
   const [reviewPropertyId, setReviewPropertyId] = useState<number | null>(null);
   const [reviewNote, setReviewNote] = useState("");
 
@@ -405,7 +405,7 @@ export default function AdminPropertiesPage() {
           },
           {
             title: "Đã đăng công khai",
-            value: (data?.items || []).filter((i) => i.status === "PUBLISHED")
+            value: (data?.items || []).filter((i) => i.status === "ACTIVE")
               .length,
             icon: <AppstoreOutlined />,
             iconBg: "#e6f4ff",
@@ -457,7 +457,7 @@ export default function AdminPropertiesPage() {
         rowKey="id"
         loading={isLoading || isFetching}
         search={false}
-        scroll={{ x: 900 }}
+        scroll={{ x: 'max-content' }}
         cardBordered
         headerTitle="Danh sách lưu trú"
         options={{
@@ -509,7 +509,7 @@ export default function AdminPropertiesPage() {
         styles={{ body: { padding: 0 } }}
         extra={
           selectedProperty &&
-          selectedProperty.status !== "PUBLISHED" && (
+          selectedProperty.status !== "ACTIVE" && (
             <Dropdown
               menu={{
                 items: ALL_STATUSES.filter(
@@ -740,7 +740,7 @@ export default function AdminPropertiesPage() {
           danger:
             reviewAction === "REJECTED" || reviewAction === "BANNED",
           style:
-            reviewAction === "PUBLISHED"
+            reviewAction === "ACTIVE"
               ? { background: "#2DD4A8", borderColor: "#2DD4A8" }
               : {},
         }}

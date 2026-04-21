@@ -420,7 +420,7 @@ export default function AdminHostApplicationsPage() {
         rowKey="hostId"
         loading={isLoading || isFetching}
         search={false}
-        scroll={{ x: 1000 }}
+        scroll={{ x: 'max-content' }}
         cardBordered
         headerTitle="Danh sách chủ nhà"
         options={{

@@ -9,6 +9,7 @@ import {
     useMemo,
     ReactNode,
 } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { User, AuthTokens } from "@/interfaces/auth";
 import Cookies from "js-cookie";
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_INFO } from "@/constants/cookie";
@@ -34,6 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [roles, setRoles] = useState<string[]>([]);
     const [subscription, setSubscription] = useState<string>("FREE");
     const [isLoading, setIsLoading] = useState(true);
+    const queryClient = useQueryClient();
 
     const isHost = useMemo(() => roles.includes("ROLE_HOST"), [roles]);
     const isAdmin = useMemo(() => roles.includes("ROLE_ADMIN"), [roles]);
@@ -58,22 +60,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     const login = useCallback((user: User, { accessToken, refreshToken }: AuthTokens) => {
+        queryClient.clear();
         Cookies.set(ACCESS_TOKEN_KEY, accessToken);
         Cookies.set(REFRESH_TOKEN_KEY, refreshToken);
         Cookies.set(USER_INFO, JSON.stringify(user));
         setUser(user);
         setRoles(getRolesFromToken(accessToken));
         setSubscription(getSubscriptionFromToken(accessToken));
-    }, []);
+    }, [queryClient]);
 
     const logout = useCallback(() => {
+        queryClient.clear();
         Cookies.remove(ACCESS_TOKEN_KEY);
         Cookies.remove(REFRESH_TOKEN_KEY);
         Cookies.remove(USER_INFO);
         setUser(null);
         setRoles([]);
         setSubscription("FREE");
-    }, []);
+    }, [queryClient]);
 
     const updateTokens = useCallback(({ accessToken, refreshToken }: AuthTokens) => {
         Cookies.set(ACCESS_TOKEN_KEY, accessToken);

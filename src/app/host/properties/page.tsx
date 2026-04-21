@@ -96,7 +96,7 @@ export default function HostPropertiesPage() {
       width: 250,
       render: (_: any, record: any) => {
         const statusData = PROPERTY_STATUS_MAP[record.status] || { label: record.status, isActive: false };
-        const isSwitchedOn = statusData.isActive || record.status === "ACTIVE" || record.status === "PUBLISHED";
+        const isSwitchedOn = statusData.isActive || record.status === "ACTIVE" || record.status === "ACTIVE";
         return (
           <div className="flex items-center gap-3">
             <Switch
@@ -153,7 +153,7 @@ export default function HostPropertiesPage() {
             size="small"
             icon={<EyeOutlined />}
             onClick={() => {
-              if (record.status === PROPERTY_STATUS.PUBLISHED) {
+              if (record.status === PROPERTY_STATUS.ACTIVE) {
                 window.open(`/homestay/${record.slug}`, "_blank");
               } else {
                 const statusLabel = PROPERTY_STATUS_MAP[record.status]?.label || record.status;
@@ -178,7 +178,7 @@ export default function HostPropertiesPage() {
 
   const tabItems = [
     { key: "all", label: "Tất cả" },
-    { key: PROPERTY_STATUS.PUBLISHED, label: "Hoạt động" },
+    { key: PROPERTY_STATUS.ACTIVE, label: "Hoạt động" },
     { key: PROPERTY_STATUS.DRAFT, label: "Nháp" },
     { key: PROPERTY_STATUS.PENDING_REVIEW, label: "Chờ duyệt" },
     { key: PROPERTY_STATUS.HIDDEN, label: "Tạm dừng" },
@@ -220,7 +220,7 @@ export default function HostPropertiesPage() {
           { title: "TỔNG BÀI ĐĂNG", value: totalElements, highlight: false },
           {
             title: "ĐANG HOẠT ĐỘNG",
-            value: listings.filter((l: any) => l.status === PROPERTY_STATUS.PUBLISHED || l.status === "ACTIVE").length,
+            value: listings.filter((l: any) => l.status === PROPERTY_STATUS.ACTIVE || l.status === "ACTIVE").length,
             highlight: false,
           },
           {
@@ -230,7 +230,7 @@ export default function HostPropertiesPage() {
           },
           { title: "THU NHẬP THÁNG", value: "0đ", highlight: true },
         ].map((stat, i) => (
-          <Col xs={12} lg={6} key={i}>
+          <Col xs={24} sm={12} lg={6} key={i}>
             <StatisticCard
               statistic={{
                 title: stat.title,
@@ -250,7 +250,7 @@ export default function HostPropertiesPage() {
         rowKey="id"
         loading={isLoading}
         search={false}
-        scroll={{ x: 800 }}
+        scroll={{ x: 'max-content' }}
         cardBordered
         headerTitle="Danh sách bài đăng"
         options={{

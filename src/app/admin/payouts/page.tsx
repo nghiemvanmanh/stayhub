@@ -282,7 +282,7 @@ export default function AdminPayoutsPage() {
         rowKey="id"
         loading={isLoading || isFetching}
         search={false}
-        scroll={{ x: 1000 }}
+        scroll={{ x: 'max-content' }}
         cardBordered
         headerTitle="Danh sách yêu cầu rút tiền"
         options={{

@@ -23,13 +23,15 @@ import "dayjs/locale/vi";
 import { BookingsResponse } from "@/interfaces";
 import { historyStatuses, upcomingStatuses } from "@/constants/booking";
 import { formatCurrency } from "@/utils/format";
+import { useAuth } from "@/contexts/AuthContext";
 
-dayjs.locale("vi");
+dayjs.locale("en");
 
 export default function MyBookings() {
   const [activeTab, setActiveTab] = useState("upcoming");
   const [disputeBookingCode, setDisputeBookingCode] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const CANCELLABLE_STATUSES = ["PENDING", "AWAITING_PAYMENT", "CONFIRMED", "PARTIALLY_PAID"];
 
@@ -114,11 +116,12 @@ export default function MyBookings() {
   };
 
   const { data : bookings, isLoading } = useQuery({
-    queryKey: ["my-bookings", activeTab],
+    queryKey: ["my-bookings", user, activeTab],
     queryFn: async () => {
       const res = await fetcher.get<BookingsResponse>("/bookings");
       return res.data?.data?.items || [];
     },
+    enabled: !!user,
   });
 
   const upcomingBookings = bookings?.filter((b) => upcomingStatuses.includes(b.status)) || [];

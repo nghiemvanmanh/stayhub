@@ -7,14 +7,20 @@ import {
   Space,
   Avatar,
   Tooltip,
+  Row,
+  Col,
 } from "antd";
 import {
   EyeOutlined,
   UserOutlined,
   DownloadOutlined,
   ReloadOutlined,
+  ExclamationCircleOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  CloseCircleOutlined,
 } from "@ant-design/icons";
-import { PageContainer, ProTable } from "@ant-design/pro-components";
+import { PageContainer, ProTable, StatisticCard } from "@ant-design/pro-components";
 import type { ProColumns } from "@ant-design/pro-components";
 import { DisputeDetailModal } from "@/components/admin/disputes/DisputeDetailModal";
 import { useQuery } from "@tanstack/react-query";
@@ -22,6 +28,7 @@ import { fetcher } from "@/utils/fetcher";
 import type { AdminDisputeItem, PaginatedResponse } from "@/interfaces/admin";
 import dayjs from "dayjs";
 import { ADMIN_DISPUTE_STATUS_MAP, ADMIN_DISPUTE_TAB_FILTERS } from "@/constants/dispute";
+import { ROLES } from "@/constants/user";
 
 export default function AdminDisputesPage() {
   const [pageNo, setPageNo] = useState(1);
@@ -44,8 +51,10 @@ export default function AdminDisputesPage() {
     },
   });
 
+  const allItems = data?.items || [];
+
   const filteredItems = useMemo(() => {
-    return (data?.items || []).filter((item) => {
+    return allItems.filter((item) => {
       if (!searchText) return true;
       const s = searchText.toLowerCase();
       return (
@@ -55,7 +64,13 @@ export default function AdminDisputesPage() {
         item.reason?.toLowerCase().includes(s)
       );
     });
-  }, [data?.items, searchText]);
+  }, [allItems, searchText]);
+
+  // Stats calculations
+  const totalDisputes = data?.totalElements || 0;
+  const openDisputes = allItems.filter((i) => i.status === "OPEN" || i.status === "PENDING").length;
+  const resolvedDisputes = allItems.filter((i) => i.status === "RESOLVED").length;
+  const rejectedDisputes = allItems.filter((i) => i.status === "REJECTED" || i.status === "CLOSED").length;
 
   const handleViewDetail = (record: AdminDisputeItem) => {
     setSelectedDispute(record);
@@ -87,8 +102,19 @@ export default function AdminDisputesPage() {
                 {record.creatorName || record.creatorEmail || "--"}
               </span>
             </Tooltip>
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "Vai trò",
+      key: "role",
+      width: 80,
+      render: (_: unknown, record: AdminDisputeItem) => (
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ minWidth: 0, display: "flex", flexDirection: "column" }}>
             <Tag color={record.creatorRole === "HOST" ? "purple" : "cyan"} style={{ alignSelf: "flex-start", marginTop: 2, fontSize: 11, padding: "0 6px" }}>
-              {record.creatorRole || "USER"}
+              {ROLES[record.creatorRole] || ROLES['USER']}
             </Tag>
           </div>
         </div>
@@ -185,13 +211,77 @@ export default function AdminDisputesPage() {
         subTitle: "Danh sách khiếu nại tranh chấp từ khách hàng và chủ nhà.",
       }}
     >
+      {/* Stat Cards */}
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Col xs={24} sm={12} lg={6}>
+          <StatisticCard
+            statistic={{
+              title: "Tổng khiếu nại",
+              value: totalDisputes,
+              description: <span style={{ fontSize: 12, color: "#94a3b8" }}>Toàn hệ thống</span>,
+              icon: (
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: "#e8f8f3", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <ExclamationCircleOutlined style={{ fontSize: 20, color: "#2DD4A8" }} />
+                </div>
+              ),
+            }}
+            style={{ borderRadius: 12, height: "100%" }}
+          />
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <StatisticCard
+            statistic={{
+              title: "Đang mở",
+              value: String(openDisputes).padStart(2, "0"),
+              description: <span style={{ fontSize: 12, color: "#f97316" }}>Cần xử lý ngay</span>,
+              icon: (
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: "#fff7ed", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <ClockCircleOutlined style={{ fontSize: 20, color: "#f97316" }} />
+                </div>
+              ),
+            }}
+            style={{ borderRadius: 12, height: "100%" }}
+          />
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <StatisticCard
+            statistic={{
+              title: "Đã giải quyết",
+              value: resolvedDisputes,
+              description: <span style={{ fontSize: 12, color: "#22c55e" }}>Hoàn tất xử lý</span>,
+              icon: (
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: "#f0fdf4", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <CheckCircleOutlined style={{ fontSize: 20, color: "#22c55e" }} />
+                </div>
+              ),
+            }}
+            style={{ borderRadius: 12, height: "100%" }}
+          />
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <StatisticCard
+            statistic={{
+              title: "Bị từ chối / Đóng",
+              value: rejectedDisputes,
+              description: <span style={{ fontSize: 12, color: "#ef4444" }}>Không hợp lệ</span>,
+              icon: (
+                <div style={{ width: 44, height: 44, borderRadius: 12, background: "#fef2f2", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <CloseCircleOutlined style={{ fontSize: 20, color: "#ef4444" }} />
+                </div>
+              ),
+            }}
+            style={{ borderRadius: 12, height: "100%" }}
+          />
+        </Col>
+      </Row>
+
       <ProTable<AdminDisputeItem>
         columns={columns}
         dataSource={filteredItems}
         rowKey="id"
         loading={isLoading || isFetching}
         search={false}
-        scroll={{ x: 900 }}
+        scroll={{ x: "max-content" }}
         cardBordered
         headerTitle="Danh sách khiếu nại"
         options={{

@@ -82,7 +82,7 @@ export default function HostSettings() {
             headerBordered
             style={{ borderRadius: 16 }}
           >
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Họ và tên</label>
                 <Input prefix={<UserOutlined style={{ color: "#94a3b8" }} />} value={user?.fullName || ""} readOnly style={{ borderRadius: 8, background: "#f8fafc" }} size="large" />
@@ -186,7 +186,7 @@ export default function HostSettings() {
             headerBordered
             style={{ borderRadius: 16 }}
           >
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label style={{ display: "block", fontSize: 11, fontWeight: 600, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6 }}>Ngôn ngữ</label>
                 <Select defaultValue="vi" className="w-full" size="large" options={[{ value: "vi", label: "🇻🇳 Tiếng Việt" }, { value: "en", label: "🇺🇸 English" }]} />

@@ -39,7 +39,7 @@ export enum HostOnboardingStatus {
 export enum PropertyStatus {
   DRAFT = "DRAFT",
   PENDING_REVIEW = "PENDING_REVIEW",
-  PUBLISHED = "PUBLISHED",
+  ACTIVE = "ACTIVE",
   HIDDEN = "HIDDEN",
   BANNED = "BANNED",
   REJECTED = "REJECTED",

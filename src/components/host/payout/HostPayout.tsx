@@ -449,6 +449,7 @@ export default function HostPayout() {
           showSizeChanger: false,
           showTotal: (total, range) => `Hiển thị ${range[0]} – ${range[1]} trong tổng số ${total} giao dịch`,
         }}
+        scroll={{ x: 'max-content' }}
       />
 
       {/* Info Notice */}

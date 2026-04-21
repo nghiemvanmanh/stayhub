@@ -326,7 +326,7 @@ export default function HostBookings() {
     >
       {/* Stat Cards */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={12} lg={6}>
+        <Col xs={24} sm={12} lg={6}>
           <StatisticCard
             statistic={{
               title: "Tổng lượt đặt",
@@ -337,7 +337,7 @@ export default function HostBookings() {
             style={{ borderRadius: 16 }}
           />
         </Col>
-        <Col xs={12} lg={6}>
+        <Col xs={24} sm={12} lg={6}>
           <StatisticCard
             statistic={{
               title: "Đang chờ xác nhận",
@@ -348,7 +348,7 @@ export default function HostBookings() {
             style={{ borderRadius: 16 }}
           />
         </Col>
-        <Col xs={12} lg={6}>
+        <Col xs={24} sm={12} lg={6}>
           <StatisticCard
             statistic={{
               title: "Doanh thu dự kiến",
@@ -359,7 +359,7 @@ export default function HostBookings() {
             style={{ borderRadius: 16 }}
           />
         </Col>
-        <Col xs={12} lg={6}>
+        <Col xs={24} sm={12} lg={6}>
           <StatisticCard
             statistic={{
               title: "Tỷ lệ lấp đầy",
@@ -415,6 +415,7 @@ export default function HostBookings() {
           showTotal: (total, range) =>
             `Hiển thị ${range[0]} – ${range[1]} trong tổng số ${total} kết quả`,
         }}
+        scroll={{ x: 'max-content' }}
       />
 
       <DisputeModal
