@@ -38,6 +38,10 @@ import {
     DoorOpen,
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
+import LoginModal from "@/components/auth/LoginModal";
+import RegisterModal from "@/components/auth/RegisterModal";
 import dayjs, { Dayjs } from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
 import "dayjs/locale/vi";
@@ -143,6 +147,11 @@ export default function HomestayDetailPage() {
         queryFn: () => getSimilarHomestays(property?.province ?? "", slug),
         enabled: !!property?.province,
     });
+
+    const { isLoggedIn } = useAuth();
+    const router = useRouter();
+    const [loginModalOpen, setLoginModalOpen] = useState(false);
+    const [registerModalOpen, setRegisterModalOpen] = useState(false);
 
     // ── Derived state ────────────────────────────────────────────────
     const nights = dates ? dates[1].diff(dates[0], "day") : 0;
@@ -859,18 +868,22 @@ export default function HomestayDetailPage() {
                                                 </div>
                                             </div>
                                             {canBook && dates ? (
-                                                <Link
-                                                    href={`/payment/${property.slug}?checkin=${dates[0].format("YYYY-MM-DD")}&checkout=${dates[1].format("YYYY-MM-DD")}&guests=${guests}&roomIds=${entirePlaceRoom?.id}`}
+                                                <Button
+                                                    type="primary"
+                                                    block
+                                                    size="large"
+                                                    onClick={() => {
+                                                        if (!isLoggedIn) {
+                                                            message.warning("Vui lòng đăng nhập để tiến hành đặt phòng.");
+                                                            setLoginModalOpen(true);
+                                                        } else {
+                                                            router.push(`/payment/${property.slug}?checkin=${dates[0].format("YYYY-MM-DD")}&checkout=${dates[1].format("YYYY-MM-DD")}&guests=${guests}&roomIds=${entirePlaceRoom?.id}`);
+                                                        }
+                                                    }}
+                                                    className="!rounded-xl !h-12 !text-base !font-semibold !bg-[#2DD4A8] !border-[#2DD4A8] hover:!bg-[#25bc95]"
                                                 >
-                                                    <Button
-                                                        type="primary"
-                                                        block
-                                                        size="large"
-                                                        className="!rounded-xl !h-12 !text-base !font-semibold !bg-[#2DD4A8] !border-[#2DD4A8] hover:!bg-[#25bc95]"
-                                                    >
-                                                        Đặt ngay
-                                                    </Button>
-                                                </Link>
+                                                    Đặt ngay
+                                                </Button>
                                             ) : (
                                                 <Button
                                                     type="primary"
@@ -1067,18 +1080,23 @@ export default function HomestayDetailPage() {
 
                                 {/* CTA */}
                                 {(canBook || (isEntirePlace && nights > 0)) && dates ? (
-                                    <Link
-                                        href={`/payment/${property.slug}?checkin=${dates[0].format("YYYY-MM-DD")}&checkout=${dates[1].format("YYYY-MM-DD")}&guests=${guests}&roomIds=${isEntirePlace ? entirePlaceRoom?.id : Array.from(selectedRoomIds).join(",")}`}
+                                    <Button
+                                        type="primary"
+                                        block
+                                        size="large"
+                                        onClick={() => {
+                                            if (!isLoggedIn) {
+                                                message.warning("Vui lòng đăng nhập để tiến hành đặt phòng.");
+                                                setLoginModalOpen(true);
+                                            } else {
+                                                const roomIds = isEntirePlace ? entirePlaceRoom?.id : Array.from(selectedRoomIds).join(",");
+                                                router.push(`/payment/${property.slug}?checkin=${dates[0].format("YYYY-MM-DD")}&checkout=${dates[1].format("YYYY-MM-DD")}&guests=${guests}&roomIds=${roomIds}`);
+                                            }
+                                        }}
+                                        className="!rounded-xl !h-12 !text-base !font-semibold mb-3 !bg-[#2DD4A8] !border-[#2DD4A8] hover:!bg-[#25bc95]"
                                     >
-                                        <Button
-                                            type="primary"
-                                            block
-                                            size="large"
-                                            className="!rounded-xl !h-12 !text-base !font-semibold mb-3 !bg-[#2DD4A8] !border-[#2DD4A8] hover:!bg-[#25bc95]"
-                                        >
-                                            {isEntirePlace ? "Đặt ngay" : `Đặt ngay · ${selectedRooms.length} phòng`}
-                                        </Button>
-                                    </Link>
+                                        {isEntirePlace ? "Đặt ngay" : `Đặt ngay · ${selectedRooms.length} phòng`}
+                                    </Button>
                                 ) : (
                                     <Button
                                         type="primary"
@@ -1276,23 +1294,44 @@ export default function HomestayDetailPage() {
                                 </div>
 
                                 {/* Action */}
-                                <Link
-                                    href={`/payment/${property.slug}?checkin=${dates[0].format("YYYY-MM-DD")}&checkout=${dates[1].format("YYYY-MM-DD")}&guests=${guests}&roomIds=${room.id}`}
-                                    onClick={() => setMobileBookingRoomId(null)}
+                                <Button
+                                    type="primary"
+                                    block
+                                    size="large"
+                                    onClick={() => {
+                                        setMobileBookingRoomId(null);
+                                        if (!isLoggedIn) {
+                                            message.warning("Vui lòng đăng nhập để tiến hành đặt phòng.");
+                                            setLoginModalOpen(true);
+                                        } else {
+                                            router.push(`/payment/${property.slug}?checkin=${dates[0].format("YYYY-MM-DD")}&checkout=${dates[1].format("YYYY-MM-DD")}&guests=${guests}&roomIds=${room.id}`);
+                                        }
+                                    }}
+                                    className="!rounded-xl !h-14 !text-base !font-semibold !bg-[#2DD4A8] !border-[#2DD4A8] hover:!bg-[#25bc95]"
                                 >
-                                    <Button
-                                        type="primary"
-                                        block
-                                        size="large"
-                                        className="!rounded-xl !h-14 !text-base !font-semibold !bg-[#2DD4A8] !border-[#2DD4A8] hover:!bg-[#25bc95]"
-                                    >
-                                        Xác nhận đặt · {roomTotal.toLocaleString("vi-VN")}đ
-                                    </Button>
-                                </Link>
+                                    Xác nhận đặt · {roomTotal.toLocaleString("vi-VN")}đ
+                                </Button>
                             </div>
                         );
                     })()}
                 </Drawer>
+
+                <LoginModal
+                    open={loginModalOpen}
+                    onClose={() => setLoginModalOpen(false)}
+                    onSwitchToRegister={() => {
+                        setLoginModalOpen(false);
+                        setRegisterModalOpen(true);
+                    }}
+                />
+                <RegisterModal
+                    open={registerModalOpen}
+                    onClose={() => setRegisterModalOpen(false)}
+                    onSwitchToLogin={() => {
+                        setRegisterModalOpen(false);
+                        setLoginModalOpen(true);
+                    }}
+                />
             </div>
         </ConfigProvider>
     );

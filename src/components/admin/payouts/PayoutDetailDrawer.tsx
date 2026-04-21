@@ -108,7 +108,7 @@ export const PayoutDetailDrawer: React.FC<PayoutDetailDrawerProps> = ({
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
                 <BankOutlined style={{ fontSize: 18, color: "#475569" }} />
                 <Text strong style={{ fontSize: 15, color: "#1a1a2e" }}>
-                  {payout.bankCode || "--"} - **** {payout.accountNumber?.slice(-4) || "----"}
+                  {payout.bankCode || "--"} - {payout.accountNumber || "----"}
                 </Text>
               </div>
               <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 6 }}>

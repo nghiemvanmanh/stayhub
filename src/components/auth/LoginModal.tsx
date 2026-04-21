@@ -45,8 +45,8 @@ export default function LoginModal({
             if (roles.includes("ROLE_ADMIN")) {
                 router.push("/admin/dashboard");
             }
-        } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : "Đăng nhập thất bại";
+        } catch (err: any) {
+            const msg = err?.response?.data?.message || err?.response?.data?.data || "Đăng nhập thất bại. Vui lòng kiểm tra lại.";
             messageApi.error(msg);
         } finally {
             setLoading(false);
