@@ -10,7 +10,8 @@ import {
   CheckCircle2, 
   XCircle,
   ChevronRight,
-  AlertTriangle
+  AlertTriangle,
+  CreditCard
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import DisputeModal from "@/components/shared/DisputeModal";
@@ -92,6 +93,26 @@ export default function MyBookings() {
     });
   };
 
+  const [isRepaying, setIsRepaying] = useState<string | null>(null);
+  const handleRepay = async (bookingCode: string) => {
+    try {
+      setIsRepaying(bookingCode);
+      const returnUrl = `${window.location.origin}/payment-result`;
+      const res = await fetcher.get("/payments/vnpay/booking/create-url", {
+        params: { bookingCode, returnUrl }
+      });
+      if (res.data?.data) {
+        window.location.href = res.data.data;
+      } else {
+        message.error("Không lấy được đường dẫn thanh toán");
+      }
+    } catch (err: any) {
+      message.error(err?.response?.data?.message || "Lỗi khi tạo giao dịch thanh toán.");
+    } finally {
+      setIsRepaying(null);
+    }
+  };
+
   const { data : bookings, isLoading } = useQuery({
     queryKey: ["my-bookings", activeTab],
     queryFn: async () => {
@@ -122,12 +143,14 @@ export default function MyBookings() {
       case "CANCELLED":
       case "REJECTED":
         return <Tag color="red" className="!flex !items-center rounded-full px-3 py-1 text-sm border-0"><XCircle className="w-4 h-4 inline mr-1" /> Đã hủy</Tag>;
+      case "AWAITING_PAYMENT":
+        return <Tag color="volcano" className="!flex !items-center rounded-full px-3 py-1 text-sm border-0"><XCircle className="w-4 h-4 inline mr-1" /> Chờ thanh toán</Tag>;
       case "COMPLETED":
         return <Tag color="cyan" className="!flex !items-center rounded-full px-3 py-1 text-sm border-0"><CheckCircle2 className="w-4 h-4 inline mr-1" /> Hoàn thành</Tag>;
       case "EXPIRED":
         return <Tag color="gray" className="!flex !items-center rounded-full px-3 py-1 text-sm border-0"><Clock className="w-4 h-4 inline mr-1" /> Hết hạn</Tag>;
       case "CHECKED_IN":
-        return <Tag color="volcano" className="!flex !items-center rounded-full px-3 py-1 text-sm border-0"><Clock className="w-4 h-4 inline mr-1" /> Nhận phòng</Tag>;
+        return <Tag color="purple" className="!flex !items-center rounded-full px-3 py-1 text-sm border-0"><Clock className="w-4 h-4 inline mr-1" /> Nhận phòng</Tag>;
       case "CHECKED_OUT":
         return <Tag color="magenta" className="!flex !items-center rounded-full px-3 py-1 text-sm border-0"><Clock className="w-4 h-4 inline mr-1" /> Trả phòng</Tag>;
       case "DISPUTED":
@@ -308,6 +331,16 @@ export default function MyBookings() {
                           className="h-10 px-4 rounded-xl font-bold text-sm flex items-center gap-2 !text-orange-500 !border-orange-200 hover:!bg-orange-50"
                         >
                           Khiếu nại
+                        </Button>
+                      )}
+                      {booking.status === "AWAITING_PAYMENT" && (
+                        <Button
+                          icon={<CreditCard className="w-4 h-4" />}
+                          onClick={() => handleRepay(booking.bookingCode)}
+                          loading={isRepaying === booking.bookingCode}
+                          className="h-10 px-4 rounded-xl font-bold text-sm flex items-center gap-2 !bg-[#2DD4A8] !text-white !border-[#2DD4A8] hover:!bg-[#25bc95]"
+                        >
+                          Hoàn thành thanh toán
                         </Button>
                       )}
                       <Button className="h-10 px-8 rounded-xl border-[#2DD4A8] text-[#2DD4A8] font-bold text-sm hover:bg-[#2DD4A8]/5 transition-colors">

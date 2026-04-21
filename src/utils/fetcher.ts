@@ -121,13 +121,13 @@ fetcher.interceptors.response.use(
       }
     }
 
-    if (
-      error.response?.status >= 500 &&
-      window?.location?.pathname !== "/500"
-    ) {
-      window.location.href = "/500";
-      return Promise.reject(error);
-    }
+    // if (
+    //   error.response?.status >= 500 &&
+    //   window?.location?.pathname !== "/500"
+    // ) {
+    //   window.location.href = "/500";
+    //   return Promise.reject(error);
+    // }
 
     return Promise.reject(error);
   },
