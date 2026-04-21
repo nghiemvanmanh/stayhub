@@ -1,25 +1,23 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button, Table, Tag, Input, Segmented, Empty, message, Switch, Tooltip } from "antd";
+import { Button, Tag, Empty, message, Switch, Tooltip, Row, Col } from "antd";
 import {
   PlusOutlined,
-  SearchOutlined,
   HomeOutlined,
   EyeOutlined,
   EditOutlined,
   MoreOutlined,
 } from "@ant-design/icons";
+import { PageContainer, ProTable, StatisticCard } from "@ant-design/pro-components";
+import type { ProColumns } from "@ant-design/pro-components";
 import { useSearchParams } from "next/navigation";
 import CreatePropertyDrawer from "@/components/host/properties/CreatePropertyDrawer";
 import EditPropertyDrawer from "@/components/host/properties/EditPropertyDrawer";
-import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { fetcher } from "@/utils/fetcher";
 import { PROPERTY_STATUS, PROPERTY_STATUS_MAP } from "@/constants/property";
 import { timeAgo, formatCurrency } from "@/utils/format";
-
-
 
 export default function HostPropertiesPage() {
   const [createDrawerOpen, setCreateDrawerOpen] = useState(false);
@@ -41,7 +39,6 @@ export default function HostPropertiesPage() {
   const { data: fetchResult, isLoading, refetch } = useQuery({
     queryKey: ["host-properties", filter, searchText, pageNo, pageSize],
     queryFn: async () => {
-      // NOTE: Here we should pass query params but we just use basic pagination for now
       const res = await fetcher.get(`/properties/host?pageNo=${pageNo}&pageSize=${pageSize}`);
       return res.data?.data ?? res.data;
     },
@@ -50,14 +47,18 @@ export default function HostPropertiesPage() {
   const listings = fetchResult?.items || [];
   const totalElements = fetchResult?.totalElements || 0;
 
-  const stats = [
-    { label: "TỔNG BÀI ĐĂNG", value: totalElements },
-    { label: "ĐANG HOẠT ĐỘNG", value: listings.filter((l: any) => l.status === PROPERTY_STATUS.PUBLISHED || l.status === "ACTIVE").length },
-    { label: "BẢN NHÁP", value: listings.filter((l: any) => l.status === PROPERTY_STATUS.DRAFT).length },
-    { label: "THU NHẬP THÁNG", value: "0đ", isHighlight: true },
-  ];
+  const handleCreateSuccess = () => {
+    setCreateDrawerOpen(false);
+    refetch();
+  };
 
-  const columns = [
+  const handleEditSuccess = () => {
+    setEditDrawerOpen(false);
+    setEditingPropertySlug(null);
+    refetch();
+  };
+
+  const columns: ProColumns<any>[] = [
     {
       title: "Cơ sở lưu trú",
       dataIndex: "name",
@@ -93,16 +94,16 @@ export default function HostPropertiesPage() {
       dataIndex: "status",
       key: "status",
       width: 250,
-      render: (status: string) => {
-        const statusData = PROPERTY_STATUS_MAP[status] || { label: status, isActive: false };
-        const isSwitchedOn = statusData.isActive || status === "ACTIVE" || status === "PUBLISHED";
+      render: (_: any, record: any) => {
+        const statusData = PROPERTY_STATUS_MAP[record.status] || { label: record.status, isActive: false };
+        const isSwitchedOn = statusData.isActive || record.status === "ACTIVE" || record.status === "PUBLISHED";
         return (
           <div className="flex items-center gap-3">
             <Switch
               size="default"
               checked={isSwitchedOn}
               onChange={(checked) => {
-                 message.info(`Sẽ cập nhật trạng thái thành ${checked ? 'Hoạt động' : 'Tạm dừng'} sau.`);
+                message.info(`Sẽ cập nhật trạng thái thành ${checked ? "Hoạt động" : "Tạm dừng"} sau.`);
               }}
               className={isSwitchedOn ? "!bg-[#2DD4A8]" : "bg-gray-300"}
             />
@@ -118,13 +119,12 @@ export default function HostPropertiesPage() {
       dataIndex: "startingPrice",
       key: "startingPrice",
       width: 120,
-      render: (price: number) => (
+      render: (price: any) => (
         <span className="font-medium whitespace-nowrap">{formatCurrency(price)}</span>
       ),
     },
     {
       title: "Hiệu suất",
-      dataIndex: "performance",
       key: "performance",
       width: 120,
       render: (_: any, record: any) => (
@@ -139,7 +139,7 @@ export default function HostPropertiesPage() {
       dataIndex: "createdAt",
       key: "createdAt",
       width: 100,
-      render: (date: string) => <span className="text-xs text-gray-500 whitespace-nowrap">{timeAgo(date)}</span>,
+      render: (date: any) => <span className="text-xs text-gray-500 whitespace-nowrap">{timeAgo(date)}</span>,
     },
     {
       title: "Thao tác",
@@ -148,169 +148,184 @@ export default function HostPropertiesPage() {
       width: 100,
       render: (_: any, record: any) => (
         <div className="flex items-center gap-1">
-          <Button type="text" size="small" icon={<EyeOutlined />} onClick={() => {
-            if (record.status === PROPERTY_STATUS.PUBLISHED) {
-              window.open(`/homestay/${record.slug}`, '_blank');
-            } else {
-              const statusLabel = PROPERTY_STATUS_MAP[record.status]?.label || record.status;
-              messageApi.warning(`Chỉ có thể xem chi tiết khi bài đăng ở trạng thái "Đang hoạt động". Trạng thái hiện tại: ${statusLabel}`);
-            }
-          }} />
-          <Button type="text" size="small" icon={<EditOutlined />} onClick={() => {
-            setEditingPropertySlug(record.slug);
-            setEditDrawerOpen(true);
-          }} />
+          <Button
+            type="text"
+            size="small"
+            icon={<EyeOutlined />}
+            onClick={() => {
+              if (record.status === PROPERTY_STATUS.PUBLISHED) {
+                window.open(`/homestay/${record.slug}`, "_blank");
+              } else {
+                const statusLabel = PROPERTY_STATUS_MAP[record.status]?.label || record.status;
+                messageApi.warning(`Chỉ có thể xem chi tiết khi bài đăng ở trạng thái "Đang hoạt động". Trạng thái hiện tại: ${statusLabel}`);
+              }
+            }}
+          />
+          <Button
+            type="text"
+            size="small"
+            icon={<EditOutlined />}
+            onClick={() => {
+              setEditingPropertySlug(record.slug);
+              setEditDrawerOpen(true);
+            }}
+          />
           <Button type="text" size="small" icon={<MoreOutlined />} />
         </div>
       ),
     },
   ];
 
-  const handleCreateSuccess = () => {
-    setCreateDrawerOpen(false);
-    refetch(); // Refetch listings after creation
-  };
-
-  const handleEditSuccess = () => {
-    setEditDrawerOpen(false);
-    setEditingPropertySlug(null);
-    refetch(); // Refetch listings after update
-  };
+  const tabItems = [
+    { key: "all", label: "Tất cả" },
+    { key: PROPERTY_STATUS.PUBLISHED, label: "Hoạt động" },
+    { key: PROPERTY_STATUS.DRAFT, label: "Nháp" },
+    { key: PROPERTY_STATUS.PENDING_REVIEW, label: "Chờ duyệt" },
+    { key: PROPERTY_STATUS.HIDDEN, label: "Tạm dừng" },
+    { key: PROPERTY_STATUS.BANNED, label: "Bị khóa" },
+  ];
 
   return (
-    <>
-      {contextHolder}
-      {/* Page Header (Hidden on mobile as Top Bar handles it) */}
-      <div className="hidden md:flex items-start justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 m-0">Bất động sản của bạn</h1>
-          <p className="text-sm text-gray-500 mt-1 m-0">
-            Quản lý và theo dõi hiệu suất các bài đăng homestay của bạn.
-          </p>
-        </div>
+    <PageContainer
+      header={{
+        title: "Bất động sản của bạn",
+        subTitle: "Quản lý và theo dõi hiệu suất các bài đăng homestay của bạn.",
+      }}
+      extra={[
         <Button
+          key="create"
           type="primary"
           icon={<PlusOutlined />}
           size="large"
           onClick={() => setCreateDrawerOpen(true)}
-          className="!bg-[#2DD4A8] !border-[#2DD4A8] !rounded-xl !font-semibold !h-[44px] !px-6 hover:!bg-[#22b892]"
+          style={{
+            background: "#2DD4A8",
+            borderColor: "#2DD4A8",
+            borderRadius: 12,
+            fontWeight: 600,
+            height: 44,
+            paddingLeft: 24,
+            paddingRight: 24,
+          }}
         >
           Thêm bài đăng mới
-        </Button>
-      </div>
+        </Button>,
+      ]}
+    >
+      {contextHolder}
 
-      {/* Stats Cards - Responsive Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6 md:mb-8">
-        {stats.map((stat, i) => (
-          <div
-            key={i}
-            className="bg-white rounded-xl border border-gray-200 p-4 md:p-5 hover:shadow-md transition-shadow"
-          >
-            <p className="text-[10px] md:text-[11px] font-semibold text-gray-400 tracking-wider m-0 uppercase truncate">
-              {stat.label}
-            </p>
-            <p
-              className={`text-xl md:text-2xl font-bold m-0 mt-1.5 md:mt-2 truncate ${
-                stat.isHighlight ? "text-[#2DD4A8]" : "text-gray-900"
-              }`}
-            >
-              {stat.value}
-            </p>
-          </div>
+      {/* Stats Cards */}
+      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        {[
+          { title: "TỔNG BÀI ĐĂNG", value: totalElements, highlight: false },
+          {
+            title: "ĐANG HOẠT ĐỘNG",
+            value: listings.filter((l: any) => l.status === PROPERTY_STATUS.PUBLISHED || l.status === "ACTIVE").length,
+            highlight: false,
+          },
+          {
+            title: "BẢN NHÁP",
+            value: listings.filter((l: any) => l.status === PROPERTY_STATUS.DRAFT).length,
+            highlight: false,
+          },
+          { title: "THU NHẬP THÁNG", value: "0đ", highlight: true },
+        ].map((stat, i) => (
+          <Col xs={12} lg={6} key={i}>
+            <StatisticCard
+              statistic={{
+                title: stat.title,
+                value: stat.value,
+                valueStyle: stat.highlight ? { color: "#2DD4A8" } : undefined,
+              }}
+              style={{ borderRadius: 12, height: "100%" }}
+            />
+          </Col>
         ))}
-      </div>
+      </Row>
 
-      {/* Search + Filters - Responsive Flex */}
-      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between mb-5 gap-4">
-        <Input
-          prefix={<SearchOutlined className="text-gray-400" />}
-          placeholder="Tìm kiếm tên, địa điểm..."
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          className="!w-full lg:!w-[360px] !rounded-lg"
-          size="large"
-        />
-        <div className="overflow-x-auto pb-1 -mx-1 px-1">
-          <Segmented
-            value={filter}
-            onChange={(v) => setFilter(v as string)}
-            options={[
-              { label: "Tất cả", value: "all" },
-              { label: "Hoạt động", value: PROPERTY_STATUS.PUBLISHED },
-              { label: "Nháp", value: PROPERTY_STATUS.DRAFT },
-              { label: "Chờ duyệt", value: PROPERTY_STATUS.PENDING_REVIEW },
-              { label: "Tạm dừng", value: PROPERTY_STATUS.HIDDEN },
-              { label: "Bị khóa", value: PROPERTY_STATUS.BANNED },
-            ]}
-          />
-        </div>
-      </div>
-
-      {/* Listings Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        {listings.length === 0 ? (
-          <div className="py-12 md:py-16 flex flex-col items-center justify-center px-4">
-            <Empty
-              image={Empty.PRESENTED_IMAGE_SIMPLE}
-              description={
-                <div className="text-center">
-                  <p className="text-base font-medium text-gray-700 m-0">Chưa có bài đăng nào</p>
-                  <p className="text-sm text-gray-400 mt-1 m-0">
-                    Bắt đầu tạo bài đăng đầu tiên của bạn ngay!
-                  </p>
-                </div>
-              }
-            >
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => setCreateDrawerOpen(true)}
-                className="!bg-[#2DD4A8] !border-[#2DD4A8] !rounded-lg !mt-4"
+      {/* ProTable */}
+      <ProTable
+        columns={columns}
+        dataSource={listings}
+        rowKey="id"
+        loading={isLoading}
+        search={false}
+        scroll={{ x: 800 }}
+        cardBordered
+        headerTitle="Danh sách bài đăng"
+        options={{
+          reload: () => refetch(),
+          density: true,
+          setting: true,
+        }}
+        toolbar={{
+          menu: {
+            type: "tab",
+            activeKey: filter,
+            items: tabItems,
+            onChange: (key) => setFilter(key as string),
+          },
+          search: {
+            placeholder: "Tìm kiếm tên, địa điểm...",
+            onSearch: (value: string) => setSearchText(value),
+            allowClear: true,
+          },
+        }}
+        pagination={{
+          current: pageNo,
+          pageSize,
+          total: totalElements,
+          onChange: (page, size) => {
+            setPageNo(page);
+            setPageSize(size);
+          },
+          showTotal: (total) => `Hiển thị ${listings.length} trên tổng số ${total} bài đăng`,
+        }}
+        locale={{
+          emptyText: (
+            <div style={{ padding: "48px 0", textAlign: "center" }}>
+              <Empty
+                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                description={
+                  <div>
+                    <p style={{ fontSize: 16, fontWeight: 500, color: "#475569", margin: 0 }}>
+                      Chưa có bài đăng nào
+                    </p>
+                    <p style={{ fontSize: 14, color: "#94a3b8", marginTop: 4 }}>
+                      Bắt đầu tạo bài đăng đầu tiên của bạn ngay!
+                    </p>
+                  </div>
+                }
               >
-                Tạo bài đăng mới
-              </Button>
-            </Empty>
-          </div>
-        ) : (
-          <Table
-            columns={columns}
-            dataSource={listings}
-            rowKey="id"
-            loading={isLoading}
-            scroll={{ x: 800 }} // Enable horizontal scroll on mobile
-            pagination={{
-              current: pageNo,
-              pageSize: pageSize,
-              total: totalElements,
-              onChange: (page, pageSize) => {
-                setPageNo(page);
-                setPageSize(pageSize);
-              },
-              showTotal: (total) => `Hiển thị ${listings.length} trên tổng số ${total} bài đăng`,
-            }}
-          />
-        )}
-      </div>
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={() => setCreateDrawerOpen(true)}
+                  style={{ background: "#2DD4A8", borderColor: "#2DD4A8", borderRadius: 8, marginTop: 8 }}
+                >
+                  Tạo bài đăng mới
+                </Button>
+              </Empty>
+            </div>
+          ),
+        }}
+      />
 
-      {/* Create Property Drawer */}
       <CreatePropertyDrawer
         open={createDrawerOpen}
         onClose={() => setCreateDrawerOpen(false)}
         onSuccess={handleCreateSuccess}
       />
 
-      {/* Edit Property Drawer */}
       <EditPropertyDrawer
         open={editDrawerOpen}
         slug={editingPropertySlug}
         onClose={() => {
           setEditDrawerOpen(false);
-          // Wait for drawer animation to close before clearing ID to avoid UI flicker
           setTimeout(() => setEditingPropertySlug(null), 300);
-
         }}
         onSuccess={handleEditSuccess}
       />
-    </>
+    </PageContainer>
   );
 }

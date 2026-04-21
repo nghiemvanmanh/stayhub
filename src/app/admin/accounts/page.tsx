@@ -1,49 +1,66 @@
 "use client";
 
 import React from "react";
-import { Card, Typography, Empty } from "antd";
-
-const { Title, Text } = Typography;
+import { PageContainer, ProTable } from "@ant-design/pro-components";
+import type { ProColumns } from "@ant-design/pro-components";
 
 export default function AdminAccountsPage() {
-  return (
-    <div>
-      <div style={{ marginBottom: 24 }}>
-        <Title level={4} style={{ margin: 0 }}>
-          Quản lý tài khoản
-        </Title>
-        <Text type="secondary" style={{ fontSize: 14 }}>
-          Quản lý tất cả tài khoản người dùng trên hệ thống
-        </Text>
-      </div>
+  const columns: ProColumns[] = [
+    { title: "Họ tên", dataIndex: "fullName", valueType: "text" },
+    { title: "Email", dataIndex: "email", valueType: "text" },
+    { title: "Vai trò", dataIndex: "role", valueType: "text" },
+    {
+      title: "Trạng thái",
+      dataIndex: "status",
+      valueType: "select",
+      valueEnum: {
+        ACTIVE: { text: "Đang hoạt động", status: "Success" },
+        INACTIVE: { text: "Vô hiệu hoá", status: "Default" },
+        BANNED: { text: "Bị khoá", status: "Error" },
+      },
+    },
+    { title: "Ngày tạo", dataIndex: "createdAt", valueType: "date" },
+  ];
 
-      <Card
-        bordered={false}
-        style={{
-          borderRadius: 12,
-          boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+  return (
+    <PageContainer
+      header={{
+        title: "Quản lý tài khoản",
+        subTitle: "Quản lý tất cả tài khoản người dùng trên hệ thống",
+      }}
+    >
+      <ProTable
+        columns={columns}
+        dataSource={[]}
+        rowKey="id"
+        search={false}
+        options={{
+          density: true,
+          setting: true,
+          fullScreen: true,
         }}
-      >
-        <Empty
-          description={
-            <div style={{ textAlign: "center" }}>
-              <Text
-                type="secondary"
-                style={{ fontSize: 16, display: "block", marginBottom: 8 }}
-              >
+        pagination={{
+          pageSize: 10,
+          showSizeChanger: true,
+        }}
+        headerTitle="Danh sách tài khoản"
+        cardBordered
+        locale={{
+          emptyText: (
+            <div style={{ padding: "60px 0", textAlign: "center" }}>
+              <div style={{ fontSize: 16, color: "#94a3b8", marginBottom: 8 }}>
                 🚧 Đang hoàn thiện
-              </Text>
-              <Text type="secondary" style={{ fontSize: 13 }}>
+              </div>
+              <div style={{ fontSize: 13, color: "#cbd5e1" }}>
                 Tính năng quản lý tài khoản đang được phát triển.
                 <br />
                 Bạn sẽ có thể xem, tìm kiếm, khóa/mở khóa tài khoản người
                 dùng tại đây.
-              </Text>
+              </div>
             </div>
-          }
-          style={{ padding: "80px 0" }}
-        />
-      </Card>
-    </div>
+          ),
+        }}
+      />
+    </PageContainer>
   );
 }

@@ -2,33 +2,26 @@
 
 import React, { useState, useMemo } from "react";
 import {
-  Card,
-  Table,
   Tag,
   Button,
-  Input,
   Space,
-  Typography,
   Avatar,
   Tooltip,
-  Segmented,
 } from "antd";
 import {
-  SearchOutlined,
   EyeOutlined,
   UserOutlined,
   DownloadOutlined,
   ReloadOutlined,
 } from "@ant-design/icons";
+import { PageContainer, ProTable } from "@ant-design/pro-components";
+import type { ProColumns } from "@ant-design/pro-components";
 import { DisputeDetailModal } from "@/components/admin/disputes/DisputeDetailModal";
 import { useQuery } from "@tanstack/react-query";
 import { fetcher } from "@/utils/fetcher";
-import type { ColumnsType } from "antd/es/table";
 import type { AdminDisputeItem, PaginatedResponse } from "@/interfaces/admin";
 import dayjs from "dayjs";
 import { ADMIN_DISPUTE_STATUS_MAP, ADMIN_DISPUTE_TAB_FILTERS } from "@/constants/dispute";
-
-const { Title, Text } = Typography;
 
 export default function AdminDisputesPage() {
   const [pageNo, setPageNo] = useState(1);
@@ -36,7 +29,6 @@ export default function AdminDisputesPage() {
   const [activeTab, setActiveTab] = useState("ALL");
   const [searchText, setSearchText] = useState("");
 
-  // Detail Modal State
   const [selectedDispute, setSelectedDispute] = useState<AdminDisputeItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -70,18 +62,16 @@ export default function AdminDisputesPage() {
     setIsModalOpen(true);
   };
 
-
-
-  const columns: ColumnsType<AdminDisputeItem> = [
+  const columns: ProColumns<AdminDisputeItem>[] = [
     {
       title: "Mã Booking",
       dataIndex: "bookingCode",
       key: "bookingCode",
       width: 130,
-      render: (code: string) => (
-        <Text strong style={{ fontSize: 13, color: "#2563eb" }}>
-          #{code}
-        </Text>
+      render: (_: any, record: AdminDisputeItem) => (
+        <span style={{ fontWeight: 600, fontSize: 13, color: "#2563eb" }}>
+          #{record.bookingCode}
+        </span>
       ),
     },
     {
@@ -93,9 +83,9 @@ export default function AdminDisputesPage() {
           <Avatar icon={<UserOutlined />} size={36} />
           <div style={{ minWidth: 0, display: "flex", flexDirection: "column" }}>
             <Tooltip title={record.creatorName || record.creatorEmail}>
-              <Text strong style={{ fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              <span style={{ fontWeight: 600, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                 {record.creatorName || record.creatorEmail || "--"}
-              </Text>
+              </span>
             </Tooltip>
             <Tag color={record.creatorRole === "HOST" ? "purple" : "cyan"} style={{ alignSelf: "flex-start", marginTop: 2, fontSize: 11, padding: "0 6px" }}>
               {record.creatorRole || "USER"}
@@ -109,22 +99,22 @@ export default function AdminDisputesPage() {
       dataIndex: "reason",
       key: "reason",
       width: 300,
-      render: (reason: string, record: AdminDisputeItem) => {
+      render: (_: any, record: AdminDisputeItem) => {
         let urlsCount = 0;
         if (record.evidenceImageUrls) {
-           try {
-              if (record.evidenceImageUrls.startsWith("[")) {
-                 urlsCount = JSON.parse(record.evidenceImageUrls).length;
-              } else {
-                 urlsCount = record.evidenceImageUrls.split(",").filter(Boolean).length;
-              }
-           } catch(e) {}
+          try {
+            if (record.evidenceImageUrls.startsWith("[")) {
+              urlsCount = JSON.parse(record.evidenceImageUrls).length;
+            } else {
+              urlsCount = record.evidenceImageUrls.split(",").filter(Boolean).length;
+            }
+          } catch (e) {}
         }
         return (
           <div>
-            <Text style={{ fontSize: 13, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-              {reason || "--"}
-            </Text>
+            <span style={{ fontSize: 13, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+              {record.reason || "--"}
+            </span>
             {urlsCount > 0 && (
               <div style={{ display: "flex", gap: 4, marginTop: 4 }}>
                 <Tag color="default" style={{ fontSize: 11 }}>
@@ -142,10 +132,10 @@ export default function AdminDisputesPage() {
       key: "createdAt",
       width: 150,
       sorter: true,
-      render: (date: string) => (
-        <Text style={{ fontSize: 13, color: "#475569" }}>
+      render: (date: any) => (
+        <span style={{ fontSize: 13, color: "#475569" }}>
           {date ? dayjs(date).format("DD/MM/YYYY HH:mm") : "--"}
-        </Text>
+        </span>
       ),
     },
     {
@@ -153,7 +143,7 @@ export default function AdminDisputesPage() {
       dataIndex: "status",
       key: "status",
       width: 140,
-      render: (status: string) => {
+      render: (status: any) => {
         const s = ADMIN_DISPUTE_STATUS_MAP[status] || { color: "default", label: status };
         return (
           <Tag color={s.color} style={{ borderRadius: 6, fontWeight: 500 }}>
@@ -183,79 +173,73 @@ export default function AdminDisputesPage() {
     },
   ];
 
-
+  const tabItems = (ADMIN_DISPUTE_TAB_FILTERS as any[]).map((f: any) => ({
+    key: typeof f === "string" ? f : f.value,
+    label: typeof f === "string" ? f : f.label,
+  }));
 
   return (
-    <div>
-      {/* Header Section */}
-      <div style={{ marginBottom: 24 }}>
-        <Title level={3} style={{ margin: 0, fontWeight: 800, color: "#1a1a2e" }}>
-          Quản lý Khiếu nại
-        </Title>
-        <Text style={{ color: "#94a3b8", fontSize: 14 }}>
-          Danh sách khiếu nại tranh chấp từ khách hàng và chủ nhà.
-        </Text>
-      </div>
+    <PageContainer
+      header={{
+        title: "Quản lý Khiếu nại",
+        subTitle: "Danh sách khiếu nại tranh chấp từ khách hàng và chủ nhà.",
+      }}
+    >
+      <ProTable<AdminDisputeItem>
+        columns={columns}
+        dataSource={filteredItems}
+        rowKey="id"
+        loading={isLoading || isFetching}
+        search={false}
+        scroll={{ x: 900 }}
+        cardBordered
+        headerTitle="Danh sách khiếu nại"
+        options={{
+          reload: () => refetch(),
+          density: true,
+          setting: true,
+        }}
+        toolbar={{
+          menu: {
+            type: "tab",
+            activeKey: activeTab,
+            items: tabItems,
+            onChange: (key) => {
+              setActiveTab(key as string);
+              setPageNo(1);
+            },
+          },
+          search: {
+            placeholder: "Tìm mã Booking, người tạo...",
+            onSearch: (value: string) => setSearchText(value),
+            allowClear: true,
+          },
+        }}
+        toolBarRender={() => [
+          <Button key="export" icon={<DownloadOutlined />}>
+            Xuất dữ liệu
+          </Button>,
+        ]}
+        pagination={{
+          current: pageNo,
+          pageSize,
+          total: data?.totalElements || 0,
+          showSizeChanger: true,
+          showTotal: (total, range) =>
+            `Hiển thị ${range[0]} - ${range[1]} của ${total} khiếu nại`,
+          pageSizeOptions: ["10", "20", "50"],
+          onChange: (page, size) => {
+            setPageNo(page);
+            setPageSize(size);
+          },
+        }}
+      />
 
-      {/* Main Table Card */}
-      <Card bordered={false} style={{ borderRadius: 12 }} styles={{ body: { padding: 0 } }}>
-        <div style={{ padding: "16px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, borderBottom: "1px solid #f0f0f0" }}>
-          <div style={{ display: "flex", gap: 12, alignItems: "center", flex: "1 1 200px", flexWrap: "wrap" }}>
-            <Input
-              placeholder="Tìm mã Booking, người tạo..."
-              prefix={<SearchOutlined style={{ color: "#bfbfbf" }} />}
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              style={{ flex: 1, minWidth: 200, maxWidth: 300, borderRadius: 8, height: 38 }}
-              allowClear
-            />
-          </div>
-          <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap", maxWidth: "100%" }}>
-            <div style={{ maxWidth: "100%", overflowX: "auto" }}>
-              <Segmented
-                options={ADMIN_DISPUTE_TAB_FILTERS}
-                value={activeTab}
-                onChange={(val) => { setActiveTab(val as string); setPageNo(1); }}
-                style={{ borderRadius: 8 }}
-              />
-            </div>
-            <Button 
-              icon={<ReloadOutlined />} 
-              onClick={() => refetch()} 
-              loading={isFetching}
-              style={{ borderRadius: 8, height: 38 }}
-            />
-            <Button icon={<DownloadOutlined />} style={{ borderRadius: 8, height: 38 }}>
-              Xuất dữ liệu
-            </Button>
-          </div>
-        </div>
-
-        <Table
-          columns={columns}
-          dataSource={filteredItems}
-          rowKey="id"
-          loading={isLoading || isFetching}
-          scroll={{ x: 900 }}
-          pagination={{
-            current: pageNo,
-            pageSize,
-            total: data?.totalElements || 0,
-            showSizeChanger: true,
-            showTotal: (total, range) => `Hiển thị ${range[0]} - ${range[1]} của ${total} khiếu nại`,
-            pageSizeOptions: ["10", "20", "50"],
-            onChange: (page, size) => { setPageNo(page); setPageSize(size); },
-            style: { padding: "0 20px" },
-          }}
-        />
-      </Card>
-
-      {/* Detail Modal */}
       <DisputeDetailModal
         open={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         dispute={selectedDispute}
       />
-    </div>
+    </PageContainer>
   );
 }
