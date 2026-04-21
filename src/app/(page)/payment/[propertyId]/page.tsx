@@ -36,21 +36,6 @@ const { TextArea } = Input;
 /* ───── helpers ───── */
 const fmt = (n: number) => n.toLocaleString("vi-VN");
 
-const cancellationPolicyText: Record<string, { title: string; desc: string }> = {
-    FLEXIBLE: {
-        title: "Hoàn tiền 100% khi hủy trước 24 giờ.",
-        desc: "Để nhận được tiền hoàn lại đầy đủ, khách phải hủy ít nhất 24 giờ trước giờ nhận phòng của danh sách. Sau thời gian đó, phí dịch vụ không được hoàn lại.",
-    },
-    MODERATE: {
-        title: "Hoàn tiền 100% khi hủy trước 48 giờ.",
-        desc: "Để nhận được tiền hoàn lại đầy đủ, khách phải hủy ít nhất 48 giờ trước giờ nhận phòng của danh sách. Sau thời gian đó, phí dịch vụ không được hoàn lại và 50% tiền phòng sẽ được tính.",
-    },
-    STRICT: {
-        title: "Hoàn tiền 50% khi hủy trước 7 ngày.",
-        desc: "Để nhận được 50% tiền hoàn lại, khách phải hủy ít nhất 7 ngày trước giờ nhận phòng. Sau thời gian đó, không hoàn lại bất kỳ khoản nào.",
-    },
-};
-
 const paymentTypeLabel: Record<PropertyPaymentType, { name: string; desc: string; icon: React.ReactNode }> = {
     [PropertyPaymentType.PAY_IN_FULL]: {
         name: "Thanh toán online toàn bộ (VNPAY)",
@@ -571,10 +556,14 @@ export default function PaymentPage() {
                                             children: (
                                                 <div className="pl-11">
                                                     <p className="text-sm font-medium text-gray-700 mb-1">
-                                                        {selectedRooms[0]?.cancellationPolicyResponse?.name || cancellationPolicyText["FLEXIBLE"].title}
+                                                        {property?.cancellationPolicyResponse?.description }
                                                     </p>
                                                     <p className="text-xs text-gray-500 leading-relaxed">
-                                                        {selectedRooms[0]?.cancellationPolicyResponse?.description || cancellationPolicyText["FLEXIBLE"].desc}
+                                                        Để đảm bảo quyền lợi hoàn tiền, khách hàng cần thực hiện hủy đặt phòng trong thời gian quy định trước ngày nhận phòng dự kiến. 
+                                                        Việc hủy sớm sẽ giúp khách nhận được mức hoàn tiền tối đa theo chính sách áp dụng tại thời điểm đặt phòng. 
+                                                        Trong trường hợp hủy muộn hơn so với thời hạn quy định, khoản hoàn tiền có thể bị khấu trừ một phần chi phí dịch vụ hoặc các khoản phí liên quan. 
+                                                        Mức hoàn cụ thể sẽ phụ thuộc vào thời điểm hủy, điều kiện của cơ sở lưu trú, cũng như các chính sách hiện hành. 
+                                                        Khách hàng nên kiểm tra kỹ thông tin chi tiết trước khi thực hiện hủy để đảm bảo quyền lợi của mình.
                                                     </p>
                                                 </div>
                                             ),

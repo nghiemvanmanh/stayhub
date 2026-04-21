@@ -120,6 +120,7 @@ export interface PropertyDetail {
   rentalTypeName: string;
   rentalTypeSlug: string;
   rooms: PropertyDetailRoom[];
+  cancellationPolicyResponse: any;
 }
 
 // Legacy interface kept for backward-compatibility (used in some mock data files)
