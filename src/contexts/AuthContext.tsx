@@ -26,6 +26,7 @@ interface AuthContextType {
     login: (user: User, tokens: AuthTokens) => void;
     logout: () => void;
     updateTokens: (tokens: AuthTokens) => void;
+    updateUser: (nextUser: User) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -86,6 +87,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSubscription(getSubscriptionFromToken(accessToken));
     }, []);
 
+    const updateUser = useCallback((nextUser: User) => {
+        Cookies.set(USER_INFO, JSON.stringify(nextUser));
+        setUser(nextUser);
+    }, []);
+
     return (
         <AuthContext.Provider
             value={{
@@ -99,6 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 login,
                 logout,
                 updateTokens,
+                updateUser,
             }}
         >
             {children}

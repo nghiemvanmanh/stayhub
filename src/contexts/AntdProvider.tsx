@@ -13,7 +13,7 @@ export default function AntdProvider({
         token: {
           colorPrimary: "#2DD4A8",
           borderRadius: 8,
-          fontFamily: "var(--font-geist-sans), Arial, Helvetica, sans-serif",
+          fontFamily: "Arial, Helvetica, sans-serif",
         },
       }}
     >

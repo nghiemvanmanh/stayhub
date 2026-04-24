@@ -211,7 +211,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               }}
             >
               <span style={{ color: "#94a3b8", fontSize: 12 }}>
-                © 2024 StayHub Admin Console. All rights reserved.
+                © 2026 StayHub Admin Console. All rights reserved.
               </span>
               <div style={{ display: "flex", gap: 20 }}>
                 <span style={{ color: "#94a3b8", fontSize: 12, cursor: "pointer" }}>

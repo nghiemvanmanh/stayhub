@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { mockReviews, mockProfiles } from "@/data";
+import { mockReviews } from "@/data";
 import { Rate, Avatar, Skeleton } from "antd";
 import Marquee from "react-fast-marquee";
 
@@ -12,14 +12,13 @@ const fetchTestimonials = async () => {
     .filter(r => r.rating >= 4)
     .slice(0, 6)
     .map((r, index) => {
-      const profile = mockProfiles.find(p => p.userId === r.userId);
       return {
         id: r.id,
         rating: r.rating,
         comment: r.comment,
-        name: profile?.fullName || "Khách Hàng",
-        avatar: profile?.avatarUrl || `https://i.pravatar.cc/150?u=${r.userId}`,
-        location: profile?.fullName ? "Từ StayHub" : "Khách du lịch",
+        name: "Khách Hàng",
+        avatar: `https://i.pravatar.cc/150?u=${r.userId}`,
+        location: "Khách du lịch",
       };
     });
 };

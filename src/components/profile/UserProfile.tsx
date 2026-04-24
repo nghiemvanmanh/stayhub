@@ -1,74 +1,194 @@
 "use client";
 
-import React, { useState } from "react";
-import { 
-  Row, 
-  Col, 
-  Menu, 
-  Card, 
-  Avatar, 
-  Typography, 
-  Button, 
-  Form, 
-  Input, 
-  DatePicker, 
-  Select, 
-  Switch, 
-  List, 
-  Badge, 
+import React, { useEffect, useRef, useState } from "react";
+import {
+  Row,
+  Col,
+  Menu,
+  Card,
+  Avatar,
+  Typography,
+  Button,
+  Form,
+  Input,
+  DatePicker,
+  Select,
+  Switch,
+  List,
   Progress,
   Divider,
   Modal,
   message,
-  Space
+  Space,
+  Spin,
 } from "antd";
-import { 
-  UserOutlined, 
-  SafetyCertificateOutlined, 
-  CreditCardOutlined, 
-  HeartOutlined, 
+import {
+  UserOutlined,
+  SafetyCertificateOutlined,
+  CreditCardOutlined,
+  HeartOutlined,
   CrownOutlined,
   EditOutlined,
   CameraOutlined,
   MailOutlined,
   PhoneOutlined,
-  DeleteOutlined,
   StarOutlined,
   EnvironmentOutlined,
-  GlobalOutlined,
-  ScheduleOutlined
+  ScheduleOutlined,
 } from "@ant-design/icons";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
+import { fetcher } from "@/utils/fetcher";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { PresignedUploadData, Profile } from "@/interfaces/user";
+import ChangePasswordModal from "../shared/ChangePasswordModal";
 
 dayjs.locale("vi");
 
-const { Title, Text, Paragraph } = Typography;
+const { Title, Text } = Typography;
+
+function getFileInfo(file: File) {
+  const dotIdx = file.name.lastIndexOf(".");
+  const extension = dotIdx >= 0 ? file.name.slice(dotIdx).toLowerCase() : "";
+  return {
+    extension,
+    contentType: file.type || "application/octet-stream",
+  };
+}
+
+async function uploadFileToS3(file: File): Promise<string> {
+  const fileInfo = getFileInfo(file);
+  const { data } = await fetcher.post("/files/presigned-url", {
+    files: [fileInfo],
+  });
+  const presigned = Array.isArray(data) ? data[0] : data;
+  const uploadData = ((presigned as any)?.data || presigned) as PresignedUploadData;
+
+  await fetch(uploadData.presignedUrl, {
+    method: "PUT",
+    body: file,
+    headers: {
+      "Content-Type": file.type,
+    },
+  });
+
+  return uploadData.publicUrl;
+}
 
 export default function UserProfile() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [activeMenu, setActiveMenu] = useState("personal");
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string>(user?.avatarUrl || "");
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement | null>(null);
   const [form] = Form.useForm();
+  const [changePasswordForm] = Form.useForm();
 
-  // Load initial value
-  const initialValues = {
-    fullName: user?.fullName || "",
-    email: user?.email || "",
-    phone: "",
-    gender: "male",
-    nationality: "VN",
-    address: ""
+  const { data: profileData, isLoading: isProfileLoading } = useQuery({
+    queryKey: ["user-profile"],
+    queryFn: async () => {
+      const res = await fetcher.get("/auth/profiles");
+      return (res.data?.data ?? res.data) as Profile;
+    },
+    enabled: !!user,
+  });
+
+  useEffect(() => {
+    if (!user) return;
+    const mappedValues: Profile = {
+      fullName: profileData?.fullName || user.fullName || "",
+      email: user.email || "",
+      phoneNumber: profileData?.phoneNumber || "",
+      gender: profileData?.gender,
+      dateOfBirth: profileData?.dateOfBirth ? dayjs(profileData.dateOfBirth) : undefined,
+      address: profileData?.address || "",
+      bio: profileData?.bio || "",
+    };
+
+    form.setFieldsValue(mappedValues);
+    setAvatarUrl(profileData?.avatarUrl || user.avatarUrl || "");
+  }, [profileData, user, form]);
+
+  const updateProfileMutation = useMutation({
+    mutationFn: async (payload: Profile) => {
+      const res = await fetcher.put("/auth/user/profiles", payload);
+      return res.data;
+    },
+    onSuccess: (_, payload) => {
+      queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+
+      if (user) {
+        updateUser({
+          ...user,
+          fullName: payload.fullName || user.fullName,
+          avatarUrl: payload.avatarUrl || user.avatarUrl,
+        });
+      }
+    },
+    onError: (err: any) => {
+      message.error(
+        err?.response?.data?.message ||
+          err?.response?.data?.data ||
+          "Không thể cập nhật thông tin. Vui lòng thử lại."
+      );
+    },
+  });
+
+  const handleUpdateInfo = async () => {
+    try {
+      const values = await form.validateFields();
+      const payload: Profile = {
+        email: user?.email || "",
+        fullName: values.fullName,
+        phoneNumber: values.phoneNumber,
+        avatarUrl,
+        gender: values.gender,
+        dateOfBirth: values.dateOfBirth
+          ? dayjs(values.dateOfBirth).format("YYYY-MM-DD")
+          : undefined as any,
+        address: values.address,
+        bio: values.bio,
+      };
+
+      await updateProfileMutation.mutateAsync(payload);
+      message.success("Cập nhật thông tin thành công!");
+    } catch {
+      // validation errors are handled by antd form
+    }
   };
 
-  const handleUpdateInfo = () => {
-    form.validateFields().then((values) => {
-      console.log("Form values:", values);
-      message.success("Cập nhật thông tin thành công!");
-    });
+  const handleAvatarClick = () => {
+    avatarInputRef.current?.click();
+  };
+
+  const handleAvatarChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const isImage = file.type.startsWith("image/");
+    if (!isImage) {
+      message.warning("Vui lòng chọn file ảnh hợp lệ");
+      event.target.value = "";
+      return;
+    }
+
+    try {
+      setIsUploadingAvatar(true);
+      const uploadedUrl = await uploadFileToS3(file);
+      await updateProfileMutation.mutateAsync({ avatarUrl: uploadedUrl } as Profile);
+      setAvatarUrl(uploadedUrl);
+      message.success("Tải ảnh đại diện thành công");
+    } catch (err: any) {
+      message.error(err?.response?.data?.message || "Không thể tải ảnh đại diện");
+    } finally {
+      setIsUploadingAvatar(false);
+      event.target.value = "";
+    }
   };
 
   const handleDeleteAccount = () => {
@@ -80,6 +200,52 @@ export default function UserProfile() {
       cancelText: "Hủy bỏ",
       onOk: () => message.success("Đã xoá tài khoản"),
     });
+  };
+
+  const changePasswordMutation = useMutation({
+    mutationFn: async (payload: {
+      oldPassword: string;
+      newPassword: string;
+      confirmPassword: string;
+    }) => {
+      const res = await fetcher.post("/auth/change-password", payload);
+      return res.data;
+    },
+    onSuccess: () => {
+      message.success("Đổi mật khẩu thành công");
+      setChangePasswordOpen(false);
+      changePasswordForm.resetFields();
+    },
+    onError: (err: any) => {
+      message.error(
+        err?.response?.data?.message ||
+          err?.response?.data?.data ||
+          "Không thể đổi mật khẩu. Vui lòng thử lại."
+      );
+    },
+  });
+
+  const handleOpenChangePassword = () => {
+    setChangePasswordOpen(true);
+  };
+
+  const handleCloseChangePassword = () => {
+    if (changePasswordMutation.isPending) return;
+    setChangePasswordOpen(false);
+    changePasswordForm.resetFields();
+  };
+
+  const handleSubmitChangePassword = async () => {
+    try {
+      const values = await changePasswordForm.validateFields();
+      await changePasswordMutation.mutateAsync({
+        oldPassword: values.oldPassword,
+        newPassword: values.newPassword,
+        confirmPassword: values.confirmPassword,
+      });
+    } catch {
+      // validation errors are handled by antd form
+    }
   };
 
   const menuItems = [
@@ -101,11 +267,10 @@ export default function UserProfile() {
       <Text type="secondary" className="block mb-6">
         Cập nhật thông tin cơ bản và cách chúng tôi có thể liên lạc với bạn.
       </Text>
-      
+
       <Form
         form={form}
         layout="vertical"
-        initialValues={initialValues}
       >
         <Row gutter={16}>
           <Col xs={24} md={12}>
@@ -119,33 +284,21 @@ export default function UserProfile() {
             </Form.Item>
           </Col>
           <Col xs={24} md={12}>
-            <Form.Item label="Số điện thoại" name="phone">
+            <Form.Item label="Số điện thoại" name="phoneNumber">
               <Input size="large" placeholder="Ví dụ: 0912345678" prefix={<PhoneOutlined />} />
             </Form.Item>
           </Col>
           <Col xs={24} md={12}>
-            <Form.Item label="Ngày sinh" name="dob">
+            <Form.Item label="Ngày sinh" name="dateOfBirth">
               <DatePicker size="large" style={{ width: '100%' }} format="DD/MM/YYYY" placeholder="Chọn ngày sinh" />
             </Form.Item>
           </Col>
           <Col xs={24} md={12}>
             <Form.Item label="Giới tính" name="gender">
               <Select size="large">
-                <Select.Option value="male">Nam</Select.Option>
-                <Select.Option value="female">Nữ</Select.Option>
-                <Select.Option value="other">Khác / Không tiết lộ</Select.Option>
-              </Select>
-            </Form.Item>
-          </Col>
-          <Col xs={24} md={12}>
-            <Form.Item label="Quốc tịch" name="nationality">
-              <Select size="large">
-                <Select.Option value="VN">
-                  <Space><GlobalOutlined /> Việt Nam</Space>
-                </Select.Option>
-                <Select.Option value="US">
-                  <Space><GlobalOutlined /> United States</Space>
-                </Select.Option>
+                <Select.Option value="MALE">Nam</Select.Option>
+                <Select.Option value="FEMALE">Nữ</Select.Option>
+                <Select.Option value="OTHER">Khác / Không tiết lộ</Select.Option>
               </Select>
             </Form.Item>
           </Col>
@@ -154,11 +307,27 @@ export default function UserProfile() {
               <Input size="large" placeholder="Số nhà, Đường, Phường, Quận..." prefix={<EnvironmentOutlined />} />
             </Form.Item>
           </Col>
+          <Col xs={24}>
+            <Form.Item label="Giới thiệu ngắn" name="bio">
+              <Input.TextArea
+                rows={4}
+                placeholder="Mô tả ngắn về bạn"
+                showCount
+                maxLength={300}
+              />
+            </Form.Item>
+          </Col>
         </Row>
-        
+
         <Divider />
         <div style={{ textAlign: "right" }}>
-          <Button type="primary" size="large" onClick={handleUpdateInfo} className="bg-[#2DD4A8] border-none hover:bg-[#25bc95] rounded-lg">
+          <Button
+            type="primary"
+            size="large"
+            onClick={handleUpdateInfo}
+            loading={updateProfileMutation.isPending}
+            className="bg-[#2DD4A8] border-none hover:bg-[#25bc95] rounded-lg"
+          >
             Lưu thay đổi
           </Button>
         </div>
@@ -180,7 +349,7 @@ export default function UserProfile() {
             {
               title: "Đổi mật khẩu",
               description: "Luôn sử dụng mật khẩu mạnh để bảo vệ tài khoản.",
-              action: <Button>Cập nhật mật khẩu mới</Button>
+              action: <Button onClick={handleOpenChangePassword}>Cập nhật mật khẩu mới</Button>
             },
             {
               title: "Đăng nhập bằng Sinh trắc học (Passkeys)",
@@ -294,23 +463,39 @@ export default function UserProfile() {
   return (
     <div className="bg-[#f0f2f5] min-h-[calc(100vh-72px)] py-10">
       <div className="max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         <Row gutter={[24, 24]}>
           <Col xs={24} md={8} lg={7}>
             {/* User Badge Card */}
             <Card bordered={false} className="shadow-sm rounded-xl mb-6 text-center">
               <div className="relative inline-block mb-4 group">
-                <Avatar 
-                  size={100} 
-                  src={user?.avatarUrl} 
-                  icon={<UserOutlined />} 
+                <Avatar
+                  size={100}
+                  src={avatarUrl || user?.avatarUrl}
+                  icon={<UserOutlined />}
                   className="border-4 border-white shadow-sm"
                 />
-                <div className="absolute bottom-0 right-0 w-8 h-8 bg-white rounded-full flex justify-center items-center cursor-pointer shadow border border-gray-100 hover:bg-gray-50">
-                  <CameraOutlined className="text-gray-600" />
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarChange}
+                />
+                <div
+                  onClick={handleAvatarClick}
+                  className="absolute bottom-0 right-0 w-8 h-8 bg-white rounded-full flex justify-center items-center cursor-pointer shadow border border-gray-100 hover:bg-gray-50"
+                >
+                  {isUploadingAvatar ? (
+                    <Spin size="small" />
+                  ) : (
+                    <CameraOutlined className="text-gray-600" />
+                  )}
                 </div>
               </div>
-              <Title level={4} style={{ margin: 0 }}>{user?.fullName || "Người dùng Stayhub"}</Title>
+              <Title level={4} style={{ margin: 0 }}>
+                {form.getFieldValue("fullName") || user?.fullName || "Người dùng Stayhub"}
+              </Title>
               <Text type="secondary" className="block mb-4">{user?.email}</Text>
               
               <div className="bg-gradient-to-r from-amber-100 to-amber-50 rounded-lg p-3 border border-amber-200 text-left">
@@ -337,11 +522,27 @@ export default function UserProfile() {
           </Col>
 
           <Col xs={24} md={16} lg={17}>
-            {getActiveContent()}
+            {isProfileLoading && activeMenu === "personal" ? (
+              <Card bordered={false} className="shadow-sm rounded-xl">
+                <div className="py-10 flex items-center justify-center">
+                  <Spin size="large" />
+                </div>
+              </Card>
+            ) : (
+              getActiveContent()
+            )}
           </Col>
         </Row>
 
       </div>
+
+      <ChangePasswordModal
+        changePasswordOpen={changePasswordOpen}
+        handleCloseChangePassword={handleCloseChangePassword}
+        handleSubmitChangePassword={handleSubmitChangePassword}
+        changePasswordForm={changePasswordForm}
+        changePasswordMutation={changePasswordMutation}
+      />
     </div>
   );
 }

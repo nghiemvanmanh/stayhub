@@ -26,7 +26,10 @@ export default function LoginModal({
     onSwitchToRegister,
 }: LoginModalProps) {
     const [form] = Form.useForm();
+    const [forgotForm] = Form.useForm();
     const [loading, setLoading] = useState(false);
+    const [forgotOpen, setForgotOpen] = useState(false);
+    const [forgotLoading, setForgotLoading] = useState(false);
     const { login } = useAuth();
     const [messageApi, contextHolder] = message.useMessage();
     const router = useRouter();
@@ -50,6 +53,40 @@ export default function LoginModal({
             messageApi.error(msg);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleOpenForgotPassword = () => {
+        const currentEmail = form.getFieldValue("email");
+        if (currentEmail) {
+            forgotForm.setFieldsValue({ email: currentEmail });
+        }
+        setForgotOpen(true);
+    };
+
+    const handleCloseForgotPassword = () => {
+        if (forgotLoading) return;
+        setForgotOpen(false);
+        forgotForm.resetFields();
+    };
+
+    const handleForgotPassword = async () => {
+        try {
+            const values = await forgotForm.validateFields();
+            setForgotLoading(true);
+            await fetcher.post("/auth/forgot-password", {
+                email: values.email,
+            });
+            messageApi.success("Yêu cầu đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra email của bạn.");
+            handleCloseForgotPassword();
+        } catch (err: any) {
+            if (err?.errorFields) {
+                return;
+            }
+            const msg = err?.response?.data?.message || err?.response?.data?.data || "Gửi yêu cầu thất bại. Vui lòng thử lại.";
+            messageApi.error(msg);
+        } finally {
+            setForgotLoading(false);
         }
     };
 
@@ -119,6 +156,7 @@ export default function LoginModal({
                     <div className="flex justify-end mb-4">
                         <button
                             type="button"
+                            onClick={handleOpenForgotPassword}
                             className="text-sm text-[#2DD4A8] hover:underline bg-transparent border-none cursor-pointer p-0"
                         >
                             Quên mật khẩu?
@@ -155,6 +193,40 @@ export default function LoginModal({
                         Đăng ký ngay
                     </button>
                 </p>
+            </Modal>
+
+            <Modal
+                open={forgotOpen}
+                onCancel={handleCloseForgotPassword}
+                onOk={handleForgotPassword}
+                okText="Gửi yêu cầu"
+                cancelText="Hủy"
+                confirmLoading={forgotLoading}
+                title="Quên mật khẩu"
+                width={420}
+                destroyOnHidden
+            >
+                <Form
+                    form={forgotForm}
+                    layout="vertical"
+                    requiredMark={false}
+                >
+                    <Form.Item
+                        name="email"
+                        label={<span className="font-medium text-gray-700">Email</span>}
+                        rules={[
+                            { required: true, message: "Vui lòng nhập email" },
+                            { type: "email", message: "Email không hợp lệ" },
+                        ]}
+                    >
+                        <Input
+                            prefix={<MailOutlined className="text-gray-400" />}
+                            placeholder="example@email.com"
+                            size="large"
+                            className="rounded-xl"
+                        />
+                    </Form.Item>
+                </Form>
             </Modal>
         </>
     );

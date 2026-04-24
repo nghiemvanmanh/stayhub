@@ -1,16 +1,24 @@
+import dayjs from "dayjs";
 import { Gender, HostOnboardingStatus, SocialProvider } from "./enums";
 
 export interface Profile {
-  userId: string | number;
+  email: string;
+  userId?: string | number;
   fullName: string;
   phoneNumber?: string;
   avatarUrl?: string;
-  dob?: Date | string;
+  dateOfBirth: dayjs.Dayjs | undefined ;
   gender?: Gender;
   bio?: string;
-  addressDetail?: string;
+  address?: string;
   updatedAt?: Date | string;
 }
+
+export interface PresignedUploadData {
+  presignedUrl: string;
+  publicUrl: string;
+}
+
 
 export interface HostDetail {
   userId: string | number;
