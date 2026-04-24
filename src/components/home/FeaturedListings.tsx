@@ -24,10 +24,12 @@ const fetchHomestaysByCategory = async (categorySlug: string): Promise<PropertyL
 };
 
 export default function FeaturedListings({ categorySlug }: FeaturedListingsProps) {
-  const { data: homestays, isLoading } = useQuery({
+
+  const { data: homestays, isLoading, isFetching } = useQuery({
     queryKey: ["homestaysByCategory", categorySlug],
     queryFn: () => fetchHomestaysByCategory(categorySlug),
     enabled: !!categorySlug,
+    staleTime: 0,
   });
 
   return (
@@ -50,7 +52,7 @@ export default function FeaturedListings({ categorySlug }: FeaturedListingsProps
         </div>
 
         {/* Grid */}
-        {isLoading ? (
+        {isLoading || isFetching ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="space-y-3">

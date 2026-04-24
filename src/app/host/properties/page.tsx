@@ -14,7 +14,7 @@ import type { ProColumns } from "@ant-design/pro-components";
 import { useSearchParams } from "next/navigation";
 import CreatePropertyDrawer from "@/components/host/properties/CreatePropertyDrawer";
 import EditPropertyDrawer from "@/components/host/properties/EditPropertyDrawer";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { fetcher } from "@/utils/fetcher";
 import { PROPERTY_STATUS, PROPERTY_STATUS_MAP } from "@/constants/property";
 import { timeAgo, formatCurrency } from "@/utils/format";
@@ -27,6 +27,7 @@ export default function HostPropertiesPage() {
   const [searchText, setSearchText] = useState("");
   const [pageNo, setPageNo] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [togglingPropertyId, setTogglingPropertyId] = useState<number | null>(null);
   const [messageApi, contextHolder] = message.useMessage();
   const searchParams = useSearchParams();
 
@@ -57,6 +58,32 @@ export default function HostPropertiesPage() {
     setEditingPropertySlug(null);
     refetch();
   };
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: async ({ propertyId, isActive }: { propertyId: number; isActive: boolean }) => {
+      const res = await fetcher.put(
+        `/properties/host/${propertyId}/toggle-status`,
+        null,
+        { params: { isActive } }
+      );
+      return res.data;
+    },
+    onSuccess: (resData) => {
+      const successMsg = resData?.data || resData?.message || "Cập nhật trạng thái bài đăng thành công";
+      messageApi.success(successMsg);
+      refetch();
+    },
+    onError: (err: any) => {
+      messageApi.error(
+        err?.response?.data?.message ||
+        err?.response?.data?.data ||
+        "Không thể cập nhật trạng thái bài đăng"
+      );
+    },
+    onSettled: () => {
+      setTogglingPropertyId(null);
+    },
+  });
 
   const columns: ProColumns<any>[] = [
     {
@@ -96,14 +123,28 @@ export default function HostPropertiesPage() {
       width: 250,
       render: (_: any, record: any) => {
         const statusData = PROPERTY_STATUS_MAP[record.status] || { label: record.status, isActive: false };
-        const isSwitchedOn = statusData.isActive || record.status === "ACTIVE" || record.status === "ACTIVE";
+        const isSwitchedOn = statusData.isActive || record.status === PROPERTY_STATUS.ACTIVE;
+        const canToggle =
+          record.status === PROPERTY_STATUS.ACTIVE ||
+          record.status === PROPERTY_STATUS.INACTIVE;
         return (
           <div className="flex items-center gap-3">
             <Switch
               size="default"
               checked={isSwitchedOn}
+              loading={togglingPropertyId === record.id}
+              disabled={!canToggle}
               onChange={(checked) => {
-                message.info(`Sẽ cập nhật trạng thái thành ${checked ? "Hoạt động" : "Tạm dừng"} sau.`);
+                if (!canToggle) {
+                  const statusLabel = PROPERTY_STATUS_MAP[record.status]?.label || record.status;
+                  messageApi.warning(`Không thể đổi trạng thái ở mục ${statusLabel}`);
+                  return;
+                }
+                setTogglingPropertyId(record.id);
+                toggleStatusMutation.mutate({
+                  propertyId: record.id,
+                  isActive: checked,
+                });
               }}
               className={isSwitchedOn ? "!bg-[#2DD4A8]" : "bg-gray-300"}
             />

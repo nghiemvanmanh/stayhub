@@ -5,6 +5,7 @@ export const PROPERTY_STATUS = {
   BANNED: "BANNED",
   REJECTED: "REJECTED",
   ACTIVE: "ACTIVE",
+  INACTIVE: "INACTIVE",
 } as const;
 
 export type PropertyStatus =
@@ -28,6 +29,11 @@ export const PROPERTY_STATUS_MAP: Record<
     label: "Đang hoạt động",
     isActive: true,
     color: "success",
+  },
+  [PROPERTY_STATUS.INACTIVE]: {
+    label: "Không hoạt động",
+    isActive: false,
+    color: "default",
   },
   [PROPERTY_STATUS.HIDDEN]: {
     label: "Tạm dừng",
