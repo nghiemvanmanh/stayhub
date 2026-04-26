@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import {
   Spin,
   Tag,
@@ -26,6 +26,9 @@ import {
   SendOutlined,
   StarFilled,
   ExclamationCircleOutlined,
+  SafetyOutlined,
+  ArrowLeftOutlined,
+  CheckCircleOutlined,
 } from "@ant-design/icons";
 import {
   Wallet,
@@ -109,6 +112,10 @@ export default function HostPayout() {
   const [showPayout, setShowPayout] = useState(false);
   const [payoutAmount, setPayoutAmount] = useState<number | null>(null);
   const [payoutBankId, setPayoutBankId] = useState<number | null>(null);
+  const [payoutStep, setPayoutStep] = useState<1 | 2>(1);
+  const [otpCode, setOtpCode] = useState("");
+  const [otpDigits, setOtpDigits] = useState<string[]>(["" , "", "", "", "", ""]);
+  const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // Fetch wallet
   const { data: wallet, isLoading: loadingWallet, refetch: refetchWallet } = useQuery({
@@ -181,21 +188,70 @@ export default function HostPayout() {
     onError: (err: any) => { message.error(err?.response?.data?.message || err?.response?.data?.data || "Xoá tài khoản thất bại"); },
   });
 
-  const payoutMutation = useMutation({
+  const requestOtpMutation = useMutation({
     mutationFn: async () => {
-      const res = await fetcher.post("/payments/host/payouts", { amountPayout: payoutAmount, bankAccountId: payoutBankId });
+      const res = await fetcher.post("/payments/host/payouts/request-otp", { amountPayout: payoutAmount, bankAccountId: payoutBankId });
       return res.data;
     },
-    onSuccess: () => {
-      message.success("Yêu cầu rút tiền đã được gửi thành công!");
+    onSuccess: (data: any) => {
+      message.success(data?.data || "Mã OTP đã được gửi đến email của bạn!");
+      setPayoutStep(2);
+      setOtpDigits(["", "", "", "", "", ""]);
+      setOtpCode("");
+      setTimeout(() => otpInputRefs.current[0]?.focus(), 100);
+    },
+    onError: (err: any) => { message.error(err?.response?.data?.message || err?.response?.data?.data || "Gửi mã OTP thất bại"); },
+  });
+
+  const verifyOtpMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetcher.post("/payments/host/payouts/verify", { amountPayout: payoutAmount, bankAccountId: payoutBankId, otp: otpCode });
+      return res.data;
+    },
+    onSuccess: (data: any) => {
+      message.success(data?.data || "Yêu cầu rút tiền đã được gửi thành công!");
       queryClient.invalidateQueries({ queryKey: ["host-wallet"] });
       queryClient.invalidateQueries({ queryKey: ["host-transactions"] });
-      setShowPayout(false); setPayoutAmount(null); setPayoutBankId(null);
+      resetPayoutForm();
     },
-    onError: (err: any) => { message.error(err?.response?.data?.message || err?.response?.data?.data || "Yêu cầu rút tiền thất bại"); },
+    onError: (err: any) => { message.error(err?.response?.data?.message || err?.response?.data?.data || "Xác thực OTP thất bại"); },
   });
 
   const resetBankForm = () => { setBankFormCode(""); setBankFormAccount(""); setBankFormHolder(""); setBankFormBranch(""); setBankFormDefault(false); };
+
+  const resetPayoutForm = () => {
+    setShowPayout(false); setPayoutAmount(null); setPayoutBankId(null);
+    setPayoutStep(1); setOtpCode(""); setOtpDigits(["", "", "", "", "", ""]);
+  };
+
+  const handleOtpDigitChange = (index: number, value: string) => {
+    if (value.length > 1) value = value.slice(-1);
+    if (value && !/^\d$/.test(value)) return;
+    const newDigits = [...otpDigits];
+    newDigits[index] = value;
+    setOtpDigits(newDigits);
+    setOtpCode(newDigits.join(""));
+    if (value && index < 5) {
+      otpInputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !otpDigits[index] && index > 0) {
+      otpInputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const text = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    const newDigits = [...otpDigits];
+    for (let i = 0; i < 6; i++) newDigits[i] = text[i] || "";
+    setOtpDigits(newDigits);
+    setOtpCode(newDigits.join(""));
+    const nextEmpty = newDigits.findIndex(d => !d);
+    otpInputRefs.current[nextEmpty >= 0 ? nextEmpty : 5]?.focus();
+  };
 
   const handleDeleteBank = (bank: BankAccount) => {
     const bankInfo = vietqrBanks.find((b) => b.code === bank.bankCode);
@@ -509,32 +565,115 @@ export default function HostPayout() {
         </div>
       </Modal>
 
-      {/* ── MODAL: Yêu cầu rút tiền ── */}
-      <Modal open={showPayout} onCancel={() => { setShowPayout(false); setPayoutAmount(null); setPayoutBankId(null); }} footer={null} width={480} centered destroyOnHidden>
+      {/* ── MODAL: Yêu cầu rút tiền (2-step OTP) ── */}
+      <Modal open={showPayout} onCancel={resetPayoutForm} footer={null} width={480} centered destroyOnHidden>
         <div className="space-y-5">
+          {/* Header */}
           <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
-            <div className="w-10 h-10 bg-green-50 rounded-xl flex items-center justify-center"><SendOutlined className="text-green-500 text-lg" /></div>
-            <div><h3 className="text-lg font-bold text-gray-900 m-0">Yêu cầu rút tiền</h3><p className="text-xs text-gray-400 m-0">Số dư khả dụng: {formatCurrency(wallet?.availableBalance || 0)}</p></div>
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${payoutStep === 1 ? 'bg-green-50' : 'bg-blue-50'}`}>
+              {payoutStep === 1 ? <SendOutlined className="text-green-500 text-lg" /> : <SafetyOutlined className="text-blue-500 text-lg" />}
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-gray-900 m-0">{payoutStep === 1 ? 'Yêu cầu rút tiền' : 'Xác thực OTP'}</h3>
+              <p className="text-xs text-gray-400 m-0">
+                {payoutStep === 1 ? `Số dư khả dụng: ${formatCurrency(wallet?.availableBalance || 0)}` : 'Nhập mã OTP đã gửi đến email của bạn'}
+              </p>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Số tiền cần rút <span className="text-red-500">*</span></label>
-            <InputNumber value={payoutAmount} onChange={(val) => setPayoutAmount(val)} min={10000} max={wallet?.availableBalance || 0}
-              formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")} parser={(value) => Number(value?.replace(/,/g, ""))}
-              className="!w-full !rounded-lg" size="large" addonAfter="VNĐ" />
+
+          {/* Step Indicator */}
+          <div className="flex items-center gap-2 px-2">
+            <div className="flex items-center gap-2 flex-1">
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+                payoutStep >= 1 ? 'bg-[#2DD4A8] text-white' : 'bg-gray-100 text-gray-400'
+              }`}>{payoutStep > 1 ? <CheckCircleOutlined /> : '1'}</div>
+              <span className={`text-xs font-medium ${payoutStep >= 1 ? 'text-gray-700' : 'text-gray-400'}`}>Thông tin</span>
+            </div>
+            <div className={`flex-1 h-0.5 rounded ${payoutStep >= 2 ? 'bg-[#2DD4A8]' : 'bg-gray-200'}`} />
+            <div className="flex items-center gap-2 flex-1 justify-end">
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${
+                payoutStep >= 2 ? 'bg-[#2DD4A8] text-white' : 'bg-gray-100 text-gray-400'
+              }`}>2</div>
+              <span className={`text-xs font-medium ${payoutStep >= 2 ? 'text-gray-700' : 'text-gray-400'}`}>Xác thực</span>
+            </div>
           </div>
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Tài khoản nhận <span className="text-red-500">*</span></label>
-            <Select placeholder="Chọn tài khoản ngân hàng..." value={payoutBankId || undefined} onChange={(val) => setPayoutBankId(val)} className="w-full" size="large"
-              options={bankAccounts.map((b) => { const bd = getBankDisplay(b.bankCode); return { value: b.id, label: (<div className="flex items-center gap-2"><span className="font-medium">{bd.shortName}</span><span className="text-gray-400 text-xs">· {b.accountNumber}</span>{b.isDefault && <Tag color="green" style={{ fontSize: 10, padding: "0 4px", borderRadius: 10 }}>Mặc định</Tag>}</div>) }; })}
-            />
-          </div>
-          <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
-            <Button onClick={() => { setShowPayout(false); setPayoutAmount(null); setPayoutBankId(null); }} style={{ borderRadius: 10 }}>Hủy</Button>
-            <Button type="primary" loading={payoutMutation.isPending} onClick={() => payoutMutation.mutate()} disabled={!payoutAmount || !payoutBankId}
-              style={{ borderRadius: 10, background: "#2DD4A8", borderColor: "#2DD4A8", fontWeight: 600 }}>
-              Xác nhận rút tiền
-            </Button>
-          </div>
+
+          {payoutStep === 1 ? (
+            /* ── Step 1: Amount + Bank ── */
+            <>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Số tiền cần rút <span className="text-red-500">*</span></label>
+                <InputNumber value={payoutAmount} onChange={(val) => setPayoutAmount(val)} min={10000} max={wallet?.availableBalance || 0}
+                  formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")} parser={(value) => Number(value?.replace(/,/g, ""))}
+                  className="!w-full !rounded-lg" size="large" addonAfter="VNĐ" />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Tài khoản nhận <span className="text-red-500">*</span></label>
+                <Select placeholder="Chọn tài khoản ngân hàng..." value={payoutBankId || undefined} onChange={(val) => setPayoutBankId(val)} className="w-full" size="large"
+                  options={bankAccounts.map((b) => { const bd = getBankDisplay(b.bankCode); return { value: b.id, label: (<div className="flex items-center gap-2"><span className="font-medium">{bd.shortName}</span><span className="text-gray-400 text-xs">· {b.accountNumber}</span>{b.isDefault && <Tag color="green" style={{ fontSize: 10, padding: "0 4px", borderRadius: 10 }}>Mặc định</Tag>}</div>) }; })}
+                />
+              </div>
+              <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
+                <Button onClick={resetPayoutForm} style={{ borderRadius: 10 }}>Hủy</Button>
+                <Button type="primary" loading={requestOtpMutation.isPending} onClick={() => requestOtpMutation.mutate()} disabled={!payoutAmount || !payoutBankId}
+                  style={{ borderRadius: 10, background: "#2DD4A8", borderColor: "#2DD4A8", fontWeight: 600 }}>
+                  Gửi mã OTP
+                </Button>
+              </div>
+            </>
+          ) : (
+            /* ── Step 2: OTP Verification ── */
+            <>
+              {/* Summary */}
+              <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Số tiền rút</span>
+                  <span className="font-bold text-gray-900">{formatCurrency(payoutAmount || 0)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Tài khoản nhận</span>
+                  <span className="font-medium text-gray-700">
+                    {(() => { const bank = bankAccounts.find(b => b.id === payoutBankId); if (!bank) return '—'; const bd = getBankDisplay(bank.bankCode); return `${bd.shortName} · ${bank.accountNumber}`; })()}
+                  </span>
+                </div>
+              </div>
+
+              {/* OTP Input */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-3 text-center">Nhập mã xác thực 6 chữ số</label>
+                <div className="flex justify-center gap-2" onPaste={handleOtpPaste}>
+                  {otpDigits.map((digit, i) => (
+                    <input
+                      key={i}
+                      ref={(el) => { otpInputRefs.current[i] = el; }}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleOtpDigitChange(i, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                      className="w-12 h-14 text-center text-xl font-bold border-2 border-gray-200 rounded-xl outline-none transition-all focus:border-[#2DD4A8] focus:ring-2 focus:ring-[#2DD4A8]/20 bg-white"
+                      style={{ caretColor: '#2DD4A8' }}
+                    />
+                  ))}
+                </div>
+                <p className="text-xs text-gray-400 text-center mt-3">
+                  Mã OTP đã được gửi đến email đăng ký của bạn
+                </p>
+              </div>
+
+              <div className="flex justify-between pt-2 border-t border-gray-100">
+                <Button icon={<ArrowLeftOutlined />} onClick={() => { setPayoutStep(1); setOtpDigits(["", "", "", "", "", ""]); setOtpCode(""); }} style={{ borderRadius: 10 }}>Quay lại</Button>
+                <div className="flex gap-3">
+                  <Button onClick={() => requestOtpMutation.mutate()} loading={requestOtpMutation.isPending} style={{ borderRadius: 10 }}>Gửi lại OTP</Button>
+                  <Button type="primary" loading={verifyOtpMutation.isPending} onClick={() => verifyOtpMutation.mutate()} disabled={otpCode.length !== 6}
+                    style={{ borderRadius: 10, background: "#2DD4A8", borderColor: "#2DD4A8", fontWeight: 600 }}>
+                    Xác nhận rút tiền
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </Modal>
     </PageContainer>

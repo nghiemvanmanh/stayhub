@@ -20,6 +20,7 @@ import dayjs from "dayjs";
 import Link from "next/link";
 import { Tag } from "antd";
 import { BOOKING_STATUS_MAP } from "@/constants/booking";
+import BookingCalendar from "@/components/host/dashboard/BookingCalendar";
 
 const { Text } = Typography;
 
@@ -288,6 +289,11 @@ export default function HostDashboardPage() {
           </ProCard>
         </Col>
       </Row>
+
+      {/* Booking Calendar */}
+      <div style={{ marginBottom: 24 }}>
+        <BookingCalendar />
+      </div>
 
       {/* Recent Bookings ProTable */}
       <ProTable<any>

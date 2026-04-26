@@ -36,6 +36,7 @@ import "dayjs/locale/vi";
 import { formatCurrency } from "@/utils/format";
 import { BOOKING_STATUS_MAP, BOOKING_FILTER_TABS } from "@/constants/booking";
 import DisputeModal from "@/components/shared/DisputeModal";
+import RoomCalendarModal from "@/components/host/bookings/RoomCalendarModal";
 
 dayjs.locale("vi");
 
@@ -70,6 +71,7 @@ export default function HostBookings() {
   const [activeFilter, setActiveFilter] = useState("all");
   const [searchText, setSearchText] = useState("");
   const [disputeBookingCode, setDisputeBookingCode] = useState<string | null>(null);
+  const [showCalendar, setShowCalendar] = useState(false);
 
   const { data: apiResponse, isLoading, refetch } = useQuery({
     queryKey: ["host-bookings", currentPage],
@@ -318,6 +320,7 @@ export default function HostBookings() {
           key="calendar"
           type="primary"
           icon={<CalendarOutlined />}
+          onClick={() => setShowCalendar(true)}
           style={{ borderRadius: 12, height: 40, background: "#2DD4A8", borderColor: "#2DD4A8", fontWeight: 600 }}
         >
           Xem lịch trống
@@ -423,6 +426,11 @@ export default function HostBookings() {
         onClose={() => setDisputeBookingCode(null)}
         bookingCode={disputeBookingCode || ""}
         onSuccess={() => queryClient.invalidateQueries({ queryKey: ["host-bookings"] })}
+      />
+
+      <RoomCalendarModal
+        open={showCalendar}
+        onClose={() => setShowCalendar(false)}
       />
     </PageContainer>
   );
