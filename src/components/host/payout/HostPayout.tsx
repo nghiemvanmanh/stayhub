@@ -135,6 +135,18 @@ export default function HostPayout() {
     },
   });
 
+  // Auto-select default bank when opening payout modal
+  useEffect(() => {
+    if (showPayout && bankAccounts && bankAccounts.length > 0 && !payoutBankId) {
+      const defaultBank = bankAccounts.find((b) => b.isDefault);
+      if (defaultBank) {
+        setPayoutBankId(defaultBank.id);
+      } else {
+        setPayoutBankId(bankAccounts[0].id);
+      }
+    }
+  }, [showPayout, bankAccounts, payoutBankId]);
+
   // Fetch VietQR bank list
   const { data: vietqrBanks = [] } = useQuery({
     queryKey: ["vietqr-banks"],

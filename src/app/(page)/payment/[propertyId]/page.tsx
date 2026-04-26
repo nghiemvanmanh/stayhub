@@ -26,6 +26,7 @@ import { Shield, Banknote, Smartphone, ChevronDown } from "lucide-react";
 import locale from "antd/locale/vi_VN";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { useAuth } from "@/contexts/AuthContext";
 import { PropertyPaymentType } from "@/interfaces/enums";
 import { fetcher } from "@/utils/fetcher";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -169,8 +170,27 @@ export default function PaymentPage() {
     const [lastName, setLastName] = useState("");
     const [firstName, setFirstName] = useState("");
     const [email, setEmail] = useState("");
+    const [phone, setPhone] = useState("");
     const [note, setNote] = useState("");
     const [agreed, setAgreed] = useState(false);
+    
+    // Auto-prefill from user token
+    const { user } = useAuth();
+    const [isPrefilled, setIsPrefilled] = useState(false);
+    console.log({user})
+    React.useEffect(() => {
+        if (user && !isPrefilled) {
+            const parts = (user.fullName || "").trim().split(" ");
+            const fname = parts.length > 0 ? parts[parts.length - 1] : "";
+            const lname = parts.length > 1 ? parts.slice(0, -1).join(" ") : "";
+
+            setFirstName(fname);
+            setLastName(lname);
+            setEmail(user.email || "");
+            setPhone((user as any).phone || (user as any).phoneNumber || "");
+            setIsPrefilled(true);
+        }
+    }, [user, isPrefilled]);
 
     const bookingMutation = useMutation({
         mutationFn: async () => {
@@ -222,10 +242,6 @@ export default function PaymentPage() {
     });
 
     const handleBookingSubmit = () => {
-        if (!lastName || !firstName || !email) {
-            message.warning("Vui lòng điền đủ thông tin khách hàng!");
-            return;
-        }
         bookingMutation.mutate();
     };
 
@@ -269,6 +285,7 @@ export default function PaymentPage() {
     const isOnlineMethod = true; // Both methods require VNPAY now
 
     const categoryName = property.categoryName || "CHỖ Ở";
+    const backUrl = `/homestay/${property.slug}?checkin=${checkin}&checkout=${checkout}&roomIds=${roomIdsParam}&guests=${guestsParam}#booking-section`;
 
     return (
         <ConfigProvider locale={locale}>
@@ -279,7 +296,7 @@ export default function PaymentPage() {
                     {/* ── Back + Title ── */}
                     <div className="flex items-center gap-3 mb-5 sm:mb-8">
                         <Link
-                            href={`/homestay/${property.slug}`}
+                            href={backUrl}
                             className="text-gray-800 hover:text-[#2DD4A8] transition-colors"
                         >
                             <ArrowLeftOutlined className="text-base sm:text-lg" />
@@ -397,7 +414,7 @@ export default function PaymentPage() {
                                             </p>
                                         </div>
                                         <Link
-                                            href={`/homestay/${property.slug}`}
+                                            href={backUrl}
                                             className="text-xs sm:text-sm font-semibold text-gray-900 underline hover:text-[#2DD4A8]"
                                         >
                                             Chỉnh sửa
@@ -409,7 +426,7 @@ export default function PaymentPage() {
                                             <p className="text-xs sm:text-sm text-gray-600 m-0">{guests} khách</p>
                                         </div>
                                         <Link
-                                            href={`/homestay/${property.slug}`}
+                                            href={backUrl}
                                             className="text-xs sm:text-sm font-semibold text-gray-900 underline hover:text-[#2DD4A8]"
                                         >
                                             Chỉnh sửa
@@ -500,17 +517,31 @@ export default function PaymentPage() {
                                         />
                                     </div>
                                 </div>
-                                <div className="mb-3 sm:mb-4">
-                                    <label className="text-[11px] sm:text-xs text-gray-500 font-medium">
-                                        Email xác nhận
-                                    </label>
-                                    <Input
-                                        placeholder="nguyenvana@example.com"
-                                        size="middle"
-                                        className="!rounded-lg mt-1 sm:!h-10"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
-                                    />
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
+                                    <div>
+                                        <label className="text-[11px] sm:text-xs text-gray-500 font-medium">
+                                            Email xác nhận
+                                        </label>
+                                        <Input
+                                            placeholder="nguyenvana@example.com"
+                                            size="middle"
+                                            className="!rounded-lg mt-1 sm:!h-10"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[11px] sm:text-xs text-gray-500 font-medium">
+                                            Số điện thoại
+                                        </label>
+                                        <Input
+                                            placeholder="0912345678"
+                                            size="middle"
+                                            className="!rounded-lg mt-1 sm:!h-10"
+                                            value={phone}
+                                            onChange={(e) => setPhone(e.target.value)}
+                                        />
+                                    </div>
                                 </div>
                                 <div>
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-0.5 sm:gap-0 mb-1">

@@ -120,15 +120,24 @@ export default function HomestayDetailPage() {
     const params = useParams();
     const slug = params?.slug as string;
 
-    const [isFavorite, setIsFavorite] = useState(false);
-    const [guests, setGuests] = useState(2);
-    const [selectedRoomIds, setSelectedRoomIds] = useState<Set<number | string>>(new Set());
-    const [mobileBookingRoomId, setMobileBookingRoomId] = useState<string | number | null>(null);
-
-    // Read dates from URL params (passed from search page)
+    // Read dates and selections from URL params (passed from search page or payment back link)
     const searchParams = useSearchParams();
-    const urlCheckIn = searchParams.get("checkIn");
-    const urlCheckOut = searchParams.get("checkOut");
+    const urlCheckIn = searchParams.get("checkIn") || searchParams.get("checkin");
+    const urlCheckOut = searchParams.get("checkOut") || searchParams.get("checkout");
+    const urlRoomIds = searchParams.get("roomIds");
+    const urlGuests = searchParams.get("guests");
+
+    const [isFavorite, setIsFavorite] = useState(false);
+    const [guests, setGuests] = useState(urlGuests ? parseInt(urlGuests, 10) : 2);
+    
+    // Parse roomIds from URL
+    const initialRooms = useMemo(() => {
+        if (!urlRoomIds) return new Set<number | string>();
+        return new Set(urlRoomIds.split(",").map(id => isNaN(Number(id)) ? id : Number(id)));
+    }, [urlRoomIds]);
+
+    const [selectedRoomIds, setSelectedRoomIds] = useState<Set<number | string>>(initialRooms);
+    const [mobileBookingRoomId, setMobileBookingRoomId] = useState<string | number | null>(null);
 
     const [dates, setDates] = useState<[Dayjs, Dayjs] | null>(
         urlCheckIn && urlCheckOut
@@ -220,6 +229,13 @@ export default function HomestayDetailPage() {
         : (selectedRooms.length > 0
             ? selectedRooms.reduce((s, r) => s + r.maxGuests, 0)
             : totalMaxGuests);
+
+    // Auto-adjust guests if the limit changes (e.g., when unselecting a room or selecting a smaller room)
+    useEffect(() => {
+        if (guests > maxGuestsLimit && maxGuestsLimit > 0) {
+            setGuests(maxGuestsLimit);
+        }
+    }, [maxGuestsLimit, guests]);
 
     // ── Calculate Price API ─────────────────────────────────────────────
     const calculatePricePayload = useMemo(() => {
@@ -960,7 +976,7 @@ export default function HomestayDetailPage() {
 
                         {/* RIGHT – Booking Card (Desktop Only) */}
                         <div className="hidden lg:block w-[380px] flex-shrink-0">
-                            <div className="sticky top-24 border border-gray-200 rounded-2xl p-6 shadow-lg">
+                            <div id="booking-section" className="sticky top-24 border border-gray-200 rounded-2xl p-6 shadow-lg">
                                 {/* Price header */}
                                 <div className="flex items-baseline justify-between mb-3">
                                     <div>
