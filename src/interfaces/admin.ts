@@ -185,3 +185,17 @@ export interface AdminDisputeItem {
   createdAt: string;
 }
 
+// =============================================
+// Admin Subscription Plans
+// =============================================
+export interface AdminSubscriptionPlan {
+  id: number;
+  name: string;
+  description: string;
+  tier: string;
+  price: number;
+  durationMonths: number;
+  maxListings: number;
+  commissionRate: number;
+  creditLimit: number;
+}

@@ -11,12 +11,14 @@ import {
   DollarOutlined,
   LogoutOutlined,
   BellOutlined,
+  TagsOutlined,
 } from "@ant-design/icons";
 import { message, Badge, Tooltip, Dropdown } from "antd";
 import { ProLayout } from "@ant-design/pro-components";
 import { useAuth } from "@/contexts/AuthContext";
 import { fetcher } from "@/utils/fetcher";
 import Link from "next/link";
+import { AdminNotificationBell } from "@/components/admin/AdminNotificationBell";
 
 const adminRoute = {
   path: "/admin",
@@ -25,6 +27,7 @@ const adminRoute = {
     { path: "/admin/accounts", name: "Tài khoản", icon: <TeamOutlined /> },
     { path: "/admin/host-applications", name: "Hồ sơ Host", icon: <SolutionOutlined /> },
     { path: "/admin/properties", name: "Bài đăng", icon: <HomeOutlined /> },
+    { path: "/admin/subscription-plans", name: "Gói cước", icon: <TagsOutlined /> },
     { path: "/admin/disputes", name: "Khiếu nại", icon: <AlertOutlined /> },
     { path: "/admin/payouts", name: "Rút tiền", icon: <DollarOutlined /> },
   ],
@@ -154,11 +157,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           }}
           actionsRender={() => [
             <Tooltip title="Thông báo" key="notifications">
-              <Badge count={3} size="small">
-                <BellOutlined
-                  style={{ fontSize: 18, color: "#64748b", cursor: "pointer" }}
-                />
-              </Badge>
+              <AdminNotificationBell />
             </Tooltip>,
           ]}
           menuFooterRender={(props) => {
