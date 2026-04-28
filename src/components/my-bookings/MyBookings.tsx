@@ -147,7 +147,7 @@ export default function MyBookings() {
       case "REJECTED":
         return <Tag color="red" className="!flex !items-center rounded-full px-3 py-1 text-sm border-0"><XCircle className="w-4 h-4 inline mr-1" /> Đã hủy</Tag>;
       case "AWAITING_PAYMENT":
-        return <Tag color="volcano" className="!flex !items-center rounded-full px-3 py-1 text-sm border-0"><XCircle className="w-4 h-4 inline mr-1" /> Chờ thanh toán</Tag>;
+        return <Tag color="volcano" className="!flex !items-center rounded-full px-3 py-1 text-sm border-0"><Clock className="w-4 h-4 inline mr-1" /> Chờ thanh toán</Tag>;
       case "COMPLETED":
         return <Tag color="cyan" className="!flex !items-center rounded-full px-3 py-1 text-sm border-0"><CheckCircle2 className="w-4 h-4 inline mr-1" /> Hoàn thành</Tag>;
       case "EXPIRED":

@@ -27,9 +27,9 @@ export const BOOKING_STATUS_MAP: Record<
   },
   AWAITING_PAYMENT: {
     label: "Chờ thanh toán",
-    color: "gold",
-    bgColor: "bg-yellow-50",
-    textColor: "text-yellow-600",
+    color: "blue",
+    bgColor: "bg-blue-50",
+    textColor: "text-blue-600",
   },
   PARTIALLY_PAID: {
     label: "Thanh toán 1 phần",
