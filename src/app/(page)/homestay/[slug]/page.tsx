@@ -326,8 +326,57 @@ export default function HomestayDetailPage() {
         setMobileBookingRoomId(roomId);
     };
 
-    const disabledDate = (current: any) =>
-        current && current < dayjs().startOf("day");
+    const fullyBlockedDates = useMemo(() => {
+        if (!rooms || rooms.length === 0) return new Set<string>();
+
+        const fullyBlocked = new Set<string>();
+
+        // Nếu đã chọn phòng (và không phải thuê nguyên căn), thì chỉ cần ngày đó
+        // bị block ở MỘT TRONG CÁC PHÒNG ĐÃ CHỌN là sẽ tô xám, để tránh book trùng
+        if (selectedRoomIds.size > 0 && !isEntirePlace) {
+            rooms.forEach((room) => {
+                if (selectedRoomIds.has(room.id) && room.blockedDates) {
+                    room.blockedDates.forEach((dateStr) => {
+                        const formatted = dateStr.split("T")[0];
+                        fullyBlocked.add(formatted);
+                    });
+                }
+            });
+        } else {
+            // Nếu chưa chọn phòng nào, hoặc là thuê nguyên căn, 
+            // thì đếm xem ngày đó có bị block hết ở tất cả các phòng không.
+            const blockedDateCounts = new Map<string, number>();
+            const totalRooms = rooms.length;
+            
+            rooms.forEach((room) => {
+                if (room.blockedDates) {
+                    // Loại bỏ trùng lặp ngày trong cùng 1 phòng để đếm chuẩn xác phòng
+                    const uniqueDates = new Set(room.blockedDates.map(d => d.split("T")[0]));
+                    uniqueDates.forEach((formatted) => {
+                        blockedDateCounts.set(formatted, (blockedDateCounts.get(formatted) || 0) + 1);
+                    });
+                }
+            });
+
+            blockedDateCounts.forEach((count, dateStr) => {
+                // Nếu số lượng phòng bị block bằng tổng số phòng -> toàn bộ homestay bị block ngày này
+                if (count === totalRooms) {
+                    fullyBlocked.add(dateStr);
+                }
+            });
+        }
+
+        return fullyBlocked;
+    }, [rooms, selectedRoomIds, isEntirePlace]);
+
+    const disabledDate = (current: any) => {
+        if (!current) return false;
+        // Bỏ qua các ngày trong quá khứ
+        if (current.isBefore(dayjs().startOf("day"), "day")) return true;
+        // Kiểm tra ngày có trong danh sách bị block không
+        const dateStr = current.format("YYYY-MM-DD");
+        return fullyBlockedDates.has(dateStr);
+    };
 
     if (loadingDetail) {
         return (

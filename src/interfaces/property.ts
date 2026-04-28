@@ -79,8 +79,13 @@ export interface PropertyDetailRoom {
   roomCount?: number;
   amenities: Amenity[];
   thumbnailUrl: string;
-  cancellationPolicyResponse: CancellationPolicyResponse;
+  cancellationPolicyResponse?: CancellationPolicyResponse;
   blockedDates: string[];
+  calculatedTotalPrice?: number;
+  priceBreakdown?: {
+    date: string;
+    price: number;
+  }[];
 }
 
 export interface PropertyDetail {
