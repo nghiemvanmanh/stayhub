@@ -77,7 +77,7 @@ export default function HostBookings() {
     queryKey: ["host-bookings", currentPage],
     queryFn: async () => {
       const res = await fetcher.get("/bookings/host", {
-        params: { page: currentPage, size: PAGE_SIZE },
+        params: { page: currentPage, size: 1000000 },
       });
       return res.data?.data ?? res.data;
     },
@@ -206,7 +206,7 @@ export default function HostBookings() {
         </Tooltip>
       );
     }
-    if (["CHECKED_IN", "CHECKED_OUT", "COMPLETED"].includes(status)) {
+    if (["CHECKED_IN", "CHECKED_OUT", "COMPLETED","PARTIALLY_PAID", "CONFIRMED"].includes(status)) {
       actionButtons.push(
         <Tooltip title="Khiếu nại" key="dispute">
           <button onClick={() => setDisputeBookingCode(booking.bookingCode)} className="w-8 h-8 rounded-lg bg-orange-50 text-orange-500 hover:bg-orange-100 flex items-center justify-center border-none cursor-pointer transition-colors">

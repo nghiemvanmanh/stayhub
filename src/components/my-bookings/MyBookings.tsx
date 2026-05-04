@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Tabs, Button, Spin, Tag, Breadcrumb, Dropdown, Modal, message } from "antd";
+import { Tabs, Button, Spin, Tag, Modal, message, Drawer, Avatar, Divider } from "antd";
 import { 
   Clock, 
   MapPin, 
@@ -11,16 +11,22 @@ import {
   XCircle,
   ChevronRight,
   AlertTriangle,
-  CreditCard
+  CreditCard,
+  Star,
+  Phone,
+  Mail,
+  Eye,
+  ExternalLink
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import DisputeModal from "@/components/shared/DisputeModal";
+import ReviewModal from "@/components/my-bookings/ReviewModal";
 import { fetcher } from "@/utils/fetcher";
 import Image from "next/image";
 import Link from "next/link";
 import dayjs from "dayjs";
 import "dayjs/locale/vi";
-import { BookingsResponse } from "@/interfaces";
+import { BookingsResponse, BookingItem } from "@/interfaces";
 import { historyStatuses, upcomingStatuses } from "@/constants/booking";
 import { formatCurrency } from "@/utils/format";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,6 +36,9 @@ dayjs.locale("en");
 export default function MyBookings() {
   const [activeTab, setActiveTab] = useState("upcoming");
   const [disputeBookingCode, setDisputeBookingCode] = useState<string | null>(null);
+  const [reviewBooking, setReviewBooking] = useState<{ bookingCode: string; propertyName: string } | null>(null);
+  const [detailBooking, setDetailBooking] = useState<BookingItem | null>(null);
+  const [contactBooking, setContactBooking] = useState<BookingItem | null>(null);
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
@@ -115,6 +124,22 @@ export default function MyBookings() {
     }
   };
 
+  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [bookingDetail, setBookingDetail] = useState<any>(null);
+
+  const handleOpenDetail = async (booking: BookingItem) => {
+    setDetailBooking(booking);
+    setLoadingDetail(true);
+    try {
+      const res = await fetcher.get(`/bookings/${booking.bookingCode}`);
+      setBookingDetail(res.data?.data ?? res.data);
+    } catch {
+      setBookingDetail(null);
+    } finally {
+      setLoadingDetail(false);
+    }
+  };
+
   const { data : bookings, isLoading } = useQuery({
     queryKey: ["my-bookings", user, activeTab],
     queryFn: async () => {
@@ -141,10 +166,8 @@ export default function MyBookings() {
       case "PENDING":
         return <Tag color="orange" className="!flex !items-center rounded-full px-3 py-1 text-sm border-0"><Clock className="w-4 h-4 inline mr-1" /> Chờ xác nhận</Tag>;
       case "CONFIRMED":
-      case "PAID":
         return <Tag color="green" className="!flex !items-center rounded-full px-3 py-1 text-sm border-0"><CheckCircle2 className="w-4 h-4 inline mr-1" /> Đã xác nhận</Tag>;
       case "CANCELLED":
-      case "REJECTED":
         return <Tag color="red" className="!flex !items-center rounded-full px-3 py-1 text-sm border-0"><XCircle className="w-4 h-4 inline mr-1" /> Đã hủy</Tag>;
       case "AWAITING_PAYMENT":
         return <Tag color="volcano" className="!flex !items-center rounded-full px-3 py-1 text-sm border-0"><Clock className="w-4 h-4 inline mr-1" /> Chờ thanh toán</Tag>;
@@ -158,6 +181,8 @@ export default function MyBookings() {
         return <Tag color="magenta" className="!flex !items-center rounded-full px-3 py-1 text-sm border-0"><Clock className="w-4 h-4 inline mr-1" /> Trả phòng</Tag>;
       case "DISPUTED":
         return <Tag color="orange" className="!flex !items-center rounded-full px-3 py-1 text-sm border-0"><Clock className="w-4 h-4 inline mr-1" /> Khiếu nại</Tag>;
+      case "PARTIALLY_PAID": 
+        return <Tag color="green" className="!flex !items-center rounded-full px-3 py-1 text-sm border-0"><Clock className="w-4 h-4 inline mr-1" />Đã thanh toán 1 phần</Tag>;
       default:
         return <Tag color="default" className="!flex !items-center rounded-full px-3 py-1 text-sm border-0">{status}</Tag>;
     }
@@ -294,13 +319,17 @@ export default function MyBookings() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex flex-wrap items-center justify-between gap-4 mt-6">
-                    <div className="flex items-center gap-3">
-                      <Button className="h-10 px-6 rounded-xl border-gray-200 text-gray-700 font-bold text-sm bg-white hover:bg-gray-50">
+                  <div className="flex flex-wrap items-center gap-3 mt-6">
+                      <Button
+                        icon={<Eye className="w-4 h-4" />}
+                        onClick={() => handleOpenDetail(booking)}
+                        className="h-10 px-5 rounded-xl border-gray-200 text-gray-700 font-bold text-sm bg-white hover:bg-gray-50 flex items-center gap-2"
+                      >
                         Xem chi tiết
                       </Button>
                       <Button 
                         icon={<MessageSquare className="w-4 h-4" />}
+                        onClick={() => setContactBooking(booking)}
                         className="h-10 px-4 rounded-xl text-gray-600 font-bold text-sm flex items-center gap-2 hover:bg-gray-50"
                       >
                         Liên hệ chủ nhà
@@ -315,27 +344,6 @@ export default function MyBookings() {
                           Hủy đặt phòng
                         </Button>
                       )}
-                      
-                      {booking.status === "CHECKED_OUT" && (
-                        <Button
-                          icon={<CheckCircle2 className="w-4 h-4" />}
-                          onClick={() => handleCompleteTrip(booking.bookingCode)}
-                          className="h-10 px-4 rounded-xl font-bold text-sm flex items-center gap-2 !bg-[#2DD4A8] !text-white !border-[#2DD4A8] hover:!bg-[#25bc95]"
-                        >
-                          Hoàn thành chuyến đi
-                        </Button>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-3">
-                      {["CHECKED_IN", "CHECKED_OUT"].includes(booking.status) && (
-                        <Button
-                          icon={<AlertTriangle className="w-4 h-4" />}
-                          onClick={() => setDisputeBookingCode(booking.bookingCode)}
-                          className="h-10 px-4 rounded-xl font-bold text-sm flex items-center gap-2 !text-orange-500 !border-orange-200 hover:!bg-orange-50"
-                        >
-                          Khiếu nại
-                        </Button>
-                      )}
                       {booking.status === "AWAITING_PAYMENT" && (
                         <Button
                           icon={<CreditCard className="w-4 h-4" />}
@@ -346,10 +354,33 @@ export default function MyBookings() {
                           Hoàn thành thanh toán
                         </Button>
                       )}
-                      <Button className="h-10 px-8 rounded-xl border-[#2DD4A8] text-[#2DD4A8] font-bold text-sm hover:bg-[#2DD4A8]/5 transition-colors">
-                        Quản lý
-                      </Button>
-                    </div>
+                      {booking.status === "CHECKED_OUT" && (
+                        <Button
+                          icon={<CheckCircle2 className="w-4 h-4" />}
+                          onClick={() => handleCompleteTrip(booking.bookingCode)}
+                          className="h-10 px-4 rounded-xl font-bold text-sm flex items-center gap-2 !bg-[#2DD4A8] !text-white !border-[#2DD4A8] hover:!bg-[#25bc95]"
+                        >
+                          Hoàn thành chuyến đi
+                        </Button>
+                      )}
+                      {["CHECKED_IN", "CHECKED_OUT", "PARTIALLY_PAID", "CONFIRMED"].includes(booking.status) && (
+                        <Button
+                          icon={<AlertTriangle className="w-4 h-4" />}
+                          onClick={() => setDisputeBookingCode(booking.bookingCode)}
+                          className="h-10 px-4 rounded-xl font-bold text-sm flex items-center gap-2 !text-orange-500 !border-orange-200 hover:!bg-orange-50"
+                        >
+                          Khiếu nại
+                        </Button>
+                      )}
+                      {booking.status === "COMPLETED" && (
+                        <Button
+                          icon={<Star className="w-4 h-4" />}
+                          onClick={() => setReviewBooking({ bookingCode: booking.bookingCode, propertyName: booking.propertyName })}
+                          className="h-10 px-4 rounded-xl font-bold text-sm flex items-center gap-2 !bg-amber-500 !text-white !border-amber-500 hover:!bg-amber-600"
+                        >
+                          Viết đánh giá
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -398,6 +429,169 @@ export default function MyBookings() {
           queryClient.invalidateQueries({ queryKey: ["my-bookings"] })
         }
       />
+
+      <ReviewModal
+        open={!!reviewBooking}
+        onClose={() => setReviewBooking(null)}
+        bookingCode={reviewBooking?.bookingCode || ""}
+        propertyName={reviewBooking?.propertyName || ""}
+        onSuccess={() =>
+          queryClient.invalidateQueries({ queryKey: ["my-bookings"] })
+        }
+      />
+
+      {/* Detail Drawer */}
+      <Drawer
+        title={<span className="text-xl font-bold">Chi tiết chuyến đi</span>}
+        open={!!detailBooking}
+        onClose={() => { setDetailBooking(null); setBookingDetail(null); }}
+        width={560}
+        styles={{ body: { padding: 0 } }}
+      >
+        {detailBooking && (
+          <div>
+            <div className="relative w-full h-56">
+              <Image src={detailBooking.thumbnailUrl || "/images/placeholder.jpg"} alt={detailBooking.propertyName} fill className="object-cover" />
+              <div className="absolute top-4 left-4 scale-110 origin-top-left">{getStatusTag(detailBooking.status)}</div>
+            </div>
+            <div className="p-8 space-y-7">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900 m-0 mb-2">{detailBooking.propertyName}</h3>
+                <p className="text-base text-gray-500 m-0 flex items-center gap-2"><MapPin className="w-4 h-4" />{detailBooking.propertyAddress}</p>
+              </div>
+
+              {loadingDetail ? (
+                <div className="flex justify-center py-12"><Spin size="large" /></div>
+              ) : (
+                <>
+                  <Divider className="!my-0" />
+                  {/* Dates */}
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100"><p className="text-xs uppercase font-bold text-gray-400 mb-1 m-0">Nhận phòng</p><p className="text-base font-bold text-gray-900 m-0">{dayjs(bookingDetail?.checkInDate || detailBooking.checkInDate).format("DD/MM/YYYY")}</p></div>
+                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100"><p className="text-xs uppercase font-bold text-gray-400 mb-1 m-0">Trả phòng</p><p className="text-base font-bold text-gray-900 m-0">{dayjs(bookingDetail?.checkOutDate || detailBooking.checkOutDate).format("DD/MM/YYYY")}</p></div>
+                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100"><p className="text-xs uppercase font-bold text-gray-400 mb-1 m-0">Số đêm</p><p className="text-base font-bold text-gray-900 m-0">{bookingDetail?.numberOfNights || dayjs(detailBooking.checkOutDate).diff(dayjs(detailBooking.checkInDate), 'day')} đêm</p></div>
+                    <div className="bg-gray-50 p-4 rounded-xl border border-gray-100"><p className="text-xs uppercase font-bold text-gray-400 mb-1 m-0">Số khách</p><p className="text-base font-bold text-gray-900 m-0">{bookingDetail?.totalGuests || detailBooking.totalGuests || '—'} khách</p></div>
+                  </div>
+
+                  {/* Rooms */}
+                  {bookingDetail?.rooms && bookingDetail.rooms.length > 0 && (
+                    <>
+                      <Divider className="!my-0" />
+                      <div>
+                        <p className="text-sm uppercase font-bold text-gray-900 mb-4 m-0">Phòng đã đặt</p>
+                        <div className="space-y-3">
+                          {bookingDetail.rooms.map((room: any, idx: number) => (
+                            <div key={idx} className="flex justify-between items-center bg-gray-50 border border-gray-100 rounded-xl px-5 py-4">
+                              <div>
+                                <p className="text-base font-bold text-gray-800 m-0">{room.roomName || room.name}</p>
+                                <p className="text-sm text-gray-500 m-0 mt-1">Số lượng: <span className="font-semibold text-gray-700">{room.quantity || 1}</span></p>
+                              </div>
+                              <span className="text-base font-bold text-[#2DD4A8]">{formatCurrency(room.pricePerNight || room.price)}<span className="text-xs font-normal text-gray-500">/đêm</span></span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Payment */}
+                  <Divider className="!my-0" />
+                  <div>
+                    <p className="text-sm uppercase font-bold text-gray-900 mb-4 m-0">Chi tiết thanh toán</p>
+                    <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 space-y-3">
+                      <div className="flex justify-between items-center text-base">
+                        <span className="text-gray-500 font-medium">Tổng thanh toán</span>
+                        <span className="font-bold text-xl text-gray-900">{formatCurrency(bookingDetail?.totalAmount || bookingDetail?.finalAmount || detailBooking.totalAmount)}</span>
+                      </div>
+                      <Divider className="!my-3 border-gray-200" />
+                      <div className="flex justify-between items-center text-base">
+                        <span className="text-gray-500">Đã thanh toán</span>
+                        <span className="font-bold text-green-600">{formatCurrency(bookingDetail?.amountPaid ?? detailBooking.amountPaid ?? bookingDetail?.totalAmount ?? detailBooking.totalAmount ?? 0)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Host */}
+                  <Divider className="!my-0" />
+                  <div>
+                    <p className="text-sm uppercase font-bold text-gray-900 mb-4 m-0">Chủ nhà</p>
+                    <div className="flex items-center gap-4 bg-gray-50 border border-gray-100 p-4 rounded-2xl">
+                      <Avatar size={56} src={bookingDetail?.hostAvatarUrl || detailBooking.hostAvatarUrl} className="border-2 border-white shadow-sm text-lg font-bold">{(bookingDetail?.hostName || detailBooking.hostName)?.charAt(0)?.toUpperCase()}</Avatar>
+                      <div className="flex-1">
+                        <p className="font-bold text-gray-900 text-lg m-0 mb-1">{bookingDetail?.hostName || detailBooking.hostName}</p>
+                        <div className="flex flex-col gap-1">
+                          {(bookingDetail?.hostPhone || detailBooking.hostPhone) && <p className="text-sm text-gray-600 flex items-center gap-2 m-0"><Phone className="w-3.5 h-3.5 text-gray-400" /> {bookingDetail?.hostPhone || detailBooking.hostPhone}</p>}
+                          {(bookingDetail?.hostEmail || detailBooking.hostEmail) && <p className="text-sm text-gray-600 flex items-center gap-2 m-0"><Mail className="w-3.5 h-3.5 text-gray-400" /> {bookingDetail?.hostEmail || detailBooking.hostEmail}</p>}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Booking Info */}
+                  <Divider className="!my-0" />
+                  <div className="grid grid-cols-2 gap-y-5 gap-x-4 bg-[#F8FAFC] p-5 rounded-2xl border border-slate-100">
+                    <div><p className="text-xs uppercase font-bold text-slate-400 mb-1 m-0">Mã xác nhận</p><p className="text-base font-bold text-slate-800 m-0">{detailBooking.bookingCode}</p></div>
+                    <div className="text-right"><p className="text-xs uppercase font-bold text-slate-400 mb-1 m-0">Ngày đặt</p><p className="text-base font-medium text-slate-700 m-0">{dayjs(bookingDetail?.createdAt || detailBooking.createdAt).format("DD/MM/YYYY HH:mm")}</p></div>
+                    <div><p className="text-xs uppercase font-bold text-slate-400 mb-1 m-0">Trạng thái</p><div className="mt-1">{getStatusTag(bookingDetail?.status || detailBooking.status)}</div></div>
+                    {bookingDetail?.cancellationPolicyName && <div className="text-right"><p className="text-xs uppercase font-bold text-slate-400 mb-1 m-0">Chính sách hủy</p><p className="text-base font-medium text-slate-700 m-0">{bookingDetail.cancellationPolicyName}</p></div>}
+                  </div>
+
+                  {(bookingDetail?.propertySlug || detailBooking.propertySlug) && (
+                    <div className="pt-2">
+                      <Link
+                        href={`/homestay/${bookingDetail?.propertySlug || detailBooking.propertySlug}`}
+                      >
+                        <Button type="primary" size="large" block className="h-12 rounded-xl !bg-[#2DD4A8] hover:!bg-[#22b892] !border-none font-bold text-base flex items-center justify-center gap-2">
+                          <ExternalLink className="w-5 h-5" /> Mở trang chỗ ở
+                        </Button>
+                      </Link>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        )}
+      </Drawer>
+
+      {/* Contact Host Modal */}
+      <Modal
+        open={!!contactBooking}
+        onCancel={() => setContactBooking(null)}
+        title={null}
+        footer={null}
+        centered
+        width={420}
+        styles={{ body: { padding: "8px 0 0" } }}
+      >
+        {contactBooking && (
+          <div className="text-center">
+            <Avatar size={64} src={contactBooking.hostAvatarUrl} className="mx-auto mb-3 border-2 border-gray-100">
+              {contactBooking.hostName?.charAt(0)?.toUpperCase()}
+            </Avatar>
+            <h3 className="text-lg font-bold text-gray-900 m-0">{contactBooking.hostName}</h3>
+            <p className="text-xs text-gray-400 mt-1 mb-4 m-0">Chủ nhà · {contactBooking.propertyName}</p>
+            <div className="bg-gray-50 rounded-xl p-4 text-left space-y-3 mb-4">
+              {contactBooking.hostPhone && (
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0"><Phone className="w-4 h-4 text-green-600" /></div>
+                  <div><p className="text-[11px] uppercase font-bold text-gray-400 m-0">Số điện thoại</p><a href={`tel:${contactBooking.hostPhone}`} className="text-sm font-semibold text-gray-900 no-underline hover:text-[#2DD4A8]">{contactBooking.hostPhone}</a></div>
+                </div>
+              )}
+              {contactBooking.hostEmail && (
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0"><Mail className="w-4 h-4 text-blue-600" /></div>
+                  <div><p className="text-[11px] uppercase font-bold text-gray-400 m-0">Email</p><a href={`mailto:${contactBooking.hostEmail}`} className="text-sm font-semibold text-gray-900 no-underline hover:text-[#2DD4A8]">{contactBooking.hostEmail}</a></div>
+                </div>
+              )}
+              {!contactBooking.hostPhone && !contactBooking.hostEmail && (
+                <p className="text-sm text-gray-400 text-center m-0">Chưa có thông tin liên hệ.</p>
+              )}
+            </div>
+            <p className="text-[11px] text-gray-400 m-0">Mã booking: <span className="font-bold">{contactBooking.bookingCode}</span></p>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

@@ -11,6 +11,7 @@ import {
   SettingOutlined,
   LogoutOutlined,
   GlobalOutlined,
+  StarOutlined,
 } from "@ant-design/icons";
 import { message, Button, Dropdown } from "antd";
 import { ProLayout } from "@ant-design/pro-components";
@@ -24,6 +25,7 @@ const hostRoute = {
     { path: "/host/dashboard", name: "Tổng quan", icon: <DashboardOutlined /> },
     { path: "/host/properties", name: "Cơ sở lưu trú", icon: <HomeOutlined /> },
     { path: "/host/bookings", name: "Đặt phòng", icon: <CalendarOutlined /> },
+    { path: "/host/reviews", name: "Đánh giá", icon: <StarOutlined /> },
     { path: "/host/payout", name: "Thanh toán", icon: <WalletOutlined /> },
     { path: "/host/settings", name: "Cài đặt", icon: <SettingOutlined /> },
   ],

@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useEffect } from "react";
 import { useParams, useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
     Button,
     DatePicker,
@@ -14,7 +14,11 @@ import {
     ConfigProvider,
     Drawer,
     message,
+    Rate,
+    Input,
+    Upload,
 } from "antd";
+import type { UploadFile } from "antd";
 import {
     ShareAltOutlined,
     HeartOutlined,
@@ -52,6 +56,8 @@ import PropertyImageGallery from "@/components/homestay/PropertyImageGallery";
 import { PropertyDetail, PropertyDetailRoom } from "@/interfaces/property";
 import { fetcher } from "@/utils/fetcher";
 
+const { TextArea } = Input;
+
 dayjs.extend(isBetween);
 dayjs.locale("vi");
 
@@ -68,6 +74,29 @@ function isRoomAvailableByBlockedDates(
         return (d.isSame(checkIn, "day") || d.isAfter(checkIn, "day")) &&
             d.isBefore(checkOut, "day");
     });
+}
+
+// ── S3 upload helper ─────────────────────────────────────────────────
+function getFileInfo(file: File) {
+    const ext = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
+    return { extension: ext, contentType: file.type || "application/octet-stream" };
+}
+
+async function uploadFileToS3(file: File): Promise<string> {
+    const fileInfo = getFileInfo(file);
+    const { data } = await fetcher.post("/files/presigned-url", {
+        files: [fileInfo],
+    });
+    const presigned = Array.isArray(data) ? data[0] : data;
+    const presignedData = (presigned as any).data || presigned;
+
+    await fetch(presignedData.presignedUrl, {
+        method: "PUT",
+        body: file,
+        headers: { "Content-Type": file.type },
+    });
+
+    return presignedData.publicUrl;
 }
 
 // ── Data fetcher ─────────────────────────────────────────────────────
@@ -157,10 +186,17 @@ export default function HomestayDetailPage() {
         enabled: !!property?.province,
     });
 
-    const { isLoggedIn } = useAuth();
+    const { isLoggedIn, user } = useAuth();
     const router = useRouter();
+    const queryClient = useQueryClient();
     const [loginModalOpen, setLoginModalOpen] = useState(false);
     const [registerModalOpen, setRegisterModalOpen] = useState(false);
+
+    // ── Inline review state ──────────────────────────────────────────
+    const [inlineRating, setInlineRating] = useState(5);
+    const [inlineComment, setInlineComment] = useState("");
+    const [inlineFileList, setInlineFileList] = useState<UploadFile[]>([]);
+    const [inlineSubmitting, setInlineSubmitting] = useState(false);
 
     // ── Derived state ────────────────────────────────────────────────
     const nights = dates ? dates[1].diff(dates[0], "day") : 0;
@@ -973,10 +1009,88 @@ export default function HomestayDetailPage() {
                                         {ratingStr} · {property.reviewCount || 0} đánh giá
                                     </span>
                                 </div>
-                                <p className="text-sm text-gray-400">Đánh giá sẽ được hiển thị khi có dữ liệu từ khách hàng.</p>
-                                <button className="mt-4 border border-gray-900 rounded-xl px-5 py-2 text-sm font-semibold hover:bg-gray-50 transition-colors">
-                                    Hiển thị tất cả {property.reviewCount || 0} đánh giá
-                                </button>
+
+                                {property.reviews && property.reviews.length > 0 ? (
+                                    <>
+                                        <div className="grid grid-cols-1 gap-6">
+                                            {property.reviews.slice(0, 3).map((review) => (
+                                                <div key={review.id} className="space-y-3">
+                                                    <div className="flex items-center gap-3">
+                                                        <Avatar
+                                                            src={review.guestAvatarUrl}
+                                                            size={40}
+                                                            className="flex-shrink-0"
+                                                        >
+                                                            {review.guestName?.charAt(0)?.toUpperCase()}
+                                                        </Avatar>
+                                                        <div>
+                                                            <p className="font-semibold text-gray-900 text-sm m-0">
+                                                                {review.guestName}
+                                                            </p>
+                                                            <p className="text-xs text-gray-400 m-0">
+                                                                {review.createdAt
+                                                                    ? dayjs(review.createdAt).format("MMMM YYYY")
+                                                                    : ""}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-0.5 mt-1">
+                                                        <Rate disabled defaultValue={review.rating} className="text-xs" style={{ color: "#fadb14", fontSize: 12 }} />
+                                                    </div>
+                                                    <p className="text-sm text-gray-600 m-0 line-clamp-3">
+                                                        {review.comment}
+                                                    </p>
+                                                    {review.imageUrls && review.imageUrls.length > 0 && (
+                                                        <div className="flex gap-2 flex-wrap">
+                                                            {review.imageUrls.slice(0, 3).map((url, idx) => (
+                                                                <div key={idx} className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200">
+                                                                    <img
+                                                                        src={url}
+                                                                        alt={`Review ${idx + 1}`}
+                                                                        className="w-full h-full object-cover"
+                                                                    />
+                                                                </div>
+                                                            ))}
+                                                            {review.imageUrls.length > 3 && (
+                                                                <div className="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center text-xs text-gray-500 font-medium">
+                                                                    +{review.imageUrls.length - 3}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                    {review.hostReply && (
+                                                        <div className="bg-gray-50 rounded-xl p-3 ml-4 border-l-2 border-[#2DD4A8]">
+                                                            <p className="text-xs font-semibold text-gray-700 mb-1 m-0">
+                                                                Phản hồi từ Chủ nhà
+                                                            </p>
+                                                            <p className="text-xs text-gray-500 m-0">
+                                                                {review.hostReply}
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                        {(property.reviewCount || property.reviews.length) > 3 && (
+                                            <Link
+                                                href={`/homestay/${slug}/reviews`}
+                                                className="mt-6 inline-block border border-gray-900 rounded-xl px-5 py-2.5 text-sm font-semibold hover:bg-gray-50 transition-colors no-underline text-gray-900"
+                                            >
+                                                Hiển thị tất cả {property.reviewCount || property.reviews.length} đánh giá
+                                            </Link>
+                                        )}
+                                    </>
+                                ) : (
+                                    <>
+                                        <p className="text-sm text-gray-400">Đánh giá sẽ được hiển thị khi có dữ liệu từ khách hàng.</p>
+                                        <Link
+                                            href={`/homestay/${slug}/reviews`}
+                                            className="mt-4 inline-block border border-gray-900 rounded-xl px-5 py-2.5 text-sm font-semibold hover:bg-gray-50 transition-colors no-underline text-gray-900"
+                                        >
+                                            Hiển thị tất cả {property.reviewCount || 0} đánh giá
+                                        </Link>
+                                    </>
+                                )}
                             </div>
 
                             {/* Similar Homestays */}

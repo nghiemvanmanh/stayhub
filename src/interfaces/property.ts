@@ -6,6 +6,7 @@ import {
 } from "./enums";
 import { Room } from "./room";
 import { Reserve } from "./reserve";
+import { PropertyReview } from "./review";
 
 export interface Category {
   id: string | number;
@@ -125,6 +126,7 @@ export interface PropertyDetail {
   rentalTypeName: string;
   rentalTypeSlug: string;
   rooms: PropertyDetailRoom[];
+  reviews: PropertyReview[];
   cancellationPolicyResponse: any;
 }
 

@@ -18,3 +18,29 @@ export interface ReviewImage {
   imageUrl: string;
   createdAt?: Date | string;
 }
+
+// Review item returned from GET /properties/{slug} response
+export interface PropertyReview {
+  id: number;
+  guestName: string;
+  guestAvatarUrl: string;
+  rating: number;
+  comment: string;
+  imageUrls: string[];
+  hostReply: string | null;
+  replyTime: string | null;
+  createdAt: string;
+}
+
+// Review item embedded in GET /bookings/host response
+export interface HostBookingReview {
+  id: number;
+  guestName: string;
+  guestAvatarUrl: string;
+  rating: number;
+  comment: string;
+  imageUrls: string[];
+  hostReply: string | null;
+  replyTime: string | null;
+  createdAt: string;
+}

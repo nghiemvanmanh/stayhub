@@ -15,9 +15,16 @@ export default function HeroSection() {
   const [children, setChildren] = useState<number>(0);
   const [rooms, setRooms] = useState<number>(1);
   const [pets, setPets] = useState<boolean>(false);
+
+  const [draftAdults, setDraftAdults] = useState<number>(2);
+  const [draftChildren, setDraftChildren] = useState<number>(0);
+  const [draftRooms, setDraftRooms] = useState<number>(1);
+  const [draftPets, setDraftPets] = useState<boolean>(false);
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [location, setLocation] = useState("");
   const [dates, setDates] = useState<[Dayjs, Dayjs] | null>(null);
+
   const handleSearch = () => {
     const params = new URLSearchParams();
     if (location.trim()) params.set("location", location.trim());
@@ -35,30 +42,48 @@ export default function HeroSection() {
 
   const guestSummary = `${adults + children} khách${rooms > 1 ? `, ${rooms} phòng` : ''}`;
 
+  const handleOpenDropdown = (open: boolean) => {
+    if (open) {
+      setDraftAdults(adults);
+      setDraftChildren(children);
+      setDraftRooms(rooms);
+      setDraftPets(pets);
+    }
+    setDropdownOpen(open);
+  };
+
+  const handleApplyGuests = () => {
+    setAdults(draftAdults);
+    setChildren(draftChildren);
+    setRooms(draftRooms);
+    setPets(draftPets);
+    setDropdownOpen(false);
+  };
+
   const guestDropdownContent = (
     <div className="w-[320px] p-1 space-y-4">
       <div className="flex justify-between items-center">
         <span className="font-semibold text-gray-900 text-[15px]">Người lớn</span>
         <div className="flex items-center gap-3">
-          <Button shape="circle" icon={<MinusOutlined className="text-gray-400" />} onClick={() => setAdults(Math.max(1, adults - 1))} disabled={adults <= 1} />
-          <span className="w-4 text-center font-medium">{adults}</span>
-          <Button shape="circle" icon={<PlusOutlined className="text-gray-400" />} onClick={() => setAdults(adults + 1)} />
+          <Button shape="circle" icon={<MinusOutlined className="text-gray-400" />} onClick={() => setDraftAdults(Math.max(1, draftAdults - 1))} disabled={draftAdults <= 1} />
+          <span className="w-4 text-center font-medium">{draftAdults}</span>
+          <Button shape="circle" icon={<PlusOutlined className="text-gray-400" />} onClick={() => setDraftAdults(draftAdults + 1)} />
         </div>
       </div>
       <div className="flex justify-between items-center">
         <span className="font-semibold text-gray-900 text-[15px]">Trẻ em</span>
         <div className="flex items-center gap-3">
-          <Button shape="circle" icon={<MinusOutlined className="text-gray-400" />} onClick={() => setChildren(Math.max(0, children - 1))} disabled={children <= 0} />
-          <span className="w-4 text-center font-medium">{children}</span>
-          <Button shape="circle" icon={<PlusOutlined className="text-gray-400" />} onClick={() => setChildren(children + 1)} />
+          <Button shape="circle" icon={<MinusOutlined className="text-gray-400" />} onClick={() => setDraftChildren(Math.max(0, draftChildren - 1))} disabled={draftChildren <= 0} />
+          <span className="w-4 text-center font-medium">{draftChildren}</span>
+          <Button shape="circle" icon={<PlusOutlined className="text-gray-400" />} onClick={() => setDraftChildren(draftChildren + 1)} />
         </div>
       </div>
       <div className="flex justify-between items-center">
         <span className="font-semibold text-gray-900 text-[15px]">Phòng</span>
         <div className="flex items-center gap-3">
-          <Button shape="circle" icon={<MinusOutlined className="text-gray-400" />} onClick={() => setRooms(Math.max(1, rooms - 1))} disabled={rooms <= 1} />
-          <span className="w-4 text-center font-medium">{rooms}</span>
-          <Button shape="circle" icon={<PlusOutlined className="text-gray-400" />} onClick={() => setRooms(rooms + 1)} />
+          <Button shape="circle" icon={<MinusOutlined className="text-gray-400" />} onClick={() => setDraftRooms(Math.max(1, draftRooms - 1))} disabled={draftRooms <= 1} />
+          <span className="w-4 text-center font-medium">{draftRooms}</span>
+          <Button shape="circle" icon={<PlusOutlined className="text-gray-400" />} onClick={() => setDraftRooms(draftRooms + 1)} />
         </div>
       </div>
       
@@ -66,7 +91,7 @@ export default function HeroSection() {
 
       <div className="flex justify-between items-center">
         <span className="font-semibold text-gray-900 text-[15px]">Mang thú cưng đi cùng</span>
-        <Switch checked={pets} onChange={(checked) => setPets(checked)} className={pets ? "bg-[#2DD4A8]" : "bg-gray-400"} />
+        <Switch checked={draftPets} onChange={(checked) => setDraftPets(checked)} className={draftPets ? "bg-[#2DD4A8]" : "bg-gray-400"} />
       </div>
       <div className="mt-[-8px]">
         <p className="text-[13px] text-gray-800 m-0 leading-relaxed">
@@ -81,7 +106,7 @@ export default function HeroSection() {
         <Button 
           block 
           className="font-semibold border-gray-300 rounded-lg text-gray-800 h-[42px] hover:!border-gray-400 hover:!text-gray-900" 
-          onClick={() => setDropdownOpen(false)}
+          onClick={handleApplyGuests}
         >
           Xong
         </Button>
@@ -150,7 +175,7 @@ export default function HeroSection() {
                     trigger="click"
                     placement="bottomRight"
                     open={dropdownOpen}
-                    onOpenChange={setDropdownOpen}
+                    onOpenChange={handleOpenDropdown}
                     arrow={false}
                     overlayInnerStyle={{ borderRadius: '16px', padding: '16px', boxShadow: '0 8px 28px rgba(0,0,0,0.1)' }}
                   >

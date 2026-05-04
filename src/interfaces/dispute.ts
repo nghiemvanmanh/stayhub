@@ -21,9 +21,18 @@ export interface BookingItem {
   propertyAddress: string;
   hostName: string;
   hostPhone: string;
+  hostEmail?: string;
+  hostAvatarUrl?: string;
+  propertySlug?: string;
   checkInDate: string;
   checkOutDate: string;
   totalAmount: number;
+  amountPaid?: number;
+  totalGuests?: number;
+  numberOfNights?: number;
+  cleaningFee?: number;
+  isFullyPaid?: boolean;
+  rooms?: { roomName: string; quantity: number; pricePerNight: number }[];
   status: string;
   createdAt: string;
 }
