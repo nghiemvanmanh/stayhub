@@ -11,6 +11,7 @@ import {
   UserOutlined,
   CalendarOutlined,
   WalletOutlined,
+  TagsOutlined,
 } from "@ant-design/icons";
 import { PageContainer, StatisticCard, ProCard, ProTable } from "@ant-design/pro-components";
 import type { ProColumns } from "@ant-design/pro-components";
@@ -351,6 +352,7 @@ export default function AdminDashboardPage() {
                 { label: "Quản lý tài khoản", href: "/admin/accounts", icon: <TeamOutlined /> },
                 { label: "Hồ sơ chủ nhà", href: "/admin/host-applications", icon: <SolutionOutlined /> },
                 { label: "Danh sách Homestay", href: "/admin/properties", icon: <HomeOutlined /> },
+                { label: "Quản lý gói cước", href: "/admin/subcription-plans", icon: <TagsOutlined /> },
                 { label: "Yêu cầu rút tiền", href: "/admin/payouts", icon: <WalletOutlined /> },
                 { label: "Khiếu nại", href: "/admin/disputes", icon: <ExclamationCircleOutlined /> },
               ].map((link) => (

@@ -255,6 +255,7 @@ export default function HostDashboardPage() {
               {[
                 { label: "Quản lý bài đăng", href: "/host/properties" },
                 { label: "Xem đặt phòng", href: "/host/bookings" },
+                { label: "Xem đánh giá", href: "/host/reviews" },
                 { label: "Thanh toán & Ví", href: "/host/payout" },
                 { label: "Cài đặt tài khoản", href: "/host/settings" },
               ].map((link) => (
