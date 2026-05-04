@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import {
   Tag,
   Button,
@@ -20,6 +20,7 @@ import {
   EditOutlined,
 } from "@ant-design/icons";
 import { PageContainer, ProTable, ProColumns, StatisticCard } from "@ant-design/pro-components";
+import type { ActionType } from "@ant-design/pro-components";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetcher } from "@/utils/fetcher";
 import dayjs from "dayjs";
@@ -50,6 +51,8 @@ interface HostBookingWithReview {
 
 export default function HostReviews() {
   const queryClient = useQueryClient();
+  const actionRef = useRef<ActionType>(null);
+  
   const [replyModal, setReplyModal] = useState<{
     reviewId: number;
     guestName: string;
@@ -89,6 +92,12 @@ export default function HostReviews() {
   const allBookingsWithReviews = useMemo(() => {
     return (apiResponse || []).filter((b: any) => b.review);
   }, [apiResponse]);
+
+  useEffect(() => {
+    if (actionRef.current) {
+      actionRef.current.reload();
+    }
+  }, [allBookingsWithReviews]);
 
   const stats = useMemo(() => {
     const total = allBookingsWithReviews.length;
@@ -318,13 +327,13 @@ export default function HostReviews() {
       </Row>
 
       <ProTable<HostBookingWithReview>
+        actionRef={actionRef}
         rowKey="bookingCode"
         columns={columns}
         cardBordered
-        dataSource={allBookingsWithReviews}
         loading={isLoading}
         request={async (params) => {
-          let filtered = allBookingsWithReviews;
+          let filtered = [...allBookingsWithReviews];
           if (params.propertyName) {
             filtered = filtered.filter((b: any) => b.propertyName === params.propertyName);
           }
