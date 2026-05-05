@@ -244,7 +244,6 @@ export default function HostPayout() {
   const resetPayoutForm = () => {
     setShowPayout(false); setPayoutAmount(null); setPayoutBankId(null);
     setPayoutStep(1); setOtpCode(""); setOtpDigits(["", "", "", "", "", ""]);
-    setCountdown(0);
   };
 
   const handleOtpDigitChange = (index: number, value: string) => {
@@ -626,8 +625,9 @@ export default function HostPayout() {
             <>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Số tiền cần rút <span className="text-red-500">*</span></label>
-                <InputNumber value={payoutAmount} onChange={(val) => setPayoutAmount(val)} min={10000} max={wallet?.availableBalance || 0}
-                  formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")} parser={(value) => Number(value?.replace(/,/g, ""))}
+                <InputNumber value={payoutAmount} onChange={(val) => setPayoutAmount(val)} min={50000} max={wallet?.availableBalance || 0}
+                  step={50000}
+                  formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")} parser={(value) => Number(value?.replace(/,/g, "").replace(/[^\d]/g, ""))}
                   className="!w-full !rounded-lg" size="large" addonAfter="VNĐ" />
               </div>
               <div>
@@ -638,9 +638,9 @@ export default function HostPayout() {
               </div>
               <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
                 <Button onClick={resetPayoutForm} style={{ borderRadius: 10 }}>Hủy</Button>
-                <Button type="primary" loading={requestOtpMutation.isPending} onClick={() => requestOtpMutation.mutate()} disabled={!payoutAmount || !payoutBankId}
-                  style={{ borderRadius: 10, background: "#2DD4A8", borderColor: "#2DD4A8", fontWeight: 600 }}>
-                  Gửi mã OTP
+                <Button type="primary" loading={requestOtpMutation.isPending} onClick={() => requestOtpMutation.mutate()} disabled={!payoutAmount || !payoutBankId || countdown > 0}
+                  style={{ borderRadius: 10, background: countdown > 0 ? undefined : "#2DD4A8", borderColor: countdown > 0 ? undefined : "#2DD4A8", fontWeight: 600 }}>
+                  {countdown > 0 ? `Vui lòng đợi (${countdown}s)` : 'Gửi mã OTP'}
                 </Button>
               </div>
             </>
@@ -686,7 +686,7 @@ export default function HostPayout() {
               </div>
 
               <div className="flex justify-between pt-2 border-t border-gray-100">
-                <Button icon={<ArrowLeftOutlined />} onClick={() => { setPayoutStep(1); setOtpDigits(["", "", "", "", "", ""]); setOtpCode(""); setCountdown(0); }} style={{ borderRadius: 10 }}>Quay lại</Button>
+                <Button icon={<ArrowLeftOutlined />} onClick={() => { setPayoutStep(1); setOtpDigits(["", "", "", "", "", ""]); setOtpCode(""); }} style={{ borderRadius: 10 }}>Quay lại</Button>
                 <div className="flex gap-3">
                   <Button onClick={() => requestOtpMutation.mutate()} loading={requestOtpMutation.isPending} disabled={countdown > 0} style={{ borderRadius: 10 }}>
                     {countdown > 0 ? `Gửi lại OTP (${countdown}s)` : 'Gửi lại OTP'}

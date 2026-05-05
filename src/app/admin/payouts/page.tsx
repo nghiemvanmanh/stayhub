@@ -193,11 +193,6 @@ export default function AdminPayoutsPage() {
           <Tooltip title="Xem chi tiết">
             <Button type="text" size="small" icon={<EyeOutlined />} onClick={() => handleViewDetail(record)} style={{ color: "#2DD4A8" }} />
           </Tooltip>
-          {record.status === "REQUESTED" && (
-            <Tooltip title="Từ chối">
-              <Button type="text" size="small" icon={<CloseCircleOutlined />} style={{ color: "#ff4d4f" }} />
-            </Tooltip>
-          )}
         </Space>
       ),
     },

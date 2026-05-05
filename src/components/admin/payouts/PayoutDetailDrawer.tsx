@@ -1,12 +1,35 @@
 import React, { useState, useEffect } from "react";
-import { Drawer, Button, Space, Avatar, Tag, Typography, Row, Col, Input } from "antd";
-import { UserOutlined, MailOutlined, BankOutlined, LinkOutlined } from "@ant-design/icons";
+import { Drawer, Button, Space, Avatar, Tag, Typography, Row, Col, Input, Upload, message } from "antd";
+import { UserOutlined, MailOutlined, BankOutlined, LinkOutlined, PlusOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { AdminPayoutItem } from "@/interfaces/admin";
 import { ADMIN_PAYOUT_STATUS_MAP } from "@/constants/payment";
+import { fetcher } from "@/utils/fetcher";
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
+
+function getFileInfo(file: File) {
+  const ext = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
+  return { extension: ext, contentType: file.type || "application/octet-stream" };
+}
+
+async function uploadFileToS3(file: File): Promise<string> {
+  const fileInfo = getFileInfo(file);
+  const { data } = await fetcher.post("/files/presigned-url", {
+    files: [fileInfo],
+  });
+  const presigned = Array.isArray(data) ? data[0] : data;
+  const presignedData = (presigned as any).data || presigned;
+
+  await fetch(presignedData.presignedUrl, {
+    method: "PUT",
+    body: file,
+    headers: { "Content-Type": file.type },
+  });
+
+  return presignedData.publicUrl;
+}
 
 interface PayoutDetailDrawerProps {
   open: boolean;
@@ -27,22 +50,47 @@ export const PayoutDetailDrawer: React.FC<PayoutDetailDrawerProps> = ({
 }) => {
   const [adminNote, setAdminNote] = useState("");
   const [bankRef, setBankRef] = useState("");
-  const [proofImage, setProofImage] = useState("");
+  const [fileList, setFileList] = useState<any[]>([]);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (payout) {
       setAdminNote(payout.adminNote || "");
       setBankRef(payout.bankTransactionRef || "");
-      setProofImage((payout as any).proofImageUrl || "");
+      if ((payout as any).proofImageUrl) {
+        setFileList([{ uid: '-1', name: 'proof.png', status: 'done', url: (payout as any).proofImageUrl }]);
+      } else {
+        setFileList([]);
+      }
     } else {
       setAdminNote("");
       setBankRef("");
-      setProofImage("");
+      setFileList([]);
     }
   }, [payout]);
 
-  const handleApprove = () => onApprove({ bankRef, proofImage, adminNote });
-  const handleReject = () => onReject({ bankRef, proofImage, adminNote });
+  const submitWithUpload = async (action: 'approve' | 'reject') => {
+    let finalUrl = "";
+    if (fileList.length > 0) {
+      const file = fileList[0];
+      if (file.url) {
+        finalUrl = file.url;
+      } else if (file.originFileObj) {
+        setUploading(true);
+        try {
+          finalUrl = await uploadFileToS3(file.originFileObj);
+        } catch (error) {
+          message.error("Lỗi khi tải ảnh lên S3");
+          setUploading(false);
+          return;
+        }
+        setUploading(false);
+      }
+    }
+    
+    if (action === 'approve') onApprove({ bankRef, proofImage: finalUrl, adminNote });
+    else onReject({ bankRef, proofImage: finalUrl, adminNote });
+  };
 
   return (
     <Drawer
@@ -142,13 +190,27 @@ export const PayoutDetailDrawer: React.FC<PayoutDetailDrawerProps> = ({
                     style={{ borderRadius: 8 }}
                     prefix={<BankOutlined style={{ color: "#bfbfbf" }} />}
                   />
-                  <Input
-                    placeholder="Đường dẫn ảnh chụp UNC / Biên lai (Không bắt buộc)"
-                    value={proofImage}
-                    onChange={(e) => setProofImage(e.target.value)}
-                    style={{ borderRadius: 8 }}
-                    prefix={<LinkOutlined style={{ color: "#bfbfbf" }} />}
-                  />
+                  <div style={{ marginTop: 4 }}>
+                    <Text strong style={{ fontSize: 13, display: "block", marginBottom: 8, color: "#64748b" }}>Ảnh chụp UNC / Biên lai (Không bắt buộc)</Text>
+                    <Upload
+                      listType="picture-card"
+                      fileList={fileList}
+                      beforeUpload={(file) => {
+                        setFileList([{ ...file, originFileObj: file, status: "done" }]);
+                        return false;
+                      }}
+                      onRemove={() => setFileList([])}
+                      maxCount={1}
+                      accept="image/*"
+                    >
+                      {fileList.length >= 1 ? null : (
+                        <div>
+                          <PlusOutlined />
+                          <div style={{ marginTop: 8 }}>Tải ảnh lên</div>
+                        </div>
+                      )}
+                    </Upload>
+                  </div>
                 </div>
               </div>
             )}
@@ -166,13 +228,13 @@ export const PayoutDetailDrawer: React.FC<PayoutDetailDrawerProps> = ({
 
             {(payout.status === "REQUESTED" || payout.status === "PROCESSING") ? (
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginTop: 24, paddingTop: 16, borderTop: "1px solid #f0f0f0" }}>
-                <Button onClick={onClose} style={{ borderRadius: 8, height: 40 }} disabled={isUpdating}>
+                <Button onClick={onClose} style={{ borderRadius: 8, height: 40 }} disabled={isUpdating || uploading}>
                   Để sau
                 </Button>
-                <Button danger style={{ borderRadius: 8, height: 40, minWidth: 100 }} onClick={handleReject} loading={isUpdating}>
+                <Button danger style={{ borderRadius: 8, height: 40, minWidth: 100 }} onClick={() => submitWithUpload('reject')} loading={isUpdating || uploading}>
                   Từ chối
                 </Button>
-                <Button type="primary" style={{ borderRadius: 8, height: 40, minWidth: 100, background: "#2DD4A8", borderColor: "#2DD4A8" }} onClick={handleApprove} loading={isUpdating}>
+                <Button type="primary" style={{ borderRadius: 8, height: 40, minWidth: 100, background: "#2DD4A8", borderColor: "#2DD4A8" }} onClick={() => submitWithUpload('approve')} loading={isUpdating || uploading}>
                   Duyệt chi
                 </Button>
               </div>
