@@ -115,7 +115,16 @@ export default function HostPayout() {
   const [payoutStep, setPayoutStep] = useState<1 | 2>(1);
   const [otpCode, setOtpCode] = useState("");
   const [otpDigits, setOtpDigits] = useState<string[]>(["" , "", "", "", "", ""]);
+  const [countdown, setCountdown] = useState(0);
   const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (countdown > 0) {
+      timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [countdown]);
 
   // Fetch wallet
   const { data: wallet, isLoading: loadingWallet, refetch: refetchWallet } = useQuery({
@@ -210,6 +219,7 @@ export default function HostPayout() {
       setPayoutStep(2);
       setOtpDigits(["", "", "", "", "", ""]);
       setOtpCode("");
+      setCountdown(60);
       setTimeout(() => otpInputRefs.current[0]?.focus(), 100);
     },
     onError: (err: any) => { message.error(err?.response?.data?.message || err?.response?.data?.data || "Gửi mã OTP thất bại"); },
@@ -234,6 +244,7 @@ export default function HostPayout() {
   const resetPayoutForm = () => {
     setShowPayout(false); setPayoutAmount(null); setPayoutBankId(null);
     setPayoutStep(1); setOtpCode(""); setOtpDigits(["", "", "", "", "", ""]);
+    setCountdown(0);
   };
 
   const handleOtpDigitChange = (index: number, value: string) => {
@@ -675,9 +686,11 @@ export default function HostPayout() {
               </div>
 
               <div className="flex justify-between pt-2 border-t border-gray-100">
-                <Button icon={<ArrowLeftOutlined />} onClick={() => { setPayoutStep(1); setOtpDigits(["", "", "", "", "", ""]); setOtpCode(""); }} style={{ borderRadius: 10 }}>Quay lại</Button>
+                <Button icon={<ArrowLeftOutlined />} onClick={() => { setPayoutStep(1); setOtpDigits(["", "", "", "", "", ""]); setOtpCode(""); setCountdown(0); }} style={{ borderRadius: 10 }}>Quay lại</Button>
                 <div className="flex gap-3">
-                  <Button onClick={() => requestOtpMutation.mutate()} loading={requestOtpMutation.isPending} style={{ borderRadius: 10 }}>Gửi lại OTP</Button>
+                  <Button onClick={() => requestOtpMutation.mutate()} loading={requestOtpMutation.isPending} disabled={countdown > 0} style={{ borderRadius: 10 }}>
+                    {countdown > 0 ? `Gửi lại OTP (${countdown}s)` : 'Gửi lại OTP'}
+                  </Button>
                   <Button type="primary" loading={verifyOtpMutation.isPending} onClick={() => verifyOtpMutation.mutate()} disabled={otpCode.length !== 6}
                     style={{ borderRadius: 10, background: "#2DD4A8", borderColor: "#2DD4A8", fontWeight: 600 }}>
                     Xác nhận rút tiền
